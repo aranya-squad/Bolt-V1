@@ -1,0 +1,4 @@
+-r base.in
+gunicorn==22.*
+sentry-sdk[django]==2.*
+django-storages[s3]==1.14.*

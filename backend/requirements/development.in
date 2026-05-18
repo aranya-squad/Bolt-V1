@@ -1,0 +1,8 @@
+-r base.in
+pytest==8.*
+pytest-django==4.*
+factory-boy==3.*
+django-debug-toolbar==4.*
+ruff==0.4.*
+mypy==1.10.*
+django-stubs==5.*

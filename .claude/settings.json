@@ -1,0 +1,33 @@
+{
+  "hooks": {
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "model=\"${CLAUDE_MODEL:-unknown}\"; if [[ \"$model\" != *\"opus\"* ]]; then echo \"{\\\"systemMessage\\\": \\\"[Model nudge] Using $model, not claude-opus-4-7. For complex engineering/game-studio tasks (CLAUDE.md), Opus reasons significantly better — switch with /model.\\\"}\"; fi",
+            "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SESSION_ID=$(echo \"$INPUT\" | jq -r '.session_id // empty' 2>/dev/null); [ -z \"$SESSION_ID\" ] && exit 0; TRANSCRIPT=$(find \"$HOME/.claude/projects\" -name \"${SESSION_ID}.jsonl\" 2>/dev/null | head -1); [ -z \"$TRANSCRIPT\" ] && exit 0; TURN_COUNT=$(grep -c '\"role\":\"assistant\"' \"$TRANSCRIPT\" 2>/dev/null || echo 0); [ \"$TURN_COUNT\" -gt 40 ] && echo \"{\\\"systemMessage\\\": \\\"[Session nudge] $TURN_COUNT assistant turns — session is getting long. Run /compact to preserve context (CLAUDE.md §4).\\\"}\"; exit 0",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "INPUT=$(cat); SESSION_ID=$(echo \"$INPUT\" | jq -r '.session_id // empty' 2>/dev/null); [ -z \"$SESSION_ID\" ] && exit 0; TRANSCRIPT=$(find \"$HOME/.claude/projects\" -name \"${SESSION_ID}.jsonl\" 2>/dev/null | head -1); [ -z \"$TRANSCRIPT\" ] && exit 0; TURN_COUNT=$(grep -c '\"role\":\"assistant\"' \"$TRANSCRIPT\" 2>/dev/null || echo 0); MODE=\"${CLAUDE_CODE_DEFAULT_MODE:-}\"; [ \"$TURN_COUNT\" -gt 5 ] && [ \"$MODE\" != \"plan\" ] && echo \"{\\\"systemMessage\\\": \\\"[Plan nudge] $TURN_COUNT turns in, not in plan mode — for multi-step tasks, /plan first (CLAUDE.md §4 Goal-Driven Execution).\\\"}\"; exit 0",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

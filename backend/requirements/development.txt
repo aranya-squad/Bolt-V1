@@ -1,0 +1,9 @@
+# Generated from development.in via pip-compile.
+-r base.txt
+pytest==8.3.2
+pytest-django==4.8.0
+factory-boy==3.3.1
+django-debug-toolbar==4.4.2
+ruff==0.4.10
+mypy==1.10.1
+django-stubs==5.0.4

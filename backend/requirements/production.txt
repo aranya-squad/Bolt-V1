@@ -1,0 +1,5 @@
+# Generated from production.in via pip-compile.
+-r base.txt
+gunicorn==22.0.0
+sentry-sdk[django]==2.5.1
+django-storages[s3]==1.14.4
