@@ -44,7 +44,9 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
 
     attempts = list(session.attempts.all())
     score_correct = sum(1 for a in attempts if a.is_correct)
-    score_total = len(attempts)
+    # Use total questions in session, not submitted attempts — partial sessions
+    # (e.g. timer expired) should show "8/30", not "8/8".
+    score_total = len(session.questions_json)
     elapsed_total = sum(a.elapsed_ms for a in attempts) // 1000
 
     accuracy = (score_correct / score_total * 100) if score_total else 0
@@ -73,6 +75,14 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
         delta=xp,
         source_session=session,
     )
+
+    if session.template is not None:
+        LevelCompletion.objects.get_or_create(
+            user=session.user,
+            level=session.template.lesson.level,
+            kind=session.kind,
+            defaults={"best_progress_record": record},
+        )
 
     session.submitted_at = timezone.now()
     session.save(update_fields=["submitted_at"])

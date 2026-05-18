@@ -2,11 +2,18 @@
 
 export type Role = "STUDENT" | "GUARDIAN" | "TEACHER" | "ADMIN";
 
+export interface HudStats {
+  total_xp: number;
+  streak_days: number;
+  levels_completed: number;
+}
+
 export interface User {
   id: string;
   email: string;
   role: Role;
-  profile: Profile;
+  profile: Profile | null;
+  stats?: HudStats;
 }
 
 export interface Profile {
@@ -81,4 +88,18 @@ export interface AttemptVerdict {
   question_index: number;
   is_correct: boolean;
   xp_delta: number;
+}
+
+export interface QuestionAttempt {
+  question_index: number;
+  question_text: string;
+  expected_answer: number;
+  submitted_answer: number;
+  is_correct: boolean;
+  elapsed_ms: number;
+}
+
+export interface SessionReport {
+  progress: ProgressRecord;
+  attempts: QuestionAttempt[];
 }

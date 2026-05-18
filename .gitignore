@@ -1,0 +1,48 @@
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyc
+
+# Django
+*.log
+local_settings.py
+db.sqlite3
+db.sqlite3-journal
+
+# Django migrations (keep __init__.py, ignore generated migrations)
+# Uncomment the next line if you want to ignore all migrations:
+# */migrations/*.py
+
+# Environment variables
+.env
+.env.*
+
+# Node / Frontend
+node_modules/
+frontend/node_modules/
+package-lock.json
+*.lock
+
+# Build output
+dist/
+build/
+*.egg-info/
+
+# OS / Editor
+.DS_Store
+Thumbs.db
+.vscode/settings.json
+.idea/
+*.swp
+*.swo
+
+# Coverage / Testing
+.coverage
+htmlcov/
+.pytest_cache/

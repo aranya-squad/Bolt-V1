@@ -15,17 +15,22 @@
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {
-    "react": "^18.3.1",
-    "react-dom": "^18.3.1",
-    "react-router-dom": "^6.24.0",
     "@tanstack/react-query": "^5.45.0",
-    "zustand": "^4.5.4",
     "axios": "^1.7.2",
     "i18next": "^23.11.5",
+    "i18next-http-backend": "^2.5.2",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
     "react-i18next": "^14.1.2",
-    "i18next-http-backend": "^2.5.2"
+    "react-router-dom": "^6.24.0",
+    "zustand": "^4.5.4"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.9.1",
+    "@playwright/test": "^1.45.0",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
     "@types/react": "^18.3.3",
     "@types/react-dom": "^18.3.0",
     "@typescript-eslint/eslint-plugin": "^7.13.0",
@@ -37,15 +42,11 @@
     "eslint-plugin-react": "^7.34.3",
     "eslint-plugin-react-hooks": "^4.6.2",
     "eslint-plugin-react-refresh": "^0.4.7",
+    "jsdom": "^24.1.0",
     "postcss": "^8.4.38",
     "tailwindcss": "^3.4.4",
     "typescript": "^5.4.5",
     "vite": "^5.3.1",
-    "vitest": "^1.6.0",
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/user-event": "^14.5.2",
-    "jsdom": "^24.1.0",
-    "@playwright/test": "^1.45.0",
-    "@axe-core/playwright": "^4.9.1"
+    "vitest": "^1.6.0"
   }
 }

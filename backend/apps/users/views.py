@@ -78,5 +78,5 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
-        serializer = UserMeSerializer(request.user)
-        return Response(serializer.data)
+        user = User.objects.select_related("profile").get(pk=request.user.pk)
+        return Response(UserMeSerializer(user).data)

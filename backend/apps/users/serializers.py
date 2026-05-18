@@ -10,13 +10,46 @@ class ProfileSerializer(serializers.ModelSerializer):
 
 
 class UserMeSerializer(serializers.ModelSerializer):
-    profile = ProfileSerializer(read_only=True)
-    # TODO(debt): add HUD stats (total_xp, streak, level) once XPEvent model is ready
+    profile = serializers.SerializerMethodField()
+    stats = serializers.SerializerMethodField()
 
     class Meta:
         model = User
-        fields = ["id", "email", "role", "profile"]
+        fields = ["id", "email", "role", "profile", "stats"]
         read_only_fields = ["id", "email", "role"]
+
+    def get_profile(self, user):
+        try:
+            return ProfileSerializer(user.profile).data
+        except Profile.DoesNotExist:
+            return None
+
+    def get_stats(self, user):
+        from datetime import timedelta
+
+        from django.db.models import Sum
+        from django.utils import timezone
+
+        from apps.progress.models import LevelCompletion, ProgressRecord, XPEvent
+
+        total_xp = XPEvent.objects.filter(user=user).aggregate(t=Sum("delta"))["t"] or 0
+
+        today = timezone.now().date()
+        yesterday = today - timedelta(days=1)
+        dates = set(
+            ProgressRecord.objects.filter(user=user).values_list("created_at__date", flat=True)
+        )
+        start = today if today in dates else (yesterday if yesterday in dates else None)
+        streak = 0
+        if start is not None:
+            d = start
+            while d in dates:
+                streak += 1
+                d -= timedelta(days=1)
+
+        levels_completed = LevelCompletion.objects.filter(user=user, kind="CLASSWORK").count()
+
+        return {"total_xp": total_xp, "streak_days": streak, "levels_completed": levels_completed}
 
 
 class GuardianRegisterSerializer(serializers.ModelSerializer):

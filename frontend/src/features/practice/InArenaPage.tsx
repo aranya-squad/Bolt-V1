@@ -1,15 +1,288 @@
 // Figma frame 1:553 — In the Arena (active practice session)
-import { useParams } from "react-router-dom";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { useQueryClient } from "@tanstack/react-query";
+import { useSession, useSubmitAttempt, useFinalizeSession } from "@/shared/api/queries/useSession";
+import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
+import type { AttemptVerdict } from "@/shared/types";
 
 export default function InArenaPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [input, setInput] = useState("");
+  const [verdict, setVerdict] = useState<AttemptVerdict | null>(null);
+  const [timeLeft, setTimeLeft] = useState<number | null>(null);
+  const questionStartMs = useRef(Date.now());
+  const inputRef = useRef<HTMLInputElement>(null);
+  const isFinalizingRef = useRef(false);
+
+  const { data: sessionMeta, isLoading, isError } = useSession(sessionId!);
+  const { mutate: submitAttempt, isPending: submitting } = useSubmitAttempt(sessionId!);
+  const { mutate: finalizeSession } = useFinalizeSession(sessionId!);
+
+  const hasTimer = (sessionMeta?.time_limit_sec ?? 0) > 0;
+
+  // Init timer once when session loads
+  useEffect(() => {
+    if (sessionMeta && sessionMeta.time_limit_sec > 0 && timeLeft === null) {
+      setTimeLeft(sessionMeta.time_limit_sec);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [sessionMeta?.session_id]);
+
+  // Countdown timer — setTimeout chain
+  useEffect(() => {
+    if (!hasTimer || timeLeft === null || timeLeft <= 0) return;
+    const id = setTimeout(() => setTimeLeft((t) => (t !== null ? t - 1 : null)), 1000);
+    return () => clearTimeout(id);
+  }, [timeLeft, hasTimer]);
+
+  // Timer expired → finalize
+  useEffect(() => {
+    if (hasTimer && timeLeft === 0 && sessionMeta) {
+      handleFinalize();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [timeLeft]);
+
+  // Focus input on question change
+  useEffect(() => {
+    questionStartMs.current = Date.now();
+    inputRef.current?.focus();
+  }, [currentIndex]);
+
+  const handleFinalize = () => {
+    if (isFinalizingRef.current) return;
+    isFinalizingRef.current = true;
+    finalizeSession(undefined, {
+      onSuccess: () => {
+        queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+        navigate(`/practice/victory/${sessionId}`);
+      },
+    });
+  };
+
+  const handleSubmit = () => {
+    if (!sessionMeta || submitting || verdict) return;
+    const parsed = parseInt(input, 10);
+    if (isNaN(parsed)) return;
+    const elapsed = Date.now() - questionStartMs.current;
+
+    submitAttempt(
+      { question_index: currentIndex, answer: parsed, elapsed_ms: elapsed },
+      {
+        onSuccess: (v) => {
+          setVerdict(v);
+          setTimeout(() => {
+            setVerdict(null);
+            setInput("");
+            if (currentIndex + 1 >= sessionMeta.questions.length) {
+              handleFinalize();
+            } else {
+              setCurrentIndex((i) => i + 1);
+            }
+          }, 600);
+        },
+      }
+    );
+  };
+
+  if (isLoading) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "var(--color-bg-base)",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "var(--font-body)",
+          color: "var(--color-text-secondary)",
+        }}
+      >
+        LOADING…
+      </main>
+    );
+  }
+
+  if (isError) {
+    return (
+      <main
+        style={{
+          minHeight: "100vh",
+          background: "var(--color-bg-base)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          fontFamily: "var(--font-body)",
+          color: "var(--color-text-primary)",
+          gap: "var(--space-md)",
+        }}
+      >
+        <p style={{ color: "var(--color-error)" }}>Failed to load session.</p>
+        <button
+          type="button"
+          onClick={() => navigate("/practice")}
+          style={{
+            background: "none",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-text-secondary)",
+            padding: "var(--space-sm) var(--space-md)",
+            borderRadius: "var(--radius-md)",
+            cursor: "pointer",
+            fontFamily: "var(--font-body)",
+          }}
+        >
+          Back to Arena
+        </button>
+      </main>
+    );
+  }
+
+  if (!sessionMeta) return null;
+
+  const question = sessionMeta.questions[currentIndex];
+  const timeLimitSec = sessionMeta.time_limit_sec;
+  const timerPct = hasTimer && timeLeft !== null ? (timeLeft / timeLimitSec) * 100 : 100;
+  const timerColor = timerPct < 20 ? "var(--color-error)" : "var(--color-primary)";
+
   return (
-    <main style={{ minHeight: "100vh", background: "var(--color-bg-base)", padding: "var(--space-xl)" }}>
-      <h1 style={{ fontFamily: "var(--font-display)", color: "var(--color-primary)" }}>
-        In the Arena
-      </h1>
-      <p style={{ color: "var(--color-text-secondary)" }}>Session: {sessionId}</p>
-      {/* TODO: question display, answer input, timer HUD — implement in Phase 4 */}
+    <main
+      style={{
+        minHeight: "100vh",
+        background: "var(--color-bg-base)",
+        fontFamily: "var(--font-body)",
+        color: "var(--color-text-primary)",
+        display: "flex",
+        flexDirection: "column",
+      }}
+    >
+      {/* Timer bar */}
+      {hasTimer && (
+        <div style={{ width: "100%", height: 4, background: "var(--color-surface)" }}>
+          <div
+            style={{
+              width: `${timerPct}%`,
+              height: "100%",
+              background: timerColor,
+              transition: "width 1s linear, background 0.3s",
+            }}
+          />
+        </div>
+      )}
+
+      <div
+        style={{
+          flex: 1,
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "var(--space-xl)",
+          gap: "var(--space-xl)",
+        }}
+      >
+        {/* Progress + timer */}
+        <div
+          style={{
+            display: "flex",
+            justifyContent: "space-between",
+            width: "100%",
+            maxWidth: 480,
+            color: "var(--color-text-secondary)",
+            fontSize: "0.9rem",
+          }}
+        >
+          <span>
+            Q {currentIndex + 1} / {sessionMeta.questions.length}
+          </span>
+          {hasTimer && (
+            <span style={{ color: timerPct < 20 ? "var(--color-error)" : "var(--color-text-secondary)" }}>
+              {timeLeft}s
+            </span>
+          )}
+        </div>
+
+        {/* Question */}
+        <div
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "clamp(2rem, 8vw, 3.5rem)",
+            color: "var(--color-text-primary)",
+            letterSpacing: "0.02em",
+            textAlign: "center",
+          }}
+        >
+          {question.text} = ?
+        </div>
+
+        {/* Verdict flash */}
+        {verdict && (
+          <div
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.6rem",
+              letterSpacing: "0.08em",
+              color: verdict.is_correct ? "var(--color-success)" : "var(--color-error)",
+            }}
+          >
+            {verdict.is_correct ? "CORRECT" : "WRONG"}
+          </div>
+        )}
+
+        {/* Input */}
+        {!verdict && (
+          <div style={{ display: "flex", gap: "var(--space-md)", width: "100%", maxWidth: 480 }}>
+            <input
+              ref={inputRef}
+              type="text"
+              inputMode="numeric"
+              pattern="[0-9]*"
+              value={input}
+              onChange={(e) => setInput(e.target.value.replace(/[^0-9]/g, ""))}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSubmit();
+              }}
+              placeholder="Answer"
+              style={{
+                flex: 1,
+                padding: "var(--space-md)",
+                background: "var(--color-surface)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "var(--radius-md)",
+                color: "var(--color-text-primary)",
+                fontFamily: "var(--font-mono)",
+                fontSize: "1.4rem",
+                textAlign: "center",
+                outline: "none",
+              }}
+            />
+            <button
+              type="button"
+              onClick={handleSubmit}
+              disabled={submitting || input.trim() === ""}
+              style={{
+                background: "var(--color-primary)",
+                color: "#000",
+                border: "none",
+                borderRadius: "var(--radius-md)",
+                padding: "var(--space-md) var(--space-xl)",
+                fontFamily: "var(--font-display)",
+                fontSize: "1.2rem",
+                letterSpacing: "0.06em",
+                cursor: input.trim() === "" ? "not-allowed" : "pointer",
+                opacity: input.trim() === "" ? 0.5 : 1,
+              }}
+            >
+              SUBMIT
+            </button>
+          </div>
+        )}
+      </div>
     </main>
   );
 }

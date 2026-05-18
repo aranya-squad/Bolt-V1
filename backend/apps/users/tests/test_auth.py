@@ -4,6 +4,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.users.models import User
+from apps.users.tests.factories import GuardianFactory
 
 
 @pytest.fixture
@@ -46,3 +47,27 @@ def test_me_requires_auth(client):
     url = reverse("auth-me")
     response = client.get(url)
     assert response.status_code == status.HTTP_401_UNAUTHORIZED
+
+
+@pytest.mark.django_db
+def test_login_returns_access_token(client):
+    user = GuardianFactory()
+    url = reverse("auth-login")
+    response = client.post(url, {"email": user.email, "password": "testpass123"}, format="json")
+    assert response.status_code == status.HTTP_200_OK
+    assert "access" in response.json()
+
+
+@pytest.mark.django_db
+def test_me_returns_stats(client):
+    user = GuardianFactory()
+    client.force_authenticate(user=user)
+    url = reverse("auth-me")
+    response = client.get(url)
+    assert response.status_code == status.HTTP_200_OK
+    data = response.json()
+    assert data["email"] == user.email
+    assert "stats" in data
+    assert "total_xp" in data["stats"]
+    assert "streak_days" in data["stats"]
+    assert "levels_completed" in data["stats"]

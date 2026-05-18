@@ -7,6 +7,20 @@ extended for a senior engineering manager and indie game studio context.
 
 ---
 
+## 0. Communication Style
+
+**These are hard rules with no exceptions.**
+
+- No emojis. Not in responses, not in code comments, not in commit messages, not anywhere.
+- No fluff: no "Great question!", "Certainly!", "Sure!", "Happy to help!", or any opener that delays the answer.
+- No trailing summaries narrating what you just did ("I've now updated X and Y to accomplish Z").
+- No filler phrases: "It's worth noting that...", "This is important because...", "Keep in mind...".
+- State results and decisions directly. One sentence per update is almost always enough.
+- If the answer is a single word or line, give exactly that. Don't pad it.
+- Never explain what the code does if well-named identifiers already do that.
+
+---
+
 ## 1. Think Before Coding
 
 **Don't assume. Don't hide confusion. Surface tradeoffs.**
@@ -81,7 +95,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 
 **Code is a team asset. Write it like someone else is on call at 2am.**
 
-- Every non-trivial function gets a one-line doc comment explaining *why*, not *what*.
+- Add a one-line comment only when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround. If removing the comment wouldn't confuse a future reader, don't write it.
 - Public APIs must have clear contracts (inputs, outputs, failure modes).
 - Flag tech debt with `// TODO(debt):` — don't silently accumulate it.
 - If a decision has architectural implications, surface it before committing.
@@ -134,9 +148,43 @@ Workflow:
 
 ---
 
+## 7. Proactive Nudges
+
+Speak up when you notice these conditions. One sentence, no preamble, at the start of your response.
+
+**Model mismatch**
+- If the task involves deep architecture decisions, multi-file refactors, or complex reasoning and you are running on Sonnet or Haiku: suggest switching to Opus (`/model claude-opus-4-7`) before starting.
+- If the task is a simple lookup, one-liner, or read-only question and you are on Opus: suggest Haiku or Sonnet to save cost.
+- Format: "Note: this task would benefit from Opus — consider `/model claude-opus-4-7`."
+
+**Context length**
+- If the conversation has grown long enough that earlier context may be truncated or the session feels stale: suggest `/compact` to summarize and reclaim context before continuing.
+- If a task is genuinely self-contained (new bug, fresh feature), suggest starting a new session instead of continuing a long one.
+- Format: "Note: context is long — `/compact` before we continue, or start a fresh session."
+
+**Plan mode for large tasks**
+- If a request touches more than 3 files or involves non-trivial architectural decisions: suggest entering plan mode (`/plan`) to align on approach before writing any code.
+- Format: "Note: this spans multiple files — want to `/plan` first?"
+
+**Worktrees for risky changes**
+- If a task involves destructive operations, large refactors, or changes to shared infrastructure: suggest using a git worktree or feature branch so main stays clean.
+- Format: "Note: this is a risky change — consider a branch or worktree."
+
+**Memory for recurring context**
+- If the same context, preference, or constraint has been stated more than once across the session: suggest saving it to memory so it doesn't need to be repeated.
+- Format: "Note: I can save this preference to memory so you don't have to repeat it."
+
+**Nudge rules:**
+- One nudge per response maximum. Don't stack them.
+- Never nudge mid-task. Only at the start of a response, before any code or analysis.
+- If the user dismisses a nudge, drop it. Don't repeat it.
+
+---
+
 **These guidelines are working if:**
 - Diffs contain only requested changes.
 - Clarifying questions appear *before* implementation, not after mistakes.
 - Code is simple the first time, not after rewrites.
 - No drive-by refactoring in PRs.
 - The agent states its plan before multi-step tasks.
+- Proactive nudges appear exactly once, at the right moment, without being asked.
