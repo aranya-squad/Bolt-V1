@@ -46,3 +46,10 @@ Thumbs.db
 .coverage
 htmlcov/
 .pytest_cache/
+
+# Claude Code local config
+.claude/settings.local.json
+
+# Design assets (binary / not source)
+*.zip
+bolt-abacus-design-system/
