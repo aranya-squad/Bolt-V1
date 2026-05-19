@@ -5,6 +5,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSession, useSubmitAttempt, useFinalizeSession } from "@/shared/api/queries/useSession";
 import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
 import type { AttemptVerdict } from "@/shared/types";
+import { BoltButton } from "@/shared/ui/BoltButton";
+import { Chip } from "@/shared/ui/Chip";
 
 export default function InArenaPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -98,17 +100,12 @@ export default function InArenaPage() {
     return (
       <div
         className="page-loading"
-        style={{ flexDirection: "column", gap: "var(--space-md)" }}
+        style={{ flexDirection: "column", gap: 16 }}
       >
-        <p style={{ color: "var(--color-error)" }}>Failed to load session.</p>
-        <button
-          type="button"
-          onClick={() => navigate("/practice")}
-          className="btn btn-secondary"
-          style={{ padding: "var(--space-sm) var(--space-md)", fontSize: "0.9rem" }}
-        >
+        <p style={{ color: "var(--err)" }}>Failed to load session.</p>
+        <BoltButton variant="ghost" size="sm" onClick={() => navigate("/practice")}>
           Back to Arena
-        </button>
+        </BoltButton>
       </div>
     );
   }
@@ -118,13 +115,13 @@ export default function InArenaPage() {
   const question = sessionMeta.questions[currentIndex];
   const timeLimitSec = sessionMeta.time_limit_sec;
   const timerPct = hasTimer && timeLeft !== null ? (timeLeft / timeLimitSec) * 100 : 100;
-  const timerColor = timerPct < 20 ? "var(--color-error)" : "var(--color-primary)";
+  const timerColor = timerPct < 20 ? "var(--err)" : "var(--y-bolt)";
 
   return (
     <main className="page-wrap" style={{ display: "flex", flexDirection: "column" }}>
       {/* Timer bar */}
       {hasTimer && (
-        <div style={{ width: "100%", height: 4, background: "var(--color-surface)" }}>
+        <div style={{ width: "100%", height: 4, background: "var(--bg-ash)" }}>
           <div
             style={{
               width: `${timerPct}%`,
@@ -143,8 +140,8 @@ export default function InArenaPage() {
           flexDirection: "column",
           alignItems: "center",
           justifyContent: "center",
-          padding: "var(--space-xl)",
-          gap: "var(--space-xl)",
+          padding: "var(--s-xl)",
+          gap: "var(--s-xl)",
         }}
       >
         {/* Progress + timer */}
@@ -154,13 +151,14 @@ export default function InArenaPage() {
             justifyContent: "space-between",
             width: "100%",
             maxWidth: 480,
-            color: "var(--color-text-secondary)",
+            color: "var(--fg-sand)",
             fontSize: "0.9rem",
+            fontFamily: "var(--font-label)",
           }}
         >
           <span>Q {currentIndex + 1} / {sessionMeta.questions.length}</span>
           {hasTimer && (
-            <span style={{ color: timerPct < 20 ? "var(--color-error)" : "var(--color-text-secondary)" }}>
+            <span style={{ color: timerPct < 20 ? "var(--err)" : "var(--fg-sand)" }}>
               {timeLeft}s
             </span>
           )}
@@ -170,34 +168,40 @@ export default function InArenaPage() {
         <div
           style={{
             fontFamily: "var(--font-mono)",
-            fontSize: "clamp(2rem, 8vw, 3.5rem)",
-            color: "var(--color-text-primary)",
+            fontSize: 56,
+            color: "var(--fg-bone)",
             letterSpacing: "0.02em",
             textAlign: "center",
             fontVariantNumeric: "tabular-nums",
+            padding: verdict ? "16px 32px" : undefined,
+            borderRadius: verdict ? 16 : undefined,
+            border: verdict
+              ? `1px solid ${verdict.is_correct ? "var(--ok)" : "var(--err)"}`
+              : undefined,
+            boxShadow: verdict
+              ? verdict.is_correct
+                ? "0 0 18px rgba(74,222,128,0.6)"
+                : "0 0 18px rgba(255,180,171,0.6)"
+              : undefined,
+            transition: "border 150ms, box-shadow 150ms",
           }}
         >
           {question.text} = ?
         </div>
 
-        {/* Verdict flash */}
+        {/* Verdict feedback chip */}
         {verdict && (
-          <div
-            className="verdict-flash"
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.6rem",
-              letterSpacing: "0.08em",
-              color: verdict.is_correct ? "var(--color-success)" : "var(--color-error)",
-            }}
+          <Chip
+            tone={verdict.is_correct ? "ok" : "err"}
+            icon={verdict.is_correct ? "check-circle-2" : "x-circle"}
           >
-            {verdict.is_correct ? "CORRECT" : "WRONG"}
-          </div>
+            {verdict.is_correct ? `+${verdict.xp_delta} XP` : "RECALCULATE"}
+          </Chip>
         )}
 
         {/* Answer input */}
         {!verdict && (
-          <div style={{ display: "flex", gap: "var(--space-md)", width: "100%", maxWidth: 480 }}>
+          <div style={{ display: "flex", gap: 16, width: "100%", maxWidth: 480 }}>
             <input
               ref={inputRef}
               type="text"
@@ -210,18 +214,15 @@ export default function InArenaPage() {
               className="field field--mono"
               style={{ flex: 1 }}
             />
-            <button
+            <BoltButton
               type="button"
+              variant="primary"
+              size="md"
               onClick={handleSubmit}
               disabled={submitting || input.trim() === ""}
-              className="btn btn-primary"
-              style={{
-                padding: "var(--space-md) var(--space-xl)",
-                fontSize: "1.2rem",
-              }}
             >
               SUBMIT
-            </button>
+            </BoltButton>
           </div>
         )}
       </div>

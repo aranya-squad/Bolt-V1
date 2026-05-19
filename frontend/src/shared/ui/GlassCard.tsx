@@ -59,6 +59,7 @@ export function GlassCard({ children, variant = "default", style = {}, onClick }
         backdropFilter: "blur(24px)",
         WebkitBackdropFilter: "blur(24px)",
         cursor: onClick ? "pointer" : "default",
+        willChange: onClick ? "transform" : undefined,
         transition: "transform 200ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms",
         ...VARIANTS[variant],
         ...style,

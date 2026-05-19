@@ -1,4 +1,6 @@
 // Bolt Abacus Design System — AmbientScene
+import { useEffect, useRef } from "react";
+
 type Accent = "yellow" | "purple" | "blue" | "pink";
 
 interface AmbientSceneProps {
@@ -21,6 +23,41 @@ const BLOB_COLORS: Record<Accent, string> = {
 };
 
 export function AmbientScene({ accents = ["yellow", "purple", "blue"], particleCount = 4 }: AmbientSceneProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Pause drift animations when the scene's page is not visible (tab switch or
+  // covered by another element), resume when visible again.
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    function setPlayState(running: boolean) {
+      const state = running ? "running" : "paused";
+      Array.from(el!.children).forEach((child) => {
+        (child as HTMLElement).style.animationPlayState = state;
+      });
+    }
+
+    // IntersectionObserver: pauses blobs when the container is not intersecting
+    // (e.g. covered by a full-screen overlay or removed from layout)
+    const observer = new IntersectionObserver(
+      ([entry]) => setPlayState(entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(el);
+
+    // visibilitychange: pauses blobs when the browser tab is hidden
+    function onVisibility() {
+      setPlayState(document.visibilityState === "visible");
+    }
+    document.addEventListener("visibilitychange", onVisibility);
+
+    return () => {
+      observer.disconnect();
+      document.removeEventListener("visibilitychange", onVisibility);
+    };
+  }, []);
+
   const blobs = Array.from({ length: particleCount }, (_, i) => {
     const accent = accents[i % accents.length];
     return {
@@ -41,6 +78,7 @@ export function AmbientScene({ accents = ["yellow", "purple", "blue"], particleC
 
   return (
     <div
+      ref={containerRef}
       data-radial-bg
       style={{
         position: "fixed",
@@ -64,6 +102,7 @@ export function AmbientScene({ accents = ["yellow", "purple", "blue"], particleC
             left: b.left,
             background: b.bg,
             filter: "blur(60px)",
+            willChange: "transform",
             animation: `drift ${b.dur}s ease-in-out infinite`,
             animationDelay: `-${b.delay}s`,
           }}

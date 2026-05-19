@@ -5,6 +5,9 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/shared/api/client";
 import { useAuthStore } from "@/shared/store/authStore";
+import { AmbientScene } from "@/shared/ui/AmbientScene";
+import { GlassCard } from "@/shared/ui/GlassCard";
+import { BoltButton } from "@/shared/ui/BoltButton";
 
 export default function RegisterPage() {
   const navigate = useNavigate();
@@ -32,6 +35,7 @@ export default function RegisterPage() {
       setUser(me);
       navigate("/hub");
     } catch (err: unknown) {
+      void err;
       setError("Registration failed. Check your details.");
     } finally {
       setLoading(false);
@@ -39,74 +43,86 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="page-content--auth">
+    <>
+      <AmbientScene accents={["yellow", "purple", "blue"]} />
       <div
         style={{
-          background: "var(--color-glass)",
-          padding: "var(--space-sm)",
-          marginBottom: "var(--space-md)",
-          borderRadius: "var(--radius-sm)",
-          fontSize: "0.75rem",
-          color: "var(--color-text-secondary)",
+          position: "relative",
+          zIndex: 1,
+          minHeight: "100vh",
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: 24,
         }}
       >
-        DEV REGISTER — production design pending
+        <GlassCard variant="default" style={{ width: "100%", maxWidth: 420, padding: 40 }}>
+          <div
+            style={{
+              fontFamily: "var(--font-label)",
+              fontSize: 11,
+              letterSpacing: "0.15em",
+              textTransform: "uppercase",
+              color: "var(--fg-sand-50)",
+              marginBottom: 24,
+              padding: "8px 12px",
+              background: "rgba(255,255,255,0.03)",
+              borderRadius: 8,
+            }}
+          >
+            DEV REGISTER — production design pending
+          </div>
+
+          <h1 className="t-h2" style={{ color: "var(--y-bolt)", marginBottom: 32 }}>
+            CREATE ACCOUNT
+          </h1>
+
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: "flex", flexDirection: "column", gap: 16 }}
+          >
+            <input
+              type="text"
+              placeholder="Display name"
+              value={displayName}
+              onChange={(e) => setDisplayName(e.target.value)}
+              required
+              className="field"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              required
+              className="field"
+            />
+            <input
+              type="password"
+              placeholder="Password (10+ characters)"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              required
+              minLength={10}
+              className="field"
+            />
+
+            {error && (
+              <p style={{ color: "var(--err)", fontSize: "0.875rem", margin: 0 }}>{error}</p>
+            )}
+
+            <BoltButton
+              type="submit"
+              variant="primary"
+              size="lg"
+              disabled={loading}
+              style={{ width: "100%", marginTop: 8 }}
+            >
+              {loading ? "CREATING ACCOUNT…" : "REGISTER"}
+            </BoltButton>
+          </form>
+        </GlassCard>
       </div>
-
-      <h1
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "2.5rem",
-          color: "var(--color-primary)",
-          marginBottom: "var(--space-lg)",
-        }}
-      >
-        Create Account
-      </h1>
-
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}
-      >
-        <input
-          type="text"
-          placeholder="Display name"
-          value={displayName}
-          onChange={(e) => setDisplayName(e.target.value)}
-          required
-          className="field"
-        />
-        <input
-          type="email"
-          placeholder="Email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          required
-          className="field"
-        />
-        <input
-          type="password"
-          placeholder="Password (10+ characters)"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          required
-          minLength={10}
-          className="field"
-        />
-
-        {error && (
-          <p style={{ color: "var(--color-error)", fontSize: "0.875rem" }}>{error}</p>
-        )}
-
-        <button
-          type="submit"
-          disabled={loading}
-          className="btn btn-primary"
-          style={{ padding: "var(--space-md)", fontSize: "1rem" }}
-        >
-          {loading ? "Creating account…" : "Register"}
-        </button>
-      </form>
-    </div>
+    </>
   );
 }

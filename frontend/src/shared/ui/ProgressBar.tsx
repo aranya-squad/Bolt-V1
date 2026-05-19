@@ -10,10 +10,10 @@ interface ProgressBarProps {
 }
 
 const FILLS: Record<Accent, { bg: string; glow: string }> = {
-  yellow: { bg: "var(--y-bolt)",                                  glow: "0 0 12px rgba(250,204,21,0.8)" },
-  blue:   { bg: "linear-gradient(90deg, #5fa1ff, #3b82f6)",       glow: "0 0 12px rgba(59,130,246,0.7)" },
-  purple: { bg: "linear-gradient(90deg, #a855f7, #ddb7ff)",       glow: "0 0 10px rgba(221,183,255,0.5)" },
-  streak: { bg: "linear-gradient(90deg, #ff8a3d, #ffb98a)",       glow: "0 0 14px rgba(255,138,61,0.7)" },
+  yellow: { bg: "var(--y-bolt)",                                                                    glow: "0 0 12px rgba(250,204,21,0.8)"  },
+  blue:   { bg: "linear-gradient(90deg, var(--b-signal-soft), var(--bolt-blue))",                   glow: "0 0 12px rgba(59,130,246,0.7)"  },
+  purple: { bg: "linear-gradient(90deg, var(--p-cyber-deep), var(--p-cyber))",                      glow: "0 0 10px rgba(221,183,255,0.5)" },
+  streak: { bg: "linear-gradient(90deg, var(--orange-streak), var(--orange-streak-soft))",          glow: "0 0 14px rgba(255,138,61,0.7)"  },
 };
 
 export function ProgressBar({ value, max = 1, accent = "yellow", height = 8, marker = false }: ProgressBarProps) {
@@ -50,8 +50,8 @@ export function ProgressBar({ value, max = 1, accent = "yellow", height = 8, mar
             top: 0,
             width: 4,
             height: "100%",
-            background: "#fff",
-            boxShadow: "0 0 8px #fff",
+            background: "var(--fg-pure)",
+            boxShadow: "0 0 8px var(--fg-pure)",
           }}
         />
       )}

@@ -1,8 +1,10 @@
-// Figma frame 1:272 — Path of Conquest
 import { useEffect } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useLevel } from "@/shared/api/queries/useLevels";
 import { BackLink } from "@/shared/ui/BackLink";
+import { Page } from "@/shared/ui/Page";
+import { BoltButton } from "@/shared/ui/BoltButton";
+import { Chip } from "@/shared/ui/Chip";
 
 export default function PathOfConquestPage() {
   const { levelId } = useParams<{ levelId: string }>();
@@ -16,76 +18,66 @@ export default function PathOfConquestPage() {
   }, [level, navigate]);
 
   return (
-    <main className="page-wrap">
-      <div className="page-content--medium">
-        <BackLink label="All Levels" onClick={() => navigate("/learn")} />
+    <Page>
+      <BackLink label="All Levels" onClick={() => navigate("/learn")} />
 
-        {isLoading && (
-          <p style={{ color: "var(--color-text-secondary)" }}>Loading…</p>
-        )}
+      {isLoading && (
+        <p style={{ color: "var(--fg-sand)", marginTop: 24 }}>Loading…</p>
+      )}
 
-        {level && (
-          <>
-            <div style={{ marginBottom: "var(--space-xs)" }}>
-              <span
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontSize: "1rem",
-                  color: "var(--color-text-secondary)",
-                  letterSpacing: "0.08em",
-                }}
-              >
-                LEVEL {level.order}
-              </span>
-            </div>
-
-            <h1
+      {level && (
+        <div style={{ marginTop: 24 }}>
+          <div style={{ marginBottom: 8 }}>
+            <span
               style={{
-                fontFamily: "var(--font-display)",
-                fontSize: "clamp(2.5rem, 6vw, 4rem)",
-                color: "var(--color-primary)",
-                marginBottom: "var(--space-md)",
-                letterSpacing: "0.04em",
+                fontFamily: "var(--font-label)",
+                fontSize: 13,
+                color: "var(--fg-sand)",
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
               }}
             >
-              {level.name.toUpperCase()}
-            </h1>
+              LEVEL {level.order}
+            </span>
+          </div>
 
-            {level.is_completed && (
-              <span
-                className="badge badge-success"
-                style={{ marginBottom: "var(--space-lg)", display: "inline-flex" }}
-              >
-                COMPLETED
-              </span>
-            )}
+          <h1 className="t-h1" style={{ color: "var(--y-bolt)", marginBottom: 16, textTransform: "uppercase" }}>
+            {level.name}
+          </h1>
 
-            {level.description && (
-              <p
-                style={{
-                  color: "var(--color-text-secondary)",
-                  marginBottom: "var(--space-2xl)",
-                  lineHeight: 1.6,
-                }}
-              >
-                {level.description}
-              </p>
-            )}
-
-            <div style={{ marginTop: level.description ? 0 : "var(--space-2xl)" }}>
-              <button
-                type="button"
-                disabled={level.is_locked}
-                onClick={() => navigate(`/learn/level/${levelId}/classwork`)}
-                className="btn btn-primary"
-                style={{ width: "100%", padding: "var(--space-md)", fontSize: "1.4rem" }}
-              >
-                START CLASSWORK
-              </button>
+          {level.is_completed && (
+            <div style={{ marginBottom: 24 }}>
+              <Chip tone="neutral">COMPLETED</Chip>
             </div>
-          </>
-        )}
-      </div>
-    </main>
+          )}
+
+          {level.description && (
+            <p
+              style={{
+                fontFamily: "var(--font-body)",
+                color: "var(--fg-sand)",
+                marginBottom: 40,
+                lineHeight: 1.6,
+                fontSize: 18,
+              }}
+            >
+              {level.description}
+            </p>
+          )}
+
+          <div style={{ marginTop: level.description ? 0 : 40 }}>
+            <BoltButton
+              variant="primary"
+              size="lg"
+              onClick={() => navigate(`/learn/level/${levelId}/classwork`)}
+              disabled={level.is_locked}
+              style={{ width: "100%" }}
+            >
+              START CLASSWORK
+            </BoltButton>
+          </div>
+        </div>
+      )}
+    </Page>
   );
 }

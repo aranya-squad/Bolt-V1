@@ -199,7 +199,7 @@
 
 .badge-success {
   background: var(--color-success);
-  color: #000;
+  color: var(--bg-void);
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
@@ -456,8 +456,8 @@
 body.bolt-app {
   margin: 0;
   background:
-    radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 100%),
-    #0a0a0a;
+    radial-gradient(ellipse at center, var(--bg-shadow) 0%, var(--bg-void) 100%),
+    var(--bg-void);
   color: var(--fg-1);
   font-family: var(--font-body);
   min-height: 100vh;
@@ -582,6 +582,15 @@ input[type=range]::-moz-range-thumb {
   cursor: pointer;
   box-shadow: 0 0 12px rgba(250,204,21,0.7);
   border: 2px solid var(--y-bolt);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Focus-visible — accessible keyboard focus ring for all interactive elements
+   ══════════════════════════════════════════════════════════════════════════ */
+
+:focus-visible {
+  outline: 2px solid var(--y-bolt);
+  outline-offset: 3px;
 }
 
 /* ══════════════════════════════════════════════════════════════════════════

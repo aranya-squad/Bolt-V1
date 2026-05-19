@@ -1,13 +1,14 @@
-// Figma frame 1:397 — Arena Setup (practice session config)
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStartPractice } from "@/shared/api/queries/usePractice";
 import { BackLink } from "@/shared/ui/BackLink";
+import { Page } from "@/shared/ui/Page";
+import { BoltButton } from "@/shared/ui/BoltButton";
 
 const ACCENT: Record<string, string> = {
-  TIME_ATTACK: "var(--color-accent-orange)",
-  ZEN: "var(--color-accent-blue)",
-  CUSTOM: "var(--color-accent-purple)",
+  TIME_ATTACK: "var(--orange-streak)",
+  ZEN:         "var(--bolt-blue)",
+  CUSTOM:      "var(--p-cyber)",
 };
 
 const DEFAULTS: Record<string, { operation: string; digits: number; rows: number; question_count: number; time_limit_sec: number }> = {
@@ -31,28 +32,28 @@ function ToggleGroup<T extends string | number>({
   format,
 }: {
   label: string;
-  options: T[];
+  options: readonly T[];
   value: T;
   onChange: (v: T) => void;
   disabled?: boolean;
   format?: (v: T) => string;
 }) {
-  const accentColor = "var(--color-primary)";
   return (
-    <div style={{ marginBottom: "var(--space-lg)" }}>
+    <div style={{ marginBottom: 24 }}>
       <div
         style={{
-          color: "var(--color-text-secondary)",
-          fontSize: "0.8rem",
-          fontWeight: 600,
-          letterSpacing: "0.06em",
-          marginBottom: "var(--space-sm)",
-          fontFamily: "var(--font-body)",
+          fontFamily: "var(--font-label)",
+          fontWeight: 500,
+          fontSize: 12,
+          letterSpacing: "0.15em",
+          textTransform: "uppercase",
+          color: "var(--fg-sand)",
+          marginBottom: 10,
         }}
       >
         {label}
       </div>
-      <div style={{ display: "flex", gap: "var(--space-sm)" }}>
+      <div style={{ display: "flex", gap: 8 }}>
         {options.map((opt) => {
           const isSelected = opt === value;
           return (
@@ -61,19 +62,20 @@ function ToggleGroup<T extends string | number>({
               type="button"
               disabled={disabled}
               onClick={() => onChange(opt)}
-              className="toggle-btn"
               style={{
                 flex: 1,
-                padding: "var(--space-sm) 0",
-                background: isSelected ? accentColor : "var(--color-surface)",
-                border: `1px solid ${isSelected ? accentColor : "var(--color-border)"}`,
-                borderRadius: "var(--radius-md)",
-                color: isSelected ? "#000" : disabled ? "var(--color-text-secondary)" : "var(--color-text-primary)",
+                padding: "10px 0",
+                background: isSelected ? "var(--y-bolt)" : "var(--md-surface-container)",
+                border: `1px solid ${isSelected ? "var(--y-bolt)" : "rgba(255,255,255,0.06)"}`,
+                borderRadius: 12,
+                color: isSelected ? "var(--y-bolt-ink)" : disabled ? "var(--fg-sand-50)" : "var(--fg-bone)",
                 fontFamily: "var(--font-display)",
-                fontSize: "1rem",
+                fontWeight: 700,
+                fontSize: 15,
                 letterSpacing: "0.04em",
                 cursor: disabled ? "not-allowed" : "pointer",
                 opacity: disabled ? 0.5 : 1,
+                transition: "all 150ms",
               }}
             >
               {format ? format(opt) : String(opt)}
@@ -89,7 +91,7 @@ export default function ArenaSetupPage() {
   const { mode = "CUSTOM" } = useParams<{ mode: string }>();
   const navigate = useNavigate();
   const defaults = DEFAULTS[mode] ?? DEFAULTS.CUSTOM;
-  const accentColor = ACCENT[mode] ?? "var(--color-primary)";
+  const accentColor = ACCENT[mode] ?? "var(--y-bolt)";
 
   const [operation, setOperation] = useState(defaults.operation);
   const [digits, setDigits] = useState(defaults.digits);
@@ -122,22 +124,17 @@ export default function ArenaSetupPage() {
   };
 
   return (
-    <main className="page-wrap">
-      <div className="page-content--narrow">
-        <BackLink label="Training Arena" onClick={() => navigate("/practice")} />
+    <Page>
+      <BackLink label="Training Arena" onClick={() => navigate("/practice")} />
 
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(2rem, 5vw, 3rem)",
-            color: accentColor,
-            marginBottom: "var(--space-2xl)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          {MODE_LABELS[mode] ?? mode}
-        </h1>
+      <h1
+        className="t-h1"
+        style={{ color: accentColor, marginTop: 24, marginBottom: 40 }}
+      >
+        {MODE_LABELS[mode] ?? mode}
+      </h1>
 
+      <div style={{ maxWidth: 560 }}>
         <ToggleGroup
           label="OPERATION"
           options={["ADD", "SUB", "MUL", "DIV"] as const}
@@ -178,27 +175,21 @@ export default function ArenaSetupPage() {
         )}
 
         {isError && (
-          <p style={{ color: "var(--color-error)", marginBottom: "var(--space-md)", fontSize: "0.9rem" }}>
+          <p style={{ color: "var(--err)", marginBottom: 16, fontSize: "0.9rem" }}>
             Failed to start session. Please try again.
           </p>
         )}
 
-        <button
-          type="button"
+        <BoltButton
+          variant="primary"
+          size="lg"
           onClick={handleStart}
           disabled={isPending}
-          className="btn btn-accent"
-          style={{
-            width: "100%",
-            padding: "var(--space-md)",
-            background: accentColor,
-            marginTop: "var(--space-md)",
-            fontSize: "1.4rem",
-          }}
+          style={{ width: "100%", marginTop: 8 }}
         >
           {isPending ? "STARTING…" : "START"}
-        </button>
+        </BoltButton>
       </div>
-    </main>
+    </Page>
   );
 }

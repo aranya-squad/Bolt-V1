@@ -2,7 +2,7 @@
 import type { CSSProperties, ReactNode } from "react";
 import { Icon } from "./Icon";
 
-type Tone = "neutral" | "yellow" | "purple" | "blue" | "orange" | "active";
+type Tone = "neutral" | "yellow" | "purple" | "blue" | "orange" | "active" | "ok" | "err";
 
 interface ChipProps {
   children: ReactNode;
@@ -17,7 +17,9 @@ const TONES: Record<Tone, { bg: string; border: string; color: string }> = {
   purple:  { bg: "rgba(53,53,52,0.8)", border: "rgba(221,183,255,0.3)",  color: "var(--p-cyber)" },
   blue:    { bg: "rgba(53,53,52,0.8)", border: "rgba(59,130,246,0.3)",   color: "var(--bolt-blue)" },
   orange:  { bg: "rgba(53,53,52,0.8)", border: "rgba(249,115,22,0.3)",   color: "var(--orange-streak)" },
-  active:  { bg: "rgba(0,0,0,0.5)",    border: "rgba(250,204,21,0.4)",   color: "var(--y-bolt)" },
+  active:  { bg: "rgba(0,0,0,0.5)",    border: "rgba(250,204,21,0.4)",   color: "var(--y-bolt)"         },
+  ok:      { bg: "rgba(74,222,128,0.12)", border: "rgba(74,222,128,0.3)", color: "var(--ok)"             },
+  err:     { bg: "rgba(255,180,171,0.12)", border: "rgba(255,180,171,0.3)", color: "var(--err)"          },
 };
 
 export function Chip({ children, icon, tone = "neutral", style }: ChipProps) {

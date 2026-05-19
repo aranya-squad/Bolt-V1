@@ -1,28 +1,33 @@
-// Figma frame 1:183 — Training Arena (mode selection)
 import { useNavigate } from "react-router-dom";
 import { BackLink } from "@/shared/ui/BackLink";
+import { Page } from "@/shared/ui/Page";
+import { GlassCard } from "@/shared/ui/GlassCard";
+import { IconPlate } from "@/shared/ui/IconPlate";
 
 const MODES = [
   {
     key: "TIME_ATTACK",
     label: "TIME ATTACK",
     desc: "Beat the clock. Speed and accuracy under pressure.",
-    color: "var(--color-accent-orange)",
-    cardClass: "mode-card--time-attack",
+    color: "var(--orange-streak)" as const,
+    plateColor: "orange" as const,
+    icon: "zap",
   },
   {
     key: "ZEN",
     label: "ZEN MODE",
     desc: "No timer. Practice at your own pace.",
-    color: "var(--color-accent-blue)",
-    cardClass: "mode-card--zen",
+    color: "var(--bolt-blue)" as const,
+    plateColor: "blue" as const,
+    icon: "wind",
   },
   {
     key: "CUSTOM",
     label: "THE LAB",
     desc: "Configure everything. Your session, your rules.",
-    color: "var(--color-accent-purple)",
-    cardClass: "mode-card--lab",
+    color: "var(--p-cyber)" as const,
+    plateColor: "purple" as const,
+    icon: "settings",
   },
 ] as const;
 
@@ -30,61 +35,52 @@ export default function TrainingArenaPage() {
   const navigate = useNavigate();
 
   return (
-    <main className="page-wrap">
-      <div className="page-content">
-        <BackLink label="Hub" onClick={() => navigate("/hub")} />
+    <Page>
+      <BackLink label="Hub" onClick={() => navigate("/hub")} />
 
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(2rem, 5vw, 3.5rem)",
-            color: "var(--color-primary)",
-            marginBottom: "var(--space-xl)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          TRAINING ARENA
-        </h1>
+      <h1 className="t-h1" style={{ color: "var(--y-bolt)", marginTop: 24, marginBottom: 40 }}>
+        TRAINING ARENA
+      </h1>
 
-        <div className="mode-cards-row">
-          {MODES.map((m) => (
-            <button
-              key={m.key}
-              type="button"
-              onClick={() => navigate(`/practice/setup/${m.key}`)}
-              className={`mode-card ${m.cardClass}`}
+      <div style={{ display: "flex", gap: 20 }}>
+        {MODES.map((m) => (
+          <GlassCard
+            key={m.key}
+            variant="default"
+            style={{ flex: 1, minHeight: 200, cursor: "pointer" }}
+            onClick={() => navigate(`/practice/setup/${m.key}`)}
+          >
+            <div
               style={{
-                flex: 1,
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-end",
-                minHeight: 200,
-                padding: "var(--space-lg)",
-                background: "var(--color-surface)",
-                borderRadius: "var(--radius-lg)",
-                border: `1px solid ${m.color}`,
-                cursor: "pointer",
-                textAlign: "left",
+                height: "100%",
+                padding: "var(--s-lg)",
               }}
             >
+              <div style={{ marginBottom: 16 }}>
+                <IconPlate icon={m.icon} color={m.plateColor} size={48} />
+              </div>
               <div
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "1.4rem",
+                  fontWeight: 800,
+                  fontSize: 22,
                   color: m.color,
                   letterSpacing: "0.04em",
-                  marginBottom: "var(--space-xs)",
+                  marginBottom: 6,
                 }}
               >
                 {m.label}
               </div>
-              <div style={{ color: "var(--color-text-secondary)", fontSize: "0.85rem" }}>
+              <div style={{ fontFamily: "var(--font-body)", color: "var(--fg-sand)", fontSize: 14, lineHeight: 1.5 }}>
                 {m.desc}
               </div>
-            </button>
-          ))}
-        </div>
+            </div>
+          </GlassCard>
+        ))}
       </div>
-    </main>
+    </Page>
   );
 }

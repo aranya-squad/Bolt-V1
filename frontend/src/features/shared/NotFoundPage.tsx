@@ -10,16 +10,16 @@ export function NotFoundPage() {
         justifyContent: "center",
         minHeight: "100vh",
         gap: "1rem",
-        background: "var(--color-bg-base)",
-        color: "var(--color-text-primary)",
+        background: "var(--bg-noir)",
+        color: "var(--fg-bone)",
         fontFamily: "var(--font-body)",
       }}
     >
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "4rem", color: "var(--color-primary)" }}>
+      <h1 className="t-hero" style={{ color: "var(--y-bolt)" }}>
         404
       </h1>
-      <p style={{ color: "var(--color-text-secondary)" }}>Page not found.</p>
-      <Link to="/hub" style={{ color: "var(--color-primary)" }}>
+      <p style={{ color: "var(--fg-sand)" }}>Page not found.</p>
+      <Link to="/hub" style={{ color: "var(--y-bolt)" }}>
         Back to Hub
       </Link>
     </div>

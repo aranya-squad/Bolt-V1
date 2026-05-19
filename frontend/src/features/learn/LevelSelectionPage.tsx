@@ -1,71 +1,61 @@
-// Figma frame 1:58 — Level Selection
 import { useNavigate } from "react-router-dom";
 import { useLevels } from "@/shared/api/queries/useLevels";
 import { BackLink } from "@/shared/ui/BackLink";
+import { Page } from "@/shared/ui/Page";
+import { GlassCard } from "@/shared/ui/GlassCard";
+import { Chip } from "@/shared/ui/Chip";
+import { Skeleton } from "@/shared/ui/Skeleton";
 
 export default function LevelSelectionPage() {
   const navigate = useNavigate();
   const { data: levels, isLoading } = useLevels();
 
   return (
-    <main className="page-wrap">
-      <div className="page-content">
-        <BackLink label="Hub" onClick={() => navigate("/hub")} />
+    <Page>
+      <BackLink label="Hub" onClick={() => navigate("/hub")} />
 
-        <h1
-          style={{
-            fontFamily: "var(--font-display)",
-            fontSize: "clamp(2rem, 5vw, 3.5rem)",
-            color: "var(--color-primary)",
-            marginBottom: "var(--space-xl)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          CHOOSE YOUR LEVEL
-        </h1>
+      <h1 className="t-h1" style={{ color: "var(--y-bolt)", marginTop: 24, marginBottom: 40 }}>
+        CHOOSE YOUR LEVEL
+      </h1>
 
-        {isLoading && (
-          <p style={{ color: "var(--color-text-secondary)" }}>Loading…</p>
-        )}
+      {isLoading && (
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+          {Array.from({ length: 6 }, (_, i) => (
+            <Skeleton key={i} height={160} radius={20} />
+          ))}
+        </div>
+      )}
 
-        <div className="grid-2col">
-          {levels?.map((level) => (
-            <button
-              key={level.id}
-              type="button"
-              disabled={level.is_locked}
-              onClick={() => {
-                if (!level.is_locked) navigate(`/learn/level/${level.id}`);
-              }}
-              className="level-card"
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+        {levels?.map((level) => (
+          <GlassCard
+            key={level.id}
+            variant={level.is_locked ? "locked" : level.is_completed ? "success" : "default"}
+            style={{
+              minHeight: 160,
+              cursor: level.is_locked ? "not-allowed" : "pointer",
+              opacity: level.is_locked ? 0.4 : 1,
+            }}
+            onClick={level.is_locked ? undefined : () => navigate(`/learn/level/${level.id}`)}
+          >
+            <div
               style={{
                 display: "flex",
                 flexDirection: "column",
                 justifyContent: "flex-end",
-                minHeight: 160,
-                padding: "var(--space-lg)",
-                background: "var(--color-surface)",
-                borderRadius: "var(--radius-lg)",
-                border: `1px solid ${
-                  level.is_completed
-                    ? "var(--color-success)"
-                    : level.is_locked
-                    ? "var(--color-border)"
-                    : "var(--color-primary)"
-                }`,
-                cursor: level.is_locked ? "not-allowed" : "pointer",
-                opacity: level.is_locked ? 0.4 : 1,
-                textAlign: "left",
+                height: "100%",
+                padding: "var(--s-lg)",
               }}
             >
               <div
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "2.2rem",
-                  color: level.is_completed ? "var(--color-success)" : "var(--color-primary)",
+                  fontWeight: 800,
+                  fontSize: 35,
+                  color: level.is_completed ? "var(--ok)" : "var(--y-bolt)",
                   letterSpacing: "0.04em",
                   lineHeight: 1,
-                  marginBottom: "var(--space-xs)",
+                  marginBottom: 4,
                 }}
               >
                 {level.order}
@@ -73,21 +63,21 @@ export default function LevelSelectionPage() {
               <div
                 style={{
                   fontFamily: "var(--font-display)",
-                  fontSize: "1.1rem",
-                  color: level.is_completed ? "var(--color-success)" : "var(--color-text-primary)",
+                  fontWeight: 700,
+                  fontSize: 18,
+                  color: level.is_completed ? "var(--ok)" : "var(--fg-bone)",
                   letterSpacing: "0.04em",
-                  marginBottom: "var(--space-xs)",
+                  marginBottom: 8,
+                  textTransform: "uppercase",
                 }}
               >
-                {level.name.toUpperCase()}
+                {level.name}
               </div>
-              {level.is_completed && (
-                <span className="badge badge-success">DONE</span>
-              )}
-            </button>
-          ))}
-        </div>
+              {level.is_completed && <Chip tone="neutral">DONE</Chip>}
+            </div>
+          </GlassCard>
+        ))}
       </div>
-    </main>
+    </Page>
   );
 }

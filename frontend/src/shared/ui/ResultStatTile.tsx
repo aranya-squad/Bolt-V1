@@ -1,3 +1,4 @@
+// Bolt Abacus Design System — ResultStatTile
 interface ResultStatTileProps {
   value: string;
   label: string;
@@ -11,13 +12,19 @@ export function ResultStatTile({ value, label, valueColor }: ResultStatTileProps
         style={{
           fontFamily: "var(--font-display)",
           fontSize: "1.8rem",
-          color: valueColor ?? "var(--color-text-primary)",
+          color: valueColor ?? "var(--fg-bone)",
           letterSpacing: "0.04em",
         }}
       >
         {value}
       </div>
-      <div style={{ color: "var(--color-text-secondary)", fontSize: "0.8rem", marginTop: 2 }}>
+      <div
+        style={{
+          color: "var(--fg-sand)",
+          fontSize: "0.8rem",
+          marginTop: 2,
+        }}
+      >
         {label}
       </div>
     </div>
