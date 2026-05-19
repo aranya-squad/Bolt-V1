@@ -1,4 +1,4 @@
-@import "./tokens.css";
+@import "./colors_and_type.css";
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -7,13 +7,17 @@
 @layer base {
   html {
     font-family: var(--font-body);
-    background-color: var(--color-bg-base);
-    color: var(--color-text-primary);
+    background-color: var(--bg-noir);
+    color: var(--fg-1);
     -webkit-font-smoothing: antialiased;
   }
 
   * {
     box-sizing: border-box;
+  }
+
+  button {
+    font: inherit;
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -444,31 +448,150 @@
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   Phase 6 — Motion: honour prefers-reduced-motion
+   Bolt Abacus Design System additions
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ─── App shell ─────────────────────────────────────────────────────────────── */
+
+body.bolt-app {
+  margin: 0;
+  background:
+    radial-gradient(ellipse at center, #1a1a1a 0%, #0a0a0a 100%),
+    #0a0a0a;
+  color: var(--fg-1);
+  font-family: var(--font-body);
+  min-height: 100vh;
+}
+
+/* ─── Page enter animation ──────────────────────────────────────────────────── */
+
+.screen-enter {
+  animation: fade-up 320ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ─── Glassmorphism card ────────────────────────────────────────────────────── */
+
+.bolt-glass-card {
+  position: relative;
+  background: rgba(255,255,255,0.05);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border-radius: var(--r-xl);
+}
+
+/* Rim-light gradient border — white 20% top, fading to transparent */
+.bolt-glass-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(180deg, rgba(255,255,255,0.20), rgba(255,255,255,0));
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+
+/* ─── Glassmorphism fallback ────────────────────────────────────────────────── */
+
+@supports not ((backdrop-filter: blur(24px)) or (-webkit-backdrop-filter: blur(24px))) {
+  .bolt-glass-card,
+  [data-glass-fallback] {
+    background: rgba(30, 30, 30, 0.95) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+}
+
+/* ─── Focus Mode ────────────────────────────────────────────────────────────── */
+
+body.focus-mode .ambient-particle,
+body.focus-mode [data-particle] {
+  display: none !important;
+}
+
+body.focus-mode .bolt-glass-card,
+body.focus-mode [data-glass] {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
+  background: rgba(28, 27, 27, 0.92) !important;
+}
+
+body.focus-mode [data-radial-bg] {
+  background: var(--bg-noir) !important;
+}
+
+/* ─── Keyframe animations ───────────────────────────────────────────────────── */
+
+@keyframes drift {
+  0%, 100% { transform: translate(0, 0); }
+  50%       { transform: translate(40px, -30px); }
+}
+
+@keyframes pulse-glow {
+  0%, 100% { box-shadow: 0 0 15px 2px rgba(250,204,21,0.6); }
+  50%       { box-shadow: 0 0 24px 4px rgba(250,204,21,0.9); }
+}
+
+@keyframes caret-blink {
+  50% { opacity: 0; }
+}
+
+@keyframes fade-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes sync-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.85); }
+}
+
+@keyframes soft-flash {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0.55; }
+}
+
+@keyframes skeleton-shimmer {
+  0%   { background-position: 100% 0; }
+  100% { background-position: 0 0; }
+}
+
+/* ─── Range slider thumb ────────────────────────────────────────────────────── */
+
+input[type=range]::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--fg-bone);
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(250,204,21,0.7), 0 0 0 4px rgba(250,204,21,0.25);
+  border: 2px solid var(--y-bolt);
+}
+
+input[type=range]::-moz-range-thumb {
+  width: 22px;
+  height: 22px;
+  border-radius: 9999px;
+  background: var(--fg-bone);
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(250,204,21,0.7);
+  border: 2px solid var(--y-bolt);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Reduced motion — global reset (covers all animations and transitions)
    ══════════════════════════════════════════════════════════════════════════ */
 
 @media (prefers-reduced-motion: reduce) {
-  .btn,
-  .back-link,
-  .field,
-  .mode-card,
-  .level-card,
-  .toggle-btn,
-  .table-row,
-  .hub-portal-card,
-  .hub-stat-tile {
-    transition: none;
-  }
-
-  .btn:active:not(:disabled),
-  .mode-card:hover,
-  .level-card:hover:not(:disabled),
-  .hub-portal-card:hover {
-    transform: none;
-  }
-
-  .verdict-flash {
-    animation: none;
-    opacity: 1;
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
   }
 }

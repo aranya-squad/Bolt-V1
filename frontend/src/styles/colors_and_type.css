@@ -1,0 +1,384 @@
+/* ============================================================
+   BOLT ABACUS — Design Tokens
+   Premium Cyber-Gaming for K-4 e-learning.
+   Canonical source: bolt-abacus-design-system/project/colors_and_type.css
+   ============================================================ */
+
+:root {
+  /* ============================================================
+     MATERIAL DESIGN 3 — Color roles
+     ============================================================ */
+
+  /* Surface (the dark stack — 6 elevation levels) */
+  --md-surface:                       #131313;
+  --md-surface-dim:                   #131313;
+  --md-surface-bright:                #3a3939;
+  --md-surface-container-lowest:      #0e0e0e;
+  --md-surface-container-low:         #1c1b1b;
+  --md-surface-container:             #201f1f;
+  --md-surface-container-high:        #2a2a2a;
+  --md-surface-container-highest:     #353534;
+  --md-surface-variant:               #353534;
+  --md-on-surface:                    #e5e2e1;
+  --md-on-surface-variant:            #d1c6ab;
+  --md-inverse-surface:               #e5e2e1;
+  --md-inverse-on-surface:            #313030;
+  --md-outline:                       #9a9078;
+  --md-outline-variant:               #4d4632;
+  --md-surface-tint:                  #eec200;
+  --md-background:                    #131313;
+  --md-on-background:                 #e5e2e1;
+
+  /* Primary — Electric Yellow (THE Bolt) */
+  --md-primary:                       #ffecb9;
+  --md-on-primary:                    #3c2f00;
+  --md-primary-container:             #facc15;
+  --md-on-primary-container:          #6c5700;
+  --md-inverse-primary:               #735c00;
+  --md-primary-fixed:                 #ffe083;
+  --md-primary-fixed-dim:             #eec200;
+  --md-on-primary-fixed:              #231b00;
+  --md-on-primary-fixed-variant:      #574500;
+
+  /* Secondary — Vibrant Purple (Challenge Modes, boss content) */
+  --md-secondary:                     #ddb7ff;
+  --md-on-secondary:                  #490080;
+  --md-secondary-container:           #6f00be;
+  --md-on-secondary-container:        #d6a9ff;
+  --md-secondary-fixed:               #f0dbff;
+  --md-secondary-fixed-dim:           #ddb7ff;
+  --md-on-secondary-fixed:            #2c0051;
+  --md-on-secondary-fixed-variant:    #6900b3;
+
+  /* Tertiary — Electric Blue (Training Modes, steady-state learning) */
+  --md-tertiary:                      #e8edff;
+  --md-on-tertiary:                   #002e6a;
+  --md-tertiary-container:            #bed1ff;
+  --md-on-tertiary-container:         #0055b9;
+  --md-tertiary-fixed:                #d8e2ff;
+  --md-tertiary-fixed-dim:            #adc6ff;
+  --md-on-tertiary-fixed:             #001a42;
+  --md-on-tertiary-fixed-variant:     #004395;
+
+  /* Error — Coral / Pink */
+  --md-error:                         #ffb4ab;
+  --md-on-error:                      #690005;
+  --md-error-container:               #93000a;
+  --md-on-error-container:            #ffdad6;
+
+  /* ============================================================
+     BOLT EXTENSIONS — outside MD3, brand-specific
+     ============================================================ */
+
+  /* Saturated brand blue for "training" callouts */
+  --bolt-blue:                        #3b82f6;
+  --bolt-blue-glow:                   rgba(59,130,246,0.5);
+
+  /* Neon Orange — Sonic Speed / Time Attack / Hot Streaks */
+  --orange-streak:                    #f97316;
+  --orange-streak-soft:               #fdba74;
+  --orange-streak-deep:               #c2410c;
+  --orange-streak-glow:               rgba(249,115,22,0.55);
+
+  /* Success */
+  --ok:                               #4ade80;
+  --ok-50:                            rgba(34,197,94,0.5);
+  --ok-20:                            rgba(34,197,94,0.2);
+
+  /* ============================================================
+     GLOWS — every brand-colored element gets a same-color glow
+     ============================================================ */
+  --glow-primary-sm:    0 0 8px  rgba(238,194,0,0.3);
+  --glow-primary-md:    0 0 10px rgba(238,194,0,0.5);
+  --glow-primary-lg:    0 0 15px rgba(250,204,21,0.6);
+  --glow-primary-xl:    0 0 20px rgba(250,204,21,0.5);
+  --glow-primary-bright: 0 0 15px 2px rgba(250,204,21,0.8);
+
+  --glow-secondary:     0 0 15px rgba(221,183,255,0.4);
+  --glow-tertiary:      0 0 15px rgba(59,130,246,0.45);
+  --glow-streak:        0 0 15px rgba(249,115,22,0.55);
+  --glow-error:         0 0 15px rgba(255,180,171,0.4);
+
+  --shadow-card:        0 25px 50px -12px rgba(0,0,0,0.25);
+  --shadow-bar:         0 4px 6px -4px rgba(0,0,0,0.1),
+                        0 10px 15px -3px rgba(0,0,0,0.1);
+  --shadow-inset-track: inset 0 2px 4px 0 rgba(0,0,0,0.05);
+
+  /* ============================================================
+     RADII — Hyper-Rounded
+     ============================================================ */
+  --r-sm:      4px;
+  --r-default: 8px;
+  --r-md:      12px;
+  --r-lg:      16px;
+  --r-xl:      24px;
+  --r-pill:    9999px;
+
+  /* ============================================================
+     SPACING — 8-unit baseline
+     ============================================================ */
+  --s-unit:          8px;
+  --s-xs:            4px;
+  --s-sm:            8px;
+  --s-md:            16px;
+  --s-lg:            24px;
+  --s-xl:            40px;
+  --s-2xl:           64px;
+  --s-gutter:        24px;
+  --s-container-max: 1200px;
+
+  /* ============================================================
+     TYPE — families
+     ============================================================ */
+  --font-display: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-body:    "Lexend", "Inter", system-ui, sans-serif;
+  --font-label:   "Space Grotesk", "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono:    "JetBrains Mono", "Liberation Mono", ui-monospace, monospace;
+  --font-ui:      var(--font-label);
+
+  /* ============================================================
+     TRANSITIONS
+     ============================================================ */
+  --ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --t-fast:   150ms;
+  --t-med:    240ms;
+  --t-slow:   400ms;
+
+  /* Blurs */
+  --blur-glass:    blur(24px);
+  --blur-nav:      blur(40px);
+  --blur-particle: blur(60px);
+
+  /* ============================================================
+     FRIENDLY ALIASES — designer-readable names
+     ============================================================ */
+
+  /* Surfaces */
+  --bg-void:     var(--md-surface-container-lowest);   /* #0E0E0E */
+  --bg-shadow:   var(--md-surface-container-low);      /* #1C1B1B */
+  --bg-noir:     var(--md-surface);                    /* #131313 */
+  --bg-coal:     var(--md-surface-container);          /* #201F1F */
+  --bg-graphite: var(--md-surface-container-high);     /* #2A2A2A */
+  --bg-ash:      var(--md-surface-container-highest);  /* #353534 */
+  --bg-app:      var(--md-background);
+  --bg-surface:  rgba(255,255,255,0.05);
+  --bg-input:    var(--md-surface-container-lowest);
+  --bg-chip:     var(--md-surface-container-high);
+
+  /* Glass overlays */
+  --glass-05:  rgba(255,255,255,0.05);
+  --glass-10:  rgba(255,255,255,0.10);
+  --glass-20:  rgba(255,255,255,0.20);
+  --glass-002: rgba(255,255,255,0.002);
+
+  /* Foreground */
+  --fg-pure:    #ffffff;
+  --fg-bone:    var(--md-on-surface);           /* #E5E2E1 — primary text */
+  --fg-sand:    var(--md-on-surface-variant);   /* #D1C6AB — body/secondary */
+  --fg-sand-50: rgba(209,198,171,0.5);
+  --fg-sand-30: rgba(209,198,171,0.3);
+  --fg-1:       var(--fg-bone);
+  --fg-2:       var(--fg-sand);
+  --fg-3:       var(--fg-sand-50);
+
+  /* Yellow family */
+  --y-bolt:        var(--md-primary-container);    /* #FACC15 — THE color */
+  --y-bolt-deep:   var(--md-primary-fixed-dim);    /* #EEC200 */
+  --y-bolt-light:  var(--md-primary-fixed);        /* #FFE083 */
+  --y-bolt-soft:   var(--md-primary);              /* #FFECB9 tonal/light */
+  --y-bolt-ink:    var(--md-on-primary-container); /* #6C5700 */
+  --y-bolt-shadow: var(--md-on-primary);           /* #3C2F00 */
+  --y-bolt-border: var(--md-outline-variant);      /* #4D4632 */
+  --y-bolt-80: rgba(250,204,21,0.8);
+  --y-bolt-50: rgba(250,204,21,0.5);
+  --y-bolt-30: rgba(250,204,21,0.3);
+  --y-bolt-20: rgba(250,204,21,0.2);
+  --y-bolt-10: rgba(250,204,21,0.1);
+  --y-bolt-05: rgba(250,204,21,0.05);
+  --fg-accent:      var(--y-bolt);
+  --fg-accent-deep: var(--y-bolt-deep);
+
+  /* Purple family */
+  --p-cyber:      var(--md-secondary);           /* #DDB7FF */
+  --p-cyber-deep: var(--md-secondary-container); /* #6F00BE */
+  --p-cyber-soft: var(--md-secondary-fixed);     /* #F0DBFF */
+  --p-cyber-30: rgba(221,183,255,0.3);
+  --p-cyber-20: rgba(221,183,255,0.2);
+  --p-cyber-10: rgba(111,0,190,0.1);
+
+  /* Blue family */
+  --b-signal:       var(--bolt-blue);              /* #3B82F6 — saturated */
+  --b-signal-soft:  var(--md-tertiary-container);  /* #BED1FF */
+  --b-signal-light: var(--md-tertiary);            /* #E8EDFF */
+  --b-signal-30: rgba(59,130,246,0.3);
+  --b-signal-20: rgba(59,130,246,0.2);
+
+  /* Error family */
+  --c-flare: var(--md-error);            /* #FFB4AB */
+  --err:     var(--md-error);            /* #FFB4AB */
+  --err-50:  rgba(239,68,68,0.5);
+  --err-20:  rgba(239,68,68,0.2);
+
+  /* Border aliases */
+  --border-glass:       var(--glass-20);
+  --border-glass-faint: var(--glass-10);
+  --border-yellow:      var(--y-bolt-30);
+  --border-outline:     var(--md-outline);
+  --border-outline-var: var(--md-outline-variant);
+
+  /* ============================================================
+     LEGACY ALIASES — keep old token names working during Phase 2→3 transition.
+     Remove after all pages are migrated to new token names.
+     ============================================================ */
+  --color-bg-base:        var(--bg-noir);
+  --color-bg-deep:        var(--bg-void);
+  --color-surface:        var(--bg-coal);
+  --color-primary:        var(--y-bolt);
+  --color-accent-blue:    var(--bolt-blue);
+  --color-accent-purple:  var(--p-cyber);
+  --color-accent-orange:  var(--orange-streak);
+  --color-success:        var(--ok);
+  --color-error:          var(--err);
+  --color-text-primary:   var(--fg-bone);
+  --color-text-secondary: var(--fg-sand);
+  --color-border:         var(--md-outline);
+  --color-glass:          var(--glass-05);
+  --space-xs:             var(--s-xs);
+  --space-sm:             var(--s-sm);
+  --space-md:             var(--s-md);
+  --space-lg:             var(--s-lg);
+  --space-xl:             var(--s-xl);
+  --space-2xl:            var(--s-2xl);
+  --radius-sm:            var(--r-default);
+  --radius-md:            var(--r-md);
+  --radius-lg:            var(--r-lg);
+  --radius-pill:          var(--r-pill);
+  --transition-fast:      var(--t-fast);
+  --transition-base:      var(--t-med);
+  --transition-slow:      var(--t-slow);
+  --shadow-glow-primary:  var(--glow-primary-md);
+  --shadow-glow-orange:   var(--glow-streak);
+  --shadow-glow-blue:     var(--glow-tertiary);
+  --shadow-glow-purple:   var(--glow-secondary);
+}
+
+/* ============================================================
+   SEMANTIC TYPE — drop classes on elements.
+   ============================================================ */
+
+.t-hero {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-style: italic;
+  font-size: 64px;
+  line-height: 1.1;
+  letter-spacing: -0.05em;
+  color: var(--y-bolt);
+  text-shadow: var(--glow-primary-lg);
+}
+
+.t-display-lg, .t-h1 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 48px;
+  line-height: 1.1;
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+}
+
+.t-display-md, .t-h2 {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 36px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+}
+
+.t-headline-lg, .t-h3 {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 28px;
+  line-height: 1.3;
+  color: var(--fg-1);
+}
+
+.t-headline-md {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 24px;
+  line-height: 1.3;
+  color: var(--fg-1);
+}
+
+.t-logo {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-size: 36px;
+  letter-spacing: 0.1em;
+  color: var(--y-bolt-deep);
+  text-shadow: var(--glow-primary-md);
+}
+
+.t-label-xl, .t-button {
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.t-label-md, .t-label {
+  font-family: var(--font-label);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--fg-sand);
+}
+
+.t-label-wide {
+  font-family: var(--font-label);
+  font-weight: 500;
+  font-size: 14px;
+  line-height: 1;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--fg-sand);
+}
+
+.t-stat {
+  font-family: var(--font-label);
+  font-weight: 600;
+  font-size: 20px;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--y-bolt-light);
+}
+
+.t-body-lg, .t-body {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 18px;
+  line-height: 1.6;
+  color: var(--fg-sand);
+}
+
+.t-body-md, .t-body-sm {
+  font-family: var(--font-body);
+  font-weight: 400;
+  font-size: 16px;
+  line-height: 1.6;
+  color: var(--fg-sand);
+}
+
+.t-mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 20px;
+  letter-spacing: 0.05em;
+  color: var(--y-bolt);
+}
