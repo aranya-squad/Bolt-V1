@@ -3,29 +3,6 @@
 import { useNavigate } from "react-router-dom";
 import { useMe } from "@/shared/api/queries/useMe";
 
-const card: React.CSSProperties = {
-  flex: 1,
-  minHeight: 200,
-  display: "flex",
-  flexDirection: "column",
-  justifyContent: "flex-end",
-  padding: "var(--space-xl)",
-  borderRadius: "var(--radius-lg)",
-  border: "1px solid var(--color-border)",
-  cursor: "pointer",
-  background: "var(--color-surface)",
-  textAlign: "left",
-};
-
-const statTile: React.CSSProperties = {
-  flex: 1,
-  padding: "var(--space-md) var(--space-lg)",
-  background: "var(--color-surface)",
-  borderRadius: "var(--radius-md)",
-  border: "1px solid var(--color-border)",
-  textAlign: "center",
-};
-
 export default function HubPage() {
   const navigate = useNavigate();
   const { data: user } = useMe();
@@ -40,139 +17,202 @@ export default function HubPage() {
       style={{
         minHeight: "100vh",
         background: "var(--color-bg-base)",
-        padding: "var(--space-xl)",
         fontFamily: "var(--font-body)",
         color: "var(--color-text-primary)",
-        maxWidth: 960,
-        margin: "0 auto",
       }}
     >
-      {/* Hero */}
-      <h1
+      <div
+        style={{
+          maxWidth: 960,
+          margin: "0 auto",
+          padding: "var(--space-xl)",
+        }}
+      >
+        {/* ── Hero ───────────────────────────────────────────────────────── */}
+        <header style={{ marginBottom: "var(--space-2xl)" }}>
+          <h1
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "clamp(3rem, 8vw, 5rem)",
+              color: "var(--color-primary)",
+              margin: "0 0 var(--space-xs)",
+              letterSpacing: "0.04em",
+              lineHeight: 1,
+            }}
+          >
+            BOLT ABACUS HUB
+          </h1>
+          <p
+            style={{
+              color: "var(--color-text-secondary)",
+              margin: 0,
+              fontSize: "1.05rem",
+            }}
+          >
+            Welcome back,{" "}
+            <strong style={{ color: "var(--color-text-primary)", fontWeight: 600 }}>
+              {displayName}
+            </strong>
+          </p>
+        </header>
+
+        {/* ── HUD stats strip ────────────────────────────────────────────── */}
+        <div
+          style={{
+            display: "flex",
+            gap: "var(--space-md)",
+            marginBottom: "var(--space-2xl)",
+          }}
+        >
+          <StatTile
+            icon="⚡"
+            value={String(totalXp)}
+            label="Total XP"
+            valueColor="var(--color-primary)"
+          />
+          <StatTile
+            icon="🔥"
+            value={String(streak)}
+            label="Day Streak"
+            valueColor="var(--color-accent-orange)"
+          />
+          <StatTile
+            icon="🏆"
+            value={String(levels)}
+            label="Levels Done"
+            valueColor="var(--color-accent-blue)"
+          />
+        </div>
+
+        {/* ── Portal cards ───────────────────────────────────────────────── */}
+        <div className="hub-portal-row">
+          <PortalCard
+            variant="learn"
+            heading="LEARN"
+            description="Classwork & structured lessons"
+            accentColor="var(--color-primary)"
+            onClick={() => navigate("/learn")}
+          />
+          <PortalCard
+            variant="practice"
+            heading="PRACTICE ARENA"
+            description="Time Attack, Zen Mode & custom drills"
+            accentColor="var(--color-accent-orange)"
+            onClick={() => navigate("/practice")}
+          />
+        </div>
+      </div>
+    </main>
+  );
+}
+
+/* ── Sub-components ──────────────────────────────────────────────────────── */
+
+function StatTile({
+  icon,
+  value,
+  label,
+  valueColor,
+}: {
+  icon: string;
+  value: string;
+  label: string;
+  valueColor: string;
+}) {
+  return (
+    <div
+      className="hub-stat-tile"
+      style={{
+        flex: 1,
+        padding: "var(--space-md) var(--space-lg)",
+        background: "var(--color-surface)",
+        borderRadius: "var(--radius-md)",
+        border: "1px solid var(--color-border)",
+        textAlign: "center",
+      }}
+    >
+      <div style={{ fontSize: "1.5rem", marginBottom: "var(--space-xs)", lineHeight: 1 }}>
+        {icon}
+      </div>
+      <div
         style={{
           fontFamily: "var(--font-display)",
-          fontSize: "clamp(2.5rem, 6vw, 4rem)",
-          color: "var(--color-primary)",
-          margin: "0 0 var(--space-xs)",
+          fontSize: "1.9rem",
+          color: valueColor,
+          letterSpacing: "0.04em",
+          lineHeight: 1,
+        }}
+      >
+        {value}
+      </div>
+      <div
+        style={{
+          color: "var(--color-text-secondary)",
+          fontSize: "0.75rem",
+          marginTop: "var(--space-xs)",
           letterSpacing: "0.04em",
         }}
       >
-        BOLT ABACUS HUB
-      </h1>
-      <p style={{ color: "var(--color-text-secondary)", margin: "0 0 var(--space-xl)", fontSize: "1.1rem" }}>
-        Welcome back, <strong style={{ color: "var(--color-text-primary)" }}>{displayName}</strong>
-      </p>
+        {label.toUpperCase()}
+      </div>
+    </div>
+  );
+}
 
-      {/* HUD stats strip */}
+function PortalCard({
+  variant,
+  heading,
+  description,
+  accentColor,
+  onClick,
+}: {
+  variant: "learn" | "practice";
+  heading: string;
+  description: string;
+  accentColor: string;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`hub-portal-card hub-portal-card--${variant}`}
+      style={{
+        flex: 1,
+        minHeight: 260,
+        display: "flex",
+        flexDirection: "column",
+        justifyContent: "flex-end",
+        padding: "var(--space-xl)",
+        borderRadius: "var(--radius-lg)",
+        border: `1px solid ${accentColor}`,
+        background: "var(--color-surface)",
+        cursor: "pointer",
+        textAlign: "left",
+      }}
+    >
       <div
         style={{
-          display: "flex",
-          gap: "var(--space-md)",
-          marginBottom: "var(--space-2xl)",
+          fontFamily: "var(--font-display)",
+          fontSize: "2.2rem",
+          color: accentColor,
+          letterSpacing: "0.04em",
+          marginBottom: "var(--space-xs)",
+          lineHeight: 1,
         }}
       >
-        <div style={statTile}>
-          <div style={{ fontSize: "1.6rem", marginBottom: "var(--space-xs)" }}>⚡</div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.8rem",
-              color: "var(--color-primary)",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {totalXp}
-          </div>
-          <div style={{ color: "var(--color-text-secondary)", fontSize: "0.8rem", marginTop: 2 }}>
-            Total XP
-          </div>
-        </div>
-
-        <div style={statTile}>
-          <div style={{ fontSize: "1.6rem", marginBottom: "var(--space-xs)" }}>🔥</div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.8rem",
-              color: "var(--color-accent-orange)",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {streak}
-          </div>
-          <div style={{ color: "var(--color-text-secondary)", fontSize: "0.8rem", marginTop: 2 }}>
-            Day Streak
-          </div>
-        </div>
-
-        <div style={statTile}>
-          <div style={{ fontSize: "1.6rem", marginBottom: "var(--space-xs)" }}>🏆</div>
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.8rem",
-              color: "var(--color-accent-blue)",
-              letterSpacing: "0.04em",
-            }}
-          >
-            {levels}
-          </div>
-          <div style={{ color: "var(--color-text-secondary)", fontSize: "0.8rem", marginTop: 2 }}>
-            Levels Done
-          </div>
-        </div>
+        {heading}
       </div>
-
-      {/* Portal cards */}
-      <div style={{ display: "flex", gap: "var(--space-lg)" }}>
-        <button
-          type="button"
-          onClick={() => navigate("/learn")}
-          style={{
-            ...card,
-            borderColor: "var(--color-primary)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "2rem",
-              color: "var(--color-primary)",
-              letterSpacing: "0.04em",
-              marginBottom: "var(--space-xs)",
-            }}
-          >
-            LEARN
-          </div>
-          <p style={{ color: "var(--color-text-secondary)", margin: 0, fontSize: "0.9rem" }}>
-            Classwork &amp; structured lessons
-          </p>
-        </button>
-
-        <button
-          type="button"
-          onClick={() => navigate("/practice")}
-          style={{
-            ...card,
-            borderColor: "var(--color-accent-orange)",
-          }}
-        >
-          <div
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "2rem",
-              color: "var(--color-accent-orange)",
-              letterSpacing: "0.04em",
-              marginBottom: "var(--space-xs)",
-            }}
-          >
-            PRACTICE ARENA
-          </div>
-          <p style={{ color: "var(--color-text-secondary)", margin: 0, fontSize: "0.9rem" }}>
-            Time Attack, Zen Mode &amp; custom drills
-          </p>
-        </button>
-      </div>
-    </main>
+      <p
+        style={{
+          color: "var(--color-text-secondary)",
+          margin: 0,
+          fontSize: "0.9rem",
+          lineHeight: 1.5,
+        }}
+      >
+        {description}
+      </p>
+    </button>
   );
 }

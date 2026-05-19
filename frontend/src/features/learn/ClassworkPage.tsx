@@ -102,71 +102,32 @@ export default function ClassworkPage() {
   const question = sessionMeta?.questions[currentIndex];
 
   if (starting) {
-    return (
-      <main
-        style={{
-          minHeight: "100vh",
-          background: "var(--color-bg-base)",
-          display: "flex",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--font-body)",
-          color: "var(--color-text-secondary)",
-        }}
-      >
-        PREPARING SESSION…
-      </main>
-    );
+    return <div className="page-loading">PREPARING SESSION…</div>;
   }
 
   if (startError) {
     return (
-      <main
-        style={{
-          minHeight: "100vh",
-          background: "var(--color-bg-base)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          fontFamily: "var(--font-body)",
-          color: "var(--color-text-primary)",
-          gap: "var(--space-md)",
-        }}
+      <div
+        className="page-loading"
+        style={{ flexDirection: "column", gap: "var(--space-md)" }}
       >
         <p style={{ color: "var(--color-error)" }}>Failed to start session.</p>
         <button
           type="button"
           onClick={() => navigate("/learn")}
-          style={{
-            background: "none",
-            border: "1px solid var(--color-border)",
-            color: "var(--color-text-secondary)",
-            padding: "var(--space-sm) var(--space-md)",
-            borderRadius: "var(--radius-md)",
-            cursor: "pointer",
-            fontFamily: "var(--font-body)",
-          }}
+          className="btn btn-secondary"
+          style={{ padding: "var(--space-sm) var(--space-md)", fontSize: "0.9rem" }}
         >
           Back to Levels
         </button>
-      </main>
+      </div>
     );
   }
 
   if (!sessionMeta || !question) return null;
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--color-bg-base)",
-        fontFamily: "var(--font-body)",
-        color: "var(--color-text-primary)",
-        display: "flex",
-        flexDirection: "column",
-      }}
-    >
+    <main className="page-wrap" style={{ display: "flex", flexDirection: "column" }}>
       {/* Timer bar */}
       <div style={{ width: "100%", height: 4, background: "var(--color-surface)" }}>
         <div
@@ -201,9 +162,7 @@ export default function ClassworkPage() {
             fontSize: "0.9rem",
           }}
         >
-          <span>
-            Q {currentIndex + 1} / {sessionMeta.questions.length}
-          </span>
+          <span>Q {currentIndex + 1} / {sessionMeta.questions.length}</span>
           <span style={{ color: timerPct < 20 ? "var(--color-error)" : "var(--color-text-secondary)" }}>
             {timeLeft}s
           </span>
@@ -217,6 +176,7 @@ export default function ClassworkPage() {
             color: "var(--color-text-primary)",
             letterSpacing: "0.02em",
             textAlign: "center",
+            fontVariantNumeric: "tabular-nums",
           }}
         >
           {question.text} = ?
@@ -225,6 +185,7 @@ export default function ClassworkPage() {
         {/* Verdict flash */}
         {verdict && (
           <div
+            className="verdict-flash"
             style={{
               fontFamily: "var(--font-display)",
               fontSize: "1.6rem",
@@ -236,7 +197,7 @@ export default function ClassworkPage() {
           </div>
         )}
 
-        {/* Input */}
+        {/* Answer input */}
         {!verdict && (
           <div style={{ display: "flex", gap: "var(--space-md)", width: "100%", maxWidth: 480 }}>
             <input
@@ -246,38 +207,19 @@ export default function ClassworkPage() {
               pattern="[0-9]*"
               value={input}
               onChange={(e) => setInput(e.target.value.replace(/[^0-9]/g, ""))}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSubmit();
-              }}
+              onKeyDown={(e) => { if (e.key === "Enter") handleSubmit(); }}
               placeholder="Answer"
-              style={{
-                flex: 1,
-                padding: "var(--space-md)",
-                background: "var(--color-surface)",
-                border: "1px solid var(--color-border)",
-                borderRadius: "var(--radius-md)",
-                color: "var(--color-text-primary)",
-                fontFamily: "var(--font-mono)",
-                fontSize: "1.4rem",
-                textAlign: "center",
-                outline: "none",
-              }}
+              className="field field--mono"
+              style={{ flex: 1 }}
             />
             <button
               type="button"
               onClick={handleSubmit}
               disabled={submitting || input.trim() === ""}
+              className="btn btn-primary"
               style={{
-                background: "var(--color-primary)",
-                color: "#000",
-                border: "none",
-                borderRadius: "var(--radius-md)",
                 padding: "var(--space-md) var(--space-xl)",
-                fontFamily: "var(--font-display)",
                 fontSize: "1.2rem",
-                letterSpacing: "0.06em",
-                cursor: input.trim() === "" ? "not-allowed" : "pointer",
-                opacity: input.trim() === "" ? 0.5 : 1,
               }}
             >
               SUBMIT

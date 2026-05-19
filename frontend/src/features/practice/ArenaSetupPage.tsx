@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useStartPractice } from "@/shared/api/queries/usePractice";
+import { BackLink } from "@/shared/ui/BackLink";
 
 const ACCENT: Record<string, string> = {
   TIME_ATTACK: "var(--color-accent-orange)",
@@ -60,6 +61,7 @@ function ToggleGroup<T extends string | number>({
               type="button"
               disabled={disabled}
               onClick={() => onChange(opt)}
+              className="toggle-btn"
               style={{
                 flex: 1,
                 padding: "var(--space-sm) 0",
@@ -120,112 +122,83 @@ export default function ArenaSetupPage() {
   };
 
   return (
-    <main
-      style={{
-        minHeight: "100vh",
-        background: "var(--color-bg-base)",
-        padding: "var(--space-xl)",
-        fontFamily: "var(--font-body)",
-        color: "var(--color-text-primary)",
-        maxWidth: 600,
-        margin: "0 auto",
-      }}
-    >
-      <button
-        type="button"
-        onClick={() => navigate("/practice")}
-        style={{
-          background: "none",
-          border: "none",
-          color: "var(--color-text-secondary)",
-          cursor: "pointer",
-          fontSize: "0.9rem",
-          padding: 0,
-          marginBottom: "var(--space-lg)",
-          fontFamily: "var(--font-body)",
-        }}
-      >
-        ← Training Arena
-      </button>
+    <main className="page-wrap">
+      <div className="page-content--narrow">
+        <BackLink label="Training Arena" onClick={() => navigate("/practice")} />
 
-      <h1
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: "clamp(2rem, 5vw, 3rem)",
-          color: accentColor,
-          margin: "0 0 var(--space-2xl)",
-          letterSpacing: "0.04em",
-        }}
-      >
-        {MODE_LABELS[mode] ?? mode}
-      </h1>
+        <h1
+          style={{
+            fontFamily: "var(--font-display)",
+            fontSize: "clamp(2rem, 5vw, 3rem)",
+            color: accentColor,
+            marginBottom: "var(--space-2xl)",
+            letterSpacing: "0.04em",
+          }}
+        >
+          {MODE_LABELS[mode] ?? mode}
+        </h1>
 
-      <ToggleGroup
-        label="OPERATION"
-        options={["ADD", "SUB", "MUL", "DIV"] as const}
-        value={operation}
-        onChange={(v) => setOperation(v)}
-      />
-
-      <ToggleGroup
-        label="DIGITS"
-        options={[1, 2, 3, 4] as const}
-        value={digits}
-        onChange={(v) => setDigits(v)}
-      />
-
-      <ToggleGroup
-        label="ROWS"
-        options={[2, 3, 4, 5] as const}
-        value={effectiveRows}
-        onChange={(v) => setRows(v)}
-        disabled={isMulDiv}
-      />
-
-      <ToggleGroup
-        label="QUESTIONS"
-        options={[10, 20, 30, 50] as const}
-        value={questionCount}
-        onChange={(v) => setQuestionCount(v)}
-      />
-
-      {showTimer && (
         <ToggleGroup
-          label="TIME LIMIT"
-          options={[60, 120, 180, 300] as const}
-          value={timeLimitSec}
-          onChange={(v) => setTimeLimitSec(v)}
-          format={(v) => `${v}s`}
+          label="OPERATION"
+          options={["ADD", "SUB", "MUL", "DIV"] as const}
+          value={operation}
+          onChange={(v) => setOperation(v)}
         />
-      )}
 
-      {isError && (
-        <p style={{ color: "var(--color-error)", marginBottom: "var(--space-md)", fontSize: "0.9rem" }}>
-          Failed to start session. Please try again.
-        </p>
-      )}
+        <ToggleGroup
+          label="DIGITS"
+          options={[1, 2, 3, 4] as const}
+          value={digits}
+          onChange={(v) => setDigits(v)}
+        />
 
-      <button
-        type="button"
-        onClick={handleStart}
-        disabled={isPending}
-        style={{
-          width: "100%",
-          padding: "var(--space-md)",
-          background: accentColor,
-          border: "none",
-          borderRadius: "var(--radius-md)",
-          color: "#000",
-          fontFamily: "var(--font-display)",
-          fontSize: "1.4rem",
-          letterSpacing: "0.06em",
-          cursor: isPending ? "not-allowed" : "pointer",
-          opacity: isPending ? 0.7 : 1,
-          marginTop: "var(--space-md)",
-        }}
-      >
-        {isPending ? "STARTING…" : "START"}
-      </button>
+        <ToggleGroup
+          label="ROWS"
+          options={[2, 3, 4, 5] as const}
+          value={effectiveRows}
+          onChange={(v) => setRows(v)}
+          disabled={isMulDiv}
+        />
+
+        <ToggleGroup
+          label="QUESTIONS"
+          options={[10, 20, 30, 50] as const}
+          value={questionCount}
+          onChange={(v) => setQuestionCount(v)}
+        />
+
+        {showTimer && (
+          <ToggleGroup
+            label="TIME LIMIT"
+            options={[60, 120, 180, 300] as const}
+            value={timeLimitSec}
+            onChange={(v) => setTimeLimitSec(v)}
+            format={(v) => `${v}s`}
+          />
+        )}
+
+        {isError && (
+          <p style={{ color: "var(--color-error)", marginBottom: "var(--space-md)", fontSize: "0.9rem" }}>
+            Failed to start session. Please try again.
+          </p>
+        )}
+
+        <button
+          type="button"
+          onClick={handleStart}
+          disabled={isPending}
+          className="btn btn-accent"
+          style={{
+            width: "100%",
+            padding: "var(--space-md)",
+            background: accentColor,
+            marginTop: "var(--space-md)",
+            fontSize: "1.4rem",
+          }}
+        >
+          {isPending ? "STARTING…" : "START"}
+        </button>
+      </div>
     </main>
   );
 }

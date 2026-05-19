@@ -3,6 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── Phase 3: Base layer ───────────────────────────────────────────────── */
 @layer base {
   html {
     font-family: var(--font-body);
@@ -15,8 +16,459 @@
     box-sizing: border-box;
   }
 
+  h1, h2, h3, h4, h5, h6 {
+    margin: 0;
+    line-height: 1.1;
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+  }
+
+  p {
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  code, kbd {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
   /* Ensure math problem display uses tabular numbers */
   .font-mono {
     font-variant-numeric: tabular-nums;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Phase 3 — Primitive components
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Button ─────────────────────────────────────────────────────────────── */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-display);
+  letter-spacing: 0.06em;
+  border-radius: var(--radius-md);
+  border: none;
+  cursor: pointer;
+  transition:
+    opacity var(--transition-fast),
+    box-shadow var(--transition-base),
+    transform var(--transition-fast),
+    border-color var(--transition-fast),
+    background var(--transition-fast);
+}
+
+.btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.btn:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: var(--color-on-primary);
+}
+
+.btn-primary:hover:not(:disabled) {
+  opacity: 0.9;
+  box-shadow: var(--shadow-glow-primary);
+}
+
+.btn-secondary {
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  border: 1px solid var(--color-border);
+}
+
+.btn-secondary:hover:not(:disabled) {
+  border-color: var(--color-primary);
+}
+
+/* For mode-coloured CTAs — caller sets background via inline style */
+.btn-accent {
+  color: var(--color-on-primary);
+}
+
+.btn-accent:hover:not(:disabled) {
+  opacity: 0.88;
+}
+
+.btn-ghost {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 0;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  letter-spacing: normal;
+}
+
+.btn-ghost:hover:not(:disabled) {
+  color: var(--color-text-primary);
+}
+
+.btn-ghost:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Text input / textarea / select ────────────────────────────────────── */
+
+.field {
+  padding: var(--space-md);
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-primary);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  outline: none;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+}
+
+.field:focus,
+.field:focus-visible {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px rgba(242, 201, 76, 0.15);
+}
+
+/* Numeric answer input inside sessions */
+.field--mono {
+  font-family: var(--font-mono);
+  text-align: center;
+  font-size: 1.4rem;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Back link navigation ────────────────────────────────────────────────── */
+
+.back-link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-xs);
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  padding: 0;
+  margin-bottom: var(--space-lg);
+  transition: color var(--transition-fast);
+}
+
+.back-link:hover {
+  color: var(--color-text-primary);
+}
+
+.back-link:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* ── Badge / pill ───────────────────────────────────────────────────────── */
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px var(--space-sm);
+  border-radius: var(--radius-pill);
+  font-family: var(--font-body);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+}
+
+.badge-success {
+  background: var(--color-success);
+  color: #000;
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Phase 4 — Composite components
+   ══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Stat tile (result summary screens) ─────────────────────────────────── */
+
+.stat-tile {
+  flex: 1;
+  padding: var(--space-md) var(--space-lg);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+/* ── Mode selection cards (TrainingArenaPage) ────────────────────────────── */
+
+.mode-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.mode-card:hover {
+  transform: translateY(-3px);
+}
+
+.mode-card:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
+.mode-card--time-attack:hover { box-shadow: var(--shadow-glow-orange); }
+.mode-card--zen:hover          { box-shadow: var(--shadow-glow-blue);   }
+.mode-card--lab:hover          { box-shadow: var(--shadow-glow-purple); }
+
+/* ── Level cards (LevelSelectionPage) ───────────────────────────────────── */
+
+.level-card {
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base);
+}
+
+.level-card:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-card);
+}
+
+.level-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+/* ── Toggle group buttons (ArenaSetupPage) ───────────────────────────────── */
+
+.toggle-btn {
+  transition:
+    background var(--transition-fast),
+    border-color var(--transition-fast),
+    color var(--transition-fast);
+}
+
+.toggle-btn:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* ── Data table rows ─────────────────────────────────────────────────────── */
+
+.table-row {
+  transition: background var(--transition-fast);
+}
+
+.table-row:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+/* ── Verdict feedback animation ─────────────────────────────────────────── */
+
+.verdict-flash {
+  animation: verdict-in 150ms ease forwards;
+}
+
+@keyframes verdict-in {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Page loading / skeleton ─────────────────────────────────────────────── */
+
+.page-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  background: var(--color-bg-base);
+  color: var(--color-text-secondary);
+  font-family: var(--font-body);
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Phase 5 — Layout & spacing
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.page-wrap {
+  min-height: 100vh;
+  background: var(--color-bg-base);
+  font-family: var(--font-body);
+  color: var(--color-text-primary);
+}
+
+.page-content {
+  max-width: 960px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+.page-content--narrow {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+.page-content--medium {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: var(--space-xl);
+}
+
+/* Auth forms — centered card layout */
+.page-content--auth {
+  max-width: 400px;
+  margin: 80px auto 0;
+  padding: 0 var(--space-xl);
+}
+
+.stats-row {
+  display: flex;
+  gap: var(--space-md);
+  margin-bottom: var(--space-2xl);
+}
+
+.btn-row {
+  display: flex;
+  gap: var(--space-md);
+}
+
+.grid-2col {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-lg);
+}
+
+.mode-cards-row {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+/* ── Responsive breakpoints ─────────────────────────────────────────────── */
+
+@media (max-width: 600px) {
+  .page-content,
+  .page-content--narrow,
+  .page-content--medium {
+    padding: var(--space-lg);
+  }
+
+  .grid-2col {
+    grid-template-columns: 1fr;
+  }
+
+  .stats-row {
+    flex-wrap: wrap;
+  }
+
+  .btn-row {
+    flex-direction: column;
+  }
+
+  .mode-cards-row {
+    flex-direction: column;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Hub page
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.hub-portal-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    transform var(--transition-base),
+    box-shadow var(--transition-base),
+    border-color var(--transition-base);
+}
+
+.hub-portal-card:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--shadow-card);
+}
+
+.hub-portal-card:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 3px;
+}
+
+.hub-portal-card--learn:hover {
+  box-shadow: var(--shadow-glow-primary);
+  border-color: var(--color-primary);
+}
+
+.hub-portal-card--practice:hover {
+  box-shadow: var(--shadow-glow-orange);
+  border-color: var(--color-accent-orange);
+}
+
+/* Subtle top-left sheen for depth */
+.hub-portal-card::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(160deg, rgba(255, 255, 255, 0.03) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.hub-stat-tile {
+  transition: background var(--transition-fast), border-color var(--transition-fast);
+}
+
+.hub-portal-row {
+  display: flex;
+  gap: var(--space-lg);
+}
+
+@media (max-width: 600px) {
+  .hub-portal-row {
+    flex-direction: column;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   Phase 6 — Motion: honour prefers-reduced-motion
+   ══════════════════════════════════════════════════════════════════════════ */
+
+@media (prefers-reduced-motion: reduce) {
+  .btn,
+  .back-link,
+  .field,
+  .mode-card,
+  .level-card,
+  .toggle-btn,
+  .table-row,
+  .hub-portal-card,
+  .hub-stat-tile {
+    transition: none;
+  }
+
+  .btn:active:not(:disabled),
+  .mode-card:hover,
+  .level-card:hover:not(:disabled),
+  .hub-portal-card:hover {
+    transform: none;
+  }
+
+  .verdict-flash {
+    animation: none;
+    opacity: 1;
   }
 }

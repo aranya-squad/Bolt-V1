@@ -39,21 +39,42 @@ export default function LoginPage() {
   }
 
   return (
-    <div style={{ maxWidth: 400, margin: "100px auto", fontFamily: "var(--font-body)", color: "var(--color-text-primary)" }}>
-      <div style={{ background: "#fff2", padding: 8, marginBottom: 16, borderRadius: 4, fontSize: 12 }}>
-        ⚠ DEV LOGIN — production design pending (see ARCHITECTURE.md §2 Q1)
+    <div className="page-content--auth">
+      <div
+        style={{
+          background: "var(--color-glass)",
+          padding: "var(--space-sm)",
+          marginBottom: "var(--space-md)",
+          borderRadius: "var(--radius-sm)",
+          fontSize: "0.75rem",
+          color: "var(--color-text-secondary)",
+        }}
+      >
+        DEV LOGIN — production design pending (see ARCHITECTURE.md §2 Q1)
       </div>
-      <h1 style={{ fontFamily: "var(--font-display)", fontSize: "2rem", color: "var(--color-primary)" }}>
+
+      <h1
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "2.5rem",
+          color: "var(--color-primary)",
+          marginBottom: "var(--space-lg)",
+        }}
+      >
         Bolt Abacus
       </h1>
-      <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 12 }}>
+
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "var(--space-md)" }}
+      >
         <input
           type="email"
           placeholder="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           required
-          style={{ padding: 8, borderRadius: 4, border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text-primary)" }}
+          className="field"
         />
         <input
           type="password"
@@ -61,13 +82,18 @@ export default function LoginPage() {
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
-          style={{ padding: 8, borderRadius: 4, border: "1px solid var(--color-border)", background: "var(--color-surface)", color: "var(--color-text-primary)" }}
+          className="field"
         />
-        {error && <p style={{ color: "var(--color-error)", fontSize: 14 }}>{error}</p>}
+
+        {error && (
+          <p style={{ color: "var(--color-error)", fontSize: "0.875rem" }}>{error}</p>
+        )}
+
         <button
           type="submit"
           disabled={loading}
-          style={{ padding: 10, background: "var(--color-primary)", color: "#1a1a1a", border: "none", borderRadius: 4, cursor: "pointer", fontWeight: 700 }}
+          className="btn btn-primary"
+          style={{ padding: "var(--space-md)", fontSize: "1rem" }}
         >
           {loading ? "Signing in…" : "Sign In"}
         </button>
