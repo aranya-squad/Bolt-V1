@@ -13,10 +13,10 @@ interface IconPlateProps {
 }
 
 const COLORS: Record<Color, { border: string; glow: string; fg: string }> = {
-  yellow: { border: "rgba(250,204,21,0.3)",  glow: "rgba(250,204,21,0.2)",  fg: "var(--y-bolt)" },
-  purple: { border: "rgba(221,183,255,0.3)", glow: "rgba(221,183,255,0.2)", fg: "var(--p-cyber)" },
-  blue:   { border: "rgba(59,130,246,0.3)",  glow: "rgba(59,130,246,0.2)",  fg: "var(--bolt-blue)" },
-  orange: { border: "rgba(249,115,22,0.3)",  glow: "rgba(249,115,22,0.2)",  fg: "var(--orange-streak)" },
+  yellow: { border: "var(--y-bolt-30)",   glow: "var(--y-bolt-20)",   fg: "var(--y-bolt)" },
+  purple: { border: "var(--p-cyber-30)",  glow: "var(--p-cyber-20)",  fg: "var(--p-cyber)" },
+  blue:   { border: "var(--b-signal-30)", glow: "var(--b-signal-20)", fg: "var(--bolt-blue)" },
+  orange: { border: "rgba(249,115,22,0.3)", glow: "rgba(249,115,22,0.2)", fg: "var(--orange-streak)" },
 };
 
 export function IconPlate({ icon, src, color = "yellow", size = 64, shape = "square" }: IconPlateProps) {
@@ -26,7 +26,7 @@ export function IconPlate({ icon, src, color = "yellow", size = 64, shape = "squ
       style={{
         width: size,
         height: size,
-        borderRadius: shape === "pill" ? 9999 : 16,
+        borderRadius: shape === "pill" ? "var(--r-pill)" : "var(--r-lg)",
         background: "var(--bg-coal)",
         border: `1px solid ${c.border}`,
         boxShadow: `0 0 20px ${c.glow}`,

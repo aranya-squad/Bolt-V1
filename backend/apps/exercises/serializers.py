@@ -34,4 +34,4 @@ class ProgressRecordSerializer(serializers.ModelSerializer):
 class AttemptSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionAttempt
-        fields = ["question_index", "question_text", "expected_answer", "submitted_answer", "is_correct", "elapsed_ms"]
+        fields = ["question_index", "attempt_number", "question_text", "expected_answer", "submitted_answer", "is_correct", "elapsed_ms"]

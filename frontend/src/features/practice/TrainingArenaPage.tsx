@@ -1,33 +1,36 @@
 import { useNavigate } from "react-router-dom";
-import { BackLink } from "@/shared/ui/BackLink";
+import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { Page } from "@/shared/ui/Page";
-import { GlassCard } from "@/shared/ui/GlassCard";
-import { IconPlate } from "@/shared/ui/IconPlate";
+import { BentoModeCard } from "@/shared/ui/BentoModeCard";
 
 const MODES = [
   {
-    key: "TIME_ATTACK",
-    label: "TIME ATTACK",
-    desc: "Beat the clock. Speed and accuracy under pressure.",
-    color: "var(--orange-streak)" as const,
-    plateColor: "orange" as const,
+    mode: "FLASH_CARDS",
+    title: "Memory Master",
+    description: "Master the abacus with flash card speed drills",
     icon: "zap",
+    color: "var(--y-bolt)",
   },
   {
-    key: "ZEN",
-    label: "ZEN MODE",
-    desc: "No timer. Practice at your own pace.",
-    color: "var(--bolt-blue)" as const,
-    plateColor: "blue" as const,
+    mode: "ZEN",
+    title: "Zen Mode",
+    description: "No pressure. No timer. Pure focus.",
     icon: "wind",
+    color: "var(--bolt-blue)",
   },
   {
-    key: "CUSTOM",
-    label: "THE LAB",
-    desc: "Configure everything. Your session, your rules.",
-    color: "var(--p-cyber)" as const,
-    plateColor: "purple" as const,
+    mode: "TIME_ATTACK",
+    title: "Sonic Speed",
+    description: "Race the clock and push your limits",
+    icon: "timer",
+    color: "var(--orange-streak)",
+  },
+  {
+    mode: "CUSTOM",
+    title: "The Lab",
+    description: "Build your own challenge with custom rules",
     icon: "settings",
+    color: "var(--p-cyber)",
   },
 ] as const;
 
@@ -35,52 +38,37 @@ export default function TrainingArenaPage() {
   const navigate = useNavigate();
 
   return (
-    <Page>
-      <BackLink label="Hub" onClick={() => navigate("/hub")} />
+    <>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <AmbientScene accents={["orange", "blue", "purple"] as any} />
+      <Page>
+        <h1
+          className="t-h1"
+          style={{ color: "var(--y-bolt)", marginBottom: "var(--s-xl)" }}
+        >
+          TRAINING ARENA
+        </h1>
 
-      <h1 className="t-h1" style={{ color: "var(--y-bolt)", marginTop: 24, marginBottom: 40 }}>
-        TRAINING ARENA
-      </h1>
-
-      <div style={{ display: "flex", gap: 20 }}>
-        {MODES.map((m) => (
-          <GlassCard
-            key={m.key}
-            variant="default"
-            style={{ flex: 1, minHeight: 200, cursor: "pointer" }}
-            onClick={() => navigate(`/practice/setup/${m.key}`)}
-          >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                height: "100%",
-                padding: "var(--s-lg)",
-              }}
-            >
-              <div style={{ marginBottom: 16 }}>
-                <IconPlate icon={m.icon} color={m.plateColor} size={48} />
-              </div>
-              <div
-                style={{
-                  fontFamily: "var(--font-display)",
-                  fontWeight: 800,
-                  fontSize: 22,
-                  color: m.color,
-                  letterSpacing: "0.04em",
-                  marginBottom: 6,
-                }}
-              >
-                {m.label}
-              </div>
-              <div style={{ fontFamily: "var(--font-body)", color: "var(--fg-sand)", fontSize: 14, lineHeight: 1.5 }}>
-                {m.desc}
-              </div>
-            </div>
-          </GlassCard>
-        ))}
-      </div>
-    </Page>
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(2, 1fr)",
+            gap: "var(--s-lg)",
+          }}
+        >
+          {MODES.map((m) => (
+            <BentoModeCard
+              key={m.mode}
+              mode={m.mode}
+              title={m.title}
+              description={m.description}
+              icon={m.icon}
+              color={m.color}
+              onClick={() => navigate(`/practice/setup/${m.mode}`)}
+            />
+          ))}
+        </div>
+      </Page>
+    </>
   );
 }

@@ -2,9 +2,6 @@ import random
 
 from .base import Question, QuestionGenerator
 
-# Minimum elapsed ms before we accept a submission (anti-cheat: catches bot submissions)
-MIN_ANSWER_MS = 200
-
 
 class ProceduralGenerator(QuestionGenerator):
     """
@@ -32,27 +29,31 @@ class ProceduralGenerator(QuestionGenerator):
 
         lo = 10 ** (digits - 1)
         hi = 10**digits - 1
-        operands = [self.rng.randint(lo, hi) for _ in range(rows)]
 
         if op == "ADD":
+            operands = [self.rng.randint(lo, hi) for _ in range(rows)]
             answer = sum(operands)
             text = " + ".join(map(str, operands))
         elif op == "SUB":
-            # Sort descending so result is non-negative (appropriate for ages 5–10)
-            operands.sort(reverse=True)
-            answer = operands[0] - sum(operands[1:])
-            if answer < 0:
-                answer = abs(answer)
+            # Constructive generation: pick subtractors and answer first, compute minuend.
+            # Guarantees answer >= 0 without rejection sampling (which can infinite-loop for
+            # large rows with small digits, e.g. digits=1, rows=8 → all combos are negative).
+            subtractors = [self.rng.randint(lo, hi) for _ in range(rows - 1)]
+            answer = self.rng.randint(0, hi)
+            minuend = sum(subtractors) + answer
+            operands = [minuend] + subtractors
             text = " - ".join(map(str, operands))
         elif op == "MUL":
-            # Limit to 2 operands for multiplication to keep difficulty sane at v1
-            a, b = operands[0], operands[1]
+            # Exactly 2 operands for multiplication to keep difficulty sane at v1.
+            a, b = self.rng.randint(lo, hi), self.rng.randint(lo, hi)
             answer = a * b
             text = f"{a} × {b}"
         elif op == "DIV":
-            # Generate dividend from a clean multiple to avoid remainders
+            # Generate dividend from a clean multiple to avoid remainders.
+            # quotient_hi raised to avoid collapsed range on 1-digit operands.
             divisor = self.rng.randint(lo, hi)
-            quotient = self.rng.randint(1, hi // max(divisor, 1) or 1)
+            quotient_hi = max(hi // max(divisor, 1), 5)
+            quotient = self.rng.randint(1, quotient_hi)
             dividend = divisor * quotient
             answer = quotient
             text = f"{dividend} ÷ {divisor}"

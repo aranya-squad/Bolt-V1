@@ -25,7 +25,7 @@ export function ProgressBar({ value, max = 1, accent = "yellow", height = 8, mar
       style={{
         width: "100%",
         height,
-        borderRadius: 9999,
+        borderRadius: "var(--r-pill)",
         background: "var(--bg-ash)",
         border: "1px solid rgba(255,255,255,0.08)",
         boxShadow: "inset 0 2px 4px rgba(0,0,0,0.4)",

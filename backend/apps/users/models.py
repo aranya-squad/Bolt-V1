@@ -72,7 +72,7 @@ class ConsentRecord(models.Model):
         db_table = "users_consent_record"
 
     def save(self, *args, **kwargs):
-        if self.pk and ConsentRecord.objects.filter(pk=self.pk).exists():
+        if not self._state.adding:
             raise ValueError("ConsentRecord is immutable and cannot be updated")
         super().save(*args, **kwargs)
 

@@ -8,23 +8,25 @@ from django.utils import timezone
 
 from apps.exercises.models import ArenaSession
 
-from .models import LevelCompletion, ProgressRecord, QuestionAttempt, XPEvent, XPEventType
+from .models import LessonCompletion, LevelCompletion, ProgressRecord, QuestionAttempt, XPEvent, XPEventType
 from .xp_rules import compute_session_xp
 
 
 def record_attempt(
     session: ArenaSession,
     question_index: int,
+    attempt_number: int,
     question_text: str,
     expected_answer: int,
     submitted_answer: int,
     elapsed_ms: int,
 ) -> QuestionAttempt:
-    """Write a single question attempt. Raises IntegrityError on duplicate index."""
+    """Write a single question attempt. Raises IntegrityError on duplicate (index, attempt_number)."""
     is_correct = submitted_answer == expected_answer
     return QuestionAttempt.objects.create(
         session=session,
         question_index=question_index,
+        attempt_number=attempt_number,
         question_text=question_text,
         expected_answer=expected_answer,
         submitted_answer=submitted_answer,
@@ -39,6 +41,8 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     Compute session results, write ProgressRecord + XPEvent(s), mark session submitted.
     Idempotent: raises ValueError if session already finalized.
     """
+    # Lock the row to serialize concurrent finalize attempts from different requests/workers.
+    session = ArenaSession.objects.select_for_update().get(pk=session.pk)
     if session.submitted_at is not None:
         raise ValueError(f"Session {session.id} is already finalized")
 
@@ -77,12 +81,59 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     )
 
     if session.template is not None:
-        LevelCompletion.objects.get_or_create(
-            user=session.user,
-            level=session.template.lesson.level,
-            kind=session.kind,
-            defaults={"best_progress_record": record},
+        lesson = session.template.lesson
+        level = lesson.level
+
+        # Level-granular completion
+        existing = (
+            LevelCompletion.objects
+            .select_for_update()
+            .filter(user=session.user, level=level, kind=session.kind)
+            .first()
         )
+        if existing is None:
+            LevelCompletion.objects.create(
+                user=session.user,
+                level=level,
+                kind=session.kind,
+                best_progress_record=record,
+            )
+        else:
+            prev = existing.best_progress_record
+            if (
+                record.accuracy_pct > prev.accuracy_pct
+                or (record.accuracy_pct == prev.accuracy_pct and record.score_correct > prev.score_correct)
+                or (
+                    record.accuracy_pct == prev.accuracy_pct
+                    and record.score_correct == prev.score_correct
+                    and record.time_taken_sec < prev.time_taken_sec
+                )
+            ):
+                existing.best_progress_record = record
+                existing.save(update_fields=["best_progress_record"])
+
+        # Lesson-granular completion (drives PathOfConquest accordion status chips)
+        lesson_existing = (
+            LessonCompletion.objects
+            .select_for_update()
+            .filter(user=session.user, lesson=lesson, kind=session.kind)
+            .first()
+        )
+        if lesson_existing is None:
+            LessonCompletion.objects.create(
+                user=session.user,
+                lesson=lesson,
+                kind=session.kind,
+                best_accuracy_pct=record.accuracy_pct,
+                best_progress_record=record,
+            )
+        elif record.accuracy_pct > lesson_existing.best_accuracy_pct:
+            lesson_existing.best_accuracy_pct = record.accuracy_pct
+            lesson_existing.best_progress_record = record
+            lesson_existing.save(update_fields=["best_accuracy_pct", "best_progress_record"])
+
+    from django.core.cache import cache
+    cache.delete(f"user_stats:{session.user_id}")
 
     session.submitted_at = timezone.now()
     session.save(update_fields=["submitted_at"])

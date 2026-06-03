@@ -10,9 +10,11 @@ interface SliderProps {
   onChange: (v: number) => void;
   suffix?: string;
   step?: number;
+  disabled?: boolean;
+  description?: string;
 }
 
-export function Slider({ label, icon, min, max, value, onChange, suffix = "", step = 1 }: SliderProps) {
+export function Slider({ label, icon, min, max, value, onChange, suffix = "", step = 1, disabled = false, description }: SliderProps) {
   const range = max - min;
   const pct = ((value - min) / range) * 100;
 
@@ -37,10 +39,12 @@ export function Slider({ label, icon, min, max, value, onChange, suffix = "", st
   return (
     <div
       style={{
-        padding: 24,
-        borderRadius: 24,
+        padding: "var(--s-lg)",
+        borderRadius: "var(--r-xl)",
         background: "var(--md-surface-container)",
         border: "1px solid rgba(255,255,255,0.06)",
+        opacity: disabled ? 0.4 : 1,
+        pointerEvents: disabled ? "none" : undefined,
       }}
     >
       <div
@@ -70,9 +74,9 @@ export function Slider({ label, icon, min, max, value, onChange, suffix = "", st
         <div
           style={{
             padding: "4px 14px",
-            borderRadius: 9999,
+            borderRadius: "var(--r-pill)",
             background: "var(--bg-noir)",
-            border: "1px solid rgba(250,204,21,0.3)",
+            border: "1px solid var(--y-bolt-30)",
             fontFamily: "var(--font-label)",
             fontWeight: 600,
             fontSize: 14,
@@ -107,7 +111,7 @@ export function Slider({ label, icon, min, max, value, onChange, suffix = "", st
                   top: "50%",
                   width: 2,
                   height: 6,
-                  borderRadius: 9999,
+                  borderRadius: "var(--r-pill)",
                   background: active ? "rgba(60,47,0,0.7)" : "rgba(255,255,255,0.12)",
                   transform: "translate(-50%, -50%)",
                 }}
@@ -126,7 +130,7 @@ export function Slider({ label, icon, min, max, value, onChange, suffix = "", st
                   top: "50%",
                   width: 4,
                   height: 12,
-                  borderRadius: 9999,
+                  borderRadius: "var(--r-pill)",
                   background: active ? "var(--y-bolt-ink)" : "rgba(255,255,255,0.25)",
                   transform: "translate(-50%, -50%)",
                   boxShadow: active ? "0 0 4px rgba(250,204,21,0.6)" : "none",
@@ -142,6 +146,7 @@ export function Slider({ label, icon, min, max, value, onChange, suffix = "", st
           max={max}
           step={step}
           value={value}
+          disabled={disabled}
           onChange={e => onChange(parseInt(e.target.value, 10))}
           style={{
             position: "relative",
@@ -193,6 +198,19 @@ export function Slider({ label, icon, min, max, value, onChange, suffix = "", st
           })}
         </div>
       </div>
+
+      {description && (
+        <div
+          style={{
+            color: "var(--fg-sand)",
+            fontSize: "0.8rem",
+            marginTop: 4,
+            fontFamily: "var(--font-body)",
+          }}
+        >
+          {description}
+        </div>
+      )}
     </div>
   );
 }

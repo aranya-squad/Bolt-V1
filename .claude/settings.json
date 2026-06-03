@@ -1,4 +1,13 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(bash /Users/sagarshukla/Bolt_v1/run-local.sh)",
+      "Bash(bash /Users/sagarshukla/Bolt_v1/setup-local.sh)",
+      "Bash(brew services start postgresql@16)",
+      "Bash(brew services start redis)",
+      "Bash(brew services list)"
+    ]
+  },
   "hooks": {
     "Stop": [
       {

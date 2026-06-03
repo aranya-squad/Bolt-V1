@@ -7,8 +7,11 @@ interface AuthState {
   accessToken: string | null;
   // User identity is persisted so the app knows if logged in across reloads
   user: User | null;
+  // True until the first refresh attempt completes — prevents ProtectedRoute flash
+  isHydrating: boolean;
   setAccessToken: (token: string) => void;
   setUser: (user: User) => void;
+  setHydrated: () => void;
   logout: () => void;
 }
 
@@ -17,13 +20,15 @@ export const useAuthStore = create<AuthState>()(
     (set) => ({
       accessToken: null, // never persisted — see partialize
       user: null,
+      isHydrating: true,
       setAccessToken: (token) => set({ accessToken: token }),
       setUser: (user) => set({ user }),
-      logout: () => set({ accessToken: null, user: null }),
+      setHydrated: () => set({ isHydrating: false }),
+      logout: () => set({ accessToken: null, user: null, isHydrating: false }),
     }),
     {
       name: "bolt-auth",
-      // Only persist user identity, not the access token
+      // Only persist user identity, not the access token or hydration flag
       partialize: (state) => ({ user: state.user }),
     }
   )

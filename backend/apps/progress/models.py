@@ -16,13 +16,15 @@ class QuestionAttempt(models.Model):
     """
     Per-question record. Append-only.
     Required for Mission Report breakdown table (PRD §7.1.4).
-    unique_together on (session, question_index) prevents double-submission (anti-cheat).
+    Multi-attempt: unique_together on (session, question_index, attempt_number).
+    The non-unique index on (session, question_index) supports fast per-question lookups.
     """
 
     session = models.ForeignKey(
         "exercises.ArenaSession", related_name="attempts", on_delete=models.CASCADE
     )
     question_index = models.PositiveSmallIntegerField()
+    attempt_number = models.PositiveSmallIntegerField(null=True)
     question_text = models.CharField(max_length=256)
     expected_answer = models.IntegerField()
     submitted_answer = models.IntegerField()
@@ -32,7 +34,7 @@ class QuestionAttempt(models.Model):
 
     class Meta:
         db_table = "progress_question_attempt"
-        unique_together = [("session", "question_index")]
+        unique_together = [("session", "question_index", "attempt_number")]
         indexes = [models.Index(fields=["session", "question_index"])]
 
     def save(self, *args, **kwargs):
@@ -66,7 +68,7 @@ class ProgressRecord(models.Model):
         indexes = [models.Index(fields=["user", "-created_at"])]
 
     def save(self, *args, **kwargs):
-        if self.pk and ProgressRecord.objects.filter(pk=self.pk).exists():
+        if not self._state.adding:
             raise ValueError("ProgressRecord is append-only and cannot be updated")
         super().save(*args, **kwargs)
 
@@ -117,3 +119,26 @@ class LevelCompletion(models.Model):
     class Meta:
         db_table = "progress_level_completion"
         unique_together = [("user", "level", "kind")]
+
+
+class LessonCompletion(models.Model):
+    """
+    Lesson-granular completion record. Finer-grained than LevelCompletion.
+    Drives the PathOfConquest accordion (per-lesson status chips).
+    """
+
+    user = models.ForeignKey("users.User", related_name="lesson_completions", on_delete=models.CASCADE)
+    lesson = models.ForeignKey("courses.Lesson", related_name="completions", on_delete=models.CASCADE)
+    kind = models.CharField(
+        max_length=16,
+        choices=[("CLASSWORK", "Classwork"), ("HOMEWORK", "Homework")],
+    )
+    first_completed_at = models.DateTimeField(auto_now_add=True)
+    best_accuracy_pct = models.DecimalField(max_digits=5, decimal_places=2)
+    best_progress_record = models.ForeignKey(
+        ProgressRecord, on_delete=models.PROTECT, related_name="lesson_completions"
+    )
+
+    class Meta:
+        db_table = "progress_lesson_completion"
+        unique_together = [("user", "lesson", "kind")]

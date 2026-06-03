@@ -1,13 +1,27 @@
 from django.urls import path
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 
-from .views import GuardianRegisterView, HealthView, MeView, StudentRegisterView
+from .views import (
+    AvatarPresetsView,
+    CookieTokenObtainPairView,
+    CookieTokenRefreshView,
+    GuardianRegisterView,
+    HealthView,
+    LogoutView,
+    MeView,
+    ProfileUpdateView,
+    StudentRegisterView,
+    XpProgressView,
+)
 
 urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
     path("auth/register/", GuardianRegisterView.as_view(), name="auth-register"),
     path("auth/register-student/", StudentRegisterView.as_view(), name="auth-register-student"),
-    path("auth/login/", TokenObtainPairView.as_view(), name="auth-login"),
-    path("auth/refresh/", TokenRefreshView.as_view(), name="auth-refresh"),
+    path("auth/login/", CookieTokenObtainPairView.as_view(), name="auth-login"),
+    path("auth/refresh/", CookieTokenRefreshView.as_view(), name="auth-refresh"),
+    path("auth/logout/", LogoutView.as_view(), name="auth-logout"),
     path("auth/me/", MeView.as_view(), name="auth-me"),
+    path("auth/me/xp-progress/", XpProgressView.as_view(), name="auth-me-xp-progress"),
+    path("auth/me/profile/", ProfileUpdateView.as_view(), name="auth-me-profile"),
+    path("auth/avatar-presets/", AvatarPresetsView.as_view(), name="auth-avatar-presets"),
 ]

@@ -71,6 +71,7 @@ class ContentBlock(models.Model):
     class Meta:
         db_table = "courses_content_block"
         ordering = ["order"]
+        unique_together = [("lesson", "order")]
 
 
 class Material(models.Model):

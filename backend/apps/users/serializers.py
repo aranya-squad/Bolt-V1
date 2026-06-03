@@ -25,31 +25,8 @@ class UserMeSerializer(serializers.ModelSerializer):
             return None
 
     def get_stats(self, user):
-        from datetime import timedelta
-
-        from django.db.models import Sum
-        from django.utils import timezone
-
-        from apps.progress.models import LevelCompletion, ProgressRecord, XPEvent
-
-        total_xp = XPEvent.objects.filter(user=user).aggregate(t=Sum("delta"))["t"] or 0
-
-        today = timezone.now().date()
-        yesterday = today - timedelta(days=1)
-        dates = set(
-            ProgressRecord.objects.filter(user=user).values_list("created_at__date", flat=True)
-        )
-        start = today if today in dates else (yesterday if yesterday in dates else None)
-        streak = 0
-        if start is not None:
-            d = start
-            while d in dates:
-                streak += 1
-                d -= timedelta(days=1)
-
-        levels_completed = LevelCompletion.objects.filter(user=user, kind="CLASSWORK").count()
-
-        return {"total_xp": total_xp, "streak_days": streak, "levels_completed": levels_completed}
+        from apps.users.stats import get_user_stats
+        return get_user_stats(user)
 
 
 class GuardianRegisterSerializer(serializers.ModelSerializer):
@@ -81,6 +58,17 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ["email", "password", "display_name", "date_of_birth"]
+
+    def validate_date_of_birth(self, value):
+        from datetime import date
+
+        today = date.today()
+        if value > today:
+            raise serializers.ValidationError("Date of birth cannot be in the future.")
+        age = today.year - value.year - ((today.month, today.day) < (value.month, value.day))
+        if age > 18:
+            raise serializers.ValidationError("Student must be 18 or younger.")
+        return value
 
     def create(self, validated_data):
         display_name = validated_data.pop("display_name")

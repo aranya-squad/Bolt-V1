@@ -1,5 +1,5 @@
 // Bolt Abacus Design System — GlassCard
-import type { CSSProperties, MouseEvent, ReactNode } from "react";
+import type { CSSProperties, KeyboardEvent, MouseEvent, ReactNode } from "react";
 
 type Variant = "default" | "active" | "locked" | "success";
 
@@ -12,25 +12,25 @@ interface GlassCardProps {
 
 const VARIANTS: Record<Variant, CSSProperties> = {
   default: {
-    background: "rgba(255,255,255,0.05)",
+    background: "var(--glass-05)",
     border: "none",
     boxShadow: "none",
   },
   active: {
-    background: "rgba(255,255,255,0.05)",
+    background: "var(--glass-05)",
     border: "1px solid var(--y-bolt)",
     boxShadow: "0 0 18px 2px rgba(250,204,21,0.6)",
     animation: "pulse-glow 2.4s ease-in-out infinite",
   },
   locked: {
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(255,255,255,0.10)",
+    background: "var(--glass-05)",
+    border: "1px solid var(--glass-10)",
     opacity: 0.6,
   },
   success: {
-    background: "rgba(255,255,255,0.05)",
-    border: "1px solid rgba(34,197,94,0.5)",
-    boxShadow: "0 0 18px rgba(34,197,94,0.2)",
+    background: "var(--glass-05)",
+    border: "1px solid var(--ok-50)",
+    boxShadow: "0 0 18px var(--ok-20)",
   },
 };
 
@@ -38,7 +38,7 @@ export function GlassCard({ children, variant = "default", style = {}, onClick }
   function handleMouseEnter(e: MouseEvent<HTMLDivElement>) {
     if (variant === "default") {
       e.currentTarget.style.transform = "translateY(-2px)";
-      e.currentTarget.style.boxShadow = "0 0 24px rgba(250,204,21,0.15)";
+      e.currentTarget.style.boxShadow = "0 0 24px rgba(250,204,21,0.15)"; // hover-only soft yellow glow (no exact token)
     }
   }
   function handleMouseLeave(e: MouseEvent<HTMLDivElement>) {
@@ -48,19 +48,29 @@ export function GlassCard({ children, variant = "default", style = {}, onClick }
     }
   }
 
+  function handleKeyDown(e: KeyboardEvent<HTMLDivElement>) {
+    if (onClick && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      onClick(e as unknown as MouseEvent<HTMLDivElement>);
+    }
+  }
+
   return (
     <div
       data-glass
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
       onClick={onClick}
+      onKeyDown={onClick ? handleKeyDown : undefined}
       style={{
         position: "relative",
-        borderRadius: 24,
+        borderRadius: "var(--r-xl)",
         overflow: "hidden",
-        backdropFilter: "blur(24px)",
-        WebkitBackdropFilter: "blur(24px)",
+        backdropFilter: "var(--blur-glass)",
+        WebkitBackdropFilter: "var(--blur-glass)",
         cursor: onClick ? "pointer" : "default",
         willChange: onClick ? "transform" : undefined,
-        transition: "transform 200ms cubic-bezier(.2,.8,.2,1), box-shadow 200ms",
+        transition: "transform 200ms var(--ease-out), box-shadow 200ms",
         ...VARIANTS[variant],
         ...style,
       }}
@@ -77,7 +87,7 @@ export function GlassCard({ children, variant = "default", style = {}, onClick }
           padding: 1,
           background:
             variant === "default"
-              ? "linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.02))"
+              ? "linear-gradient(180deg, rgba(255,255,255,0.25), rgba(255,255,255,0.02))" // rim-light gradient stops have no token equivalents
               : "none",
           WebkitMask: "linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)",
           WebkitMaskComposite: "xor",

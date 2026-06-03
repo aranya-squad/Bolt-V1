@@ -1,7 +1,7 @@
 // Bolt Abacus Design System — AmbientScene
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 
-type Accent = "yellow" | "purple" | "blue" | "pink";
+type Accent = "yellow" | "purple" | "blue" | "pink" | "orange" | "streak";
 
 interface AmbientSceneProps {
   accents?: Accent[];
@@ -13,6 +13,8 @@ const PALETTE: Record<Accent, string> = {
   purple: "rgba(111,0,190,0.18)",
   blue:   "rgba(173,198,255,0.14)",
   pink:   "rgba(255,180,171,0.14)",
+  orange: "rgba(251,146,60,0.18)",
+  streak: "rgba(251,146,60,0.18)",
 };
 
 const BLOB_COLORS: Record<Accent, string> = {
@@ -20,10 +22,26 @@ const BLOB_COLORS: Record<Accent, string> = {
   purple: "rgba(221,183,255,0.30)",
   blue:   "rgba(173,198,255,0.28)",
   pink:   "rgba(255,180,171,0.25)",
+  orange: "rgba(251,146,60,0.30)",
+  streak: "rgba(251,146,60,0.30)",
 };
 
-export function AmbientScene({ accents = ["yellow", "purple", "blue"], particleCount = 4 }: AmbientSceneProps) {
+export function AmbientScene({ accents = ["yellow", "purple", "blue"], particleCount }: AmbientSceneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [focusMode, setFocusMode] = useState(() => document.body.classList.contains("focus-mode"));
+
+  // Raise default particle count on desktop.
+  const defaultCount = window.innerWidth > 1024 ? 6 : 4;
+  const effectiveCount = focusMode ? 0 : (particleCount ?? defaultCount);
+
+  // MutationObserver: track focus-mode class on <body>.
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setFocusMode(document.body.classList.contains("focus-mode"));
+    });
+    observer.observe(document.body, { attributes: true, attributeFilter: ["class"] });
+    return () => observer.disconnect();
+  }, []);
 
   // Pause drift animations when the scene's page is not visible (tab switch or
   // covered by another element), resume when visible again.
@@ -58,7 +76,7 @@ export function AmbientScene({ accents = ["yellow", "purple", "blue"], particleC
     };
   }, []);
 
-  const blobs = Array.from({ length: particleCount }, (_, i) => {
+  const blobs = Array.from({ length: effectiveCount }, (_, i) => {
     const accent = accents[i % accents.length];
     return {
       key: i,

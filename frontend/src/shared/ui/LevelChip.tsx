@@ -3,7 +3,7 @@ interface LevelChipProps {
   level?: number;
 }
 
-export function LevelChip({ level = 12 }: LevelChipProps) {
+export function LevelChip({ level }: LevelChipProps) {
   return (
     <div
       style={{
@@ -19,7 +19,7 @@ export function LevelChip({ level = 12 }: LevelChipProps) {
         color: "var(--y-bolt)",
       }}
     >
-      LEVEL {level}
+      {level !== undefined ? `LEVEL ${level}` : "LEVEL —"}
     </div>
   );
 }

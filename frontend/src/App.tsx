@@ -3,8 +3,11 @@ import { RouterProvider } from "react-router-dom";
 import { router } from "./router";
 import { DemoControls } from "./shared/ui/DemoControls";
 import type { DemoState } from "./shared/ui/DemoControls";
+import { apiClient } from "./shared/api/client";
+import { useAuthStore } from "./shared/store/authStore";
 
 const INITIAL_DEMO: DemoState = { focusMode: false, skeleton: false, connection: "good" };
+const IS_DEV = import.meta.env.DEV;
 
 export default function App() {
   const [demo, setDemo] = useState<DemoState>(INITIAL_DEMO);
@@ -12,7 +15,7 @@ export default function App() {
   const updateDemo = useCallback((updater: (prev: DemoState) => DemoState) => {
     setDemo(prev => {
       const next = updater(prev);
-      window.__BOLT_DEMO__ = next;
+      if (IS_DEV) window.__BOLT_DEMO__ = next;
       document.body.classList.toggle("focus-mode", next.focusMode);
       return next;
     });
@@ -29,16 +32,29 @@ export default function App() {
       document.body.classList.add("focus-mode");
       setDemo(prev => {
         const next = { ...prev, focusMode: true };
-        window.__BOLT_DEMO__ = next;
+        if (IS_DEV) window.__BOLT_DEMO__ = next;
         return next;
       });
     }
   }, []);
 
+  // Hydration: verify persisted user is still valid, then clear the isHydrating gate
+  useEffect(() => {
+    const { user, setUser, setHydrated } = useAuthStore.getState();
+    if (!user) {
+      setHydrated();
+      return;
+    }
+    apiClient.get("/auth/me/")
+      .then(({ data }) => setUser(data))
+      .catch(() => { /* interceptor handles logout-and-redirect on auth failure */ })
+      .finally(() => setHydrated());
+  }, []);
+
   return (
     <>
       <RouterProvider router={router} />
-      <DemoControls state={demo} setState={updateDemo} />
+      {IS_DEV && <DemoControls state={demo} setState={updateDemo} />}
     </>
   );
 }

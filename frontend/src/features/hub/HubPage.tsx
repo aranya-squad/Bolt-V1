@@ -1,35 +1,33 @@
 import { useNavigate } from "react-router-dom";
 import { useMe } from "@/shared/api/queries/useMe";
+import { useXpProgress } from "@/shared/api/queries/useXpProgress";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
-import { TopNav } from "@/shared/ui/TopNav";
 import { Page } from "@/shared/ui/Page";
 import { GlassCard } from "@/shared/ui/GlassCard";
-import { Icon } from "@/shared/ui/Icon";
+import { HudStatTile } from "@/shared/ui/HudStatTile";
+import { XpProgressBar } from "@/shared/ui/XpProgressBar";
 
 export default function HubPage() {
   const navigate = useNavigate();
   const { data: user } = useMe();
+  const { data: xp } = useXpProgress();
 
   const displayName = user?.profile?.display_name ?? "…";
   const totalXp: number = user?.stats?.total_xp ?? 0;
   const streak: number = user?.stats?.streak_days ?? 0;
   const levels: number = user?.stats?.levels_completed ?? 0;
+  const currentLevel: number = user?.stats?.current_level ?? 1;
 
   return (
     <>
       <AmbientScene accents={["yellow", "purple", "blue"]} />
-      <TopNav
-        xp={totalXp}
-        streak={streak}
-        trophies={levels}
-      />
       <Page>
         {/* ── Hero ─────────────────────────────────────────────── */}
-        <header style={{ marginBottom: 48 }}>
+        <header style={{ marginBottom: 40 }}>
           <h1 className="t-hero" style={{ color: "var(--y-bolt)", marginBottom: 12 }}>
             BOLT ABACUS HUB
           </h1>
-          <p style={{ fontFamily: "var(--font-body)", fontSize: 18, color: "var(--fg-sand)", margin: 0 }}>
+          <p className="t-body" style={{ margin: 0 }}>
             Welcome back,{" "}
             <strong style={{ color: "var(--fg-bone)", fontWeight: 600 }}>
               {displayName}
@@ -38,17 +36,26 @@ export default function HubPage() {
         </header>
 
         {/* ── HUD stats strip ──────────────────────────────────── */}
-        <div style={{ display: "flex", gap: 16, marginBottom: 48 }}>
-          <StatTile icon="zap"    value={String(totalXp)} label="Total XP"    color="var(--y-bolt)"          />
-          <StatTile icon="flame"  value={String(streak)}  label="Day Streak"  color="var(--orange-streak)"   />
-          <StatTile icon="trophy" value={String(levels)}  label="Levels Done" color="var(--bolt-blue)"       />
+        <div style={{ display: "flex", gap: "var(--s-md)", marginBottom: "var(--s-lg)" }}>
+          <HudStatTile icon="zap"    value={String(totalXp)}     label="Total XP"    color="var(--y-bolt)"        />
+          <HudStatTile icon="flame"  value={String(streak)}      label="Day Streak"  color="var(--orange-streak)" />
+          <HudStatTile icon="trophy" value={String(levels)}      label="Levels Done" color="var(--bolt-blue)"     />
+          <HudStatTile icon="target" value={`LVL ${currentLevel}`} label="Current Level" color="var(--p-cyber)" />
+        </div>
+
+        <div style={{ marginBottom: "var(--s-xl)" }}>
+          <XpProgressBar
+            currentXp={xp?.total_xp ?? totalXp}
+            currentLevelThreshold={xp?.current_level_threshold ?? 0}
+            nextLevelThreshold={xp?.next_level_threshold ?? 0}
+          />
         </div>
 
         {/* ── Portal cards ─────────────────────────────────────── */}
         <div style={{ display: "flex", gap: 20 }}>
           <GlassCard
             variant="default"
-            style={{ flex: 1, minHeight: 260, cursor: "pointer" }}
+            style={{ flex: 1, minHeight: 280, cursor: "pointer" }}
             onClick={() => navigate("/learn")}
           >
             <div
@@ -57,13 +64,14 @@ export default function HubPage() {
                 flexDirection: "column",
                 justifyContent: "flex-end",
                 height: "100%",
+                minHeight: 280,
                 padding: "var(--s-xl)",
               }}
             >
               <h2 className="t-h2" style={{ color: "var(--y-bolt)", marginBottom: 8 }}>
                 LEARN
               </h2>
-              <p style={{ fontFamily: "var(--font-body)", color: "var(--fg-sand)", margin: 0, fontSize: 15 }}>
+              <p className="t-body-md" style={{ margin: 0 }}>
                 Classwork &amp; structured lessons
               </p>
             </div>
@@ -71,7 +79,7 @@ export default function HubPage() {
 
           <GlassCard
             variant="default"
-            style={{ flex: 1, minHeight: 260, cursor: "pointer" }}
+            style={{ flex: 1, minHeight: 280, cursor: "pointer" }}
             onClick={() => navigate("/practice")}
           >
             <div
@@ -80,13 +88,14 @@ export default function HubPage() {
                 flexDirection: "column",
                 justifyContent: "flex-end",
                 height: "100%",
+                minHeight: 280,
                 padding: "var(--s-xl)",
               }}
             >
               <h2 className="t-h2" style={{ color: "var(--orange-streak)", marginBottom: 8 }}>
                 PRACTICE ARENA
               </h2>
-              <p style={{ fontFamily: "var(--font-body)", color: "var(--fg-sand)", margin: 0, fontSize: 15 }}>
+              <p className="t-body-md" style={{ margin: 0 }}>
                 Time Attack, Zen Mode &amp; custom drills
               </p>
             </div>
@@ -94,36 +103,5 @@ export default function HubPage() {
         </div>
       </Page>
     </>
-  );
-}
-
-function StatTile({ icon, value, label, color }: { icon: string; value: string; label: string; color: string }) {
-  return (
-    <GlassCard variant="default" style={{ flex: 1, textAlign: "center", padding: "20px 24px" }}>
-      <Icon name={icon} size={22} color={color} style={{ margin: "0 auto 10px" }} />
-      <div
-        style={{
-          fontFamily: "var(--font-display)",
-          fontSize: 30,
-          color,
-          letterSpacing: "0.04em",
-          lineHeight: 1,
-        }}
-      >
-        {value}
-      </div>
-      <div
-        style={{
-          fontFamily: "var(--font-label)",
-          fontSize: 11,
-          color: "var(--fg-sand)",
-          marginTop: 6,
-          letterSpacing: "0.1em",
-          textTransform: "uppercase",
-        }}
-      >
-        {label}
-      </div>
-    </GlassCard>
   );
 }

@@ -4,6 +4,7 @@ import { PageSkeleton } from "@/features/shared/PageSkeleton";
 import { ProtectedRoute } from "@/features/shared/ProtectedRoute";
 import { PublicRoute } from "@/features/shared/PublicRoute";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
+import { ShellLayout } from "@/features/shared/ShellLayout";
 
 // Lazy-load all feature pages (see ARCHITECTURE.md §6.4)
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
@@ -17,6 +18,7 @@ const TrainingArenaPage = lazy(() => import("@/features/practice/TrainingArenaPa
 const ArenaSetupPage = lazy(() => import("@/features/practice/ArenaSetupPage"));
 const InArenaPage = lazy(() => import("@/features/practice/InArenaPage"));
 const VictoryPage = lazy(() => import("@/features/practice/VictoryPage"));
+const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
 
 const wrap = (element: React.ReactNode) => (
   <Suspense fallback={<PageSkeleton />}>{element}</Suspense>
@@ -34,19 +36,32 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      { path: "/", element: <Navigate to="/hub" replace /> },
-      { path: "/hub", element: wrap(<HubPage />) },
-      { path: "/learn", element: wrap(<LevelSelectionPage />) },
-      { path: "/learn/level/:levelId", element: wrap(<PathOfConquestPage />) },
-      { path: "/learn/level/:levelId/classwork", element: wrap(<ClassworkPage />) },
+      // NAV-SHELL group: Sidebar + BottomNav rendered on all these routes
       {
-        path: "/learn/level/:levelId/report/:sessionId",
-        element: wrap(<MissionReportPage />),
+        element: <ShellLayout />,
+        children: [
+          { path: "/", element: <Navigate to="/hub" replace /> },
+          { path: "/hub", element: wrap(<HubPage />) },
+          { path: "/learn", element: wrap(<LevelSelectionPage />) },
+          { path: "/learn/level/:levelId", element: wrap(<PathOfConquestPage />) },
+          // Legacy classwork route — kept during Wave 2–3 transition
+          { path: "/learn/level/:levelId/classwork", element: wrap(<ClassworkPage />) },
+          {
+            path: "/learn/level/:levelId/report/:sessionId",
+            element: wrap(<MissionReportPage />),
+          },
+          { path: "/practice", element: wrap(<TrainingArenaPage />) },
+          { path: "/practice/setup/:mode", element: wrap(<ArenaSetupPage />) },
+          { path: "/practice/victory/:sessionId", element: wrap(<VictoryPage />) },
+          { path: "/profile", element: wrap(<ProfilePage />) },
+        ],
       },
-      { path: "/practice", element: wrap(<TrainingArenaPage />) },
-      { path: "/practice/setup/:mode", element: wrap(<ArenaSetupPage />) },
+      // FOCUS group: no nav (active session screens must be distraction-free)
+      {
+        path: "/learn/level/:levelId/lesson/:lessonId/classwork",
+        element: wrap(<ClassworkPage />),
+      },
       { path: "/practice/session/:sessionId", element: wrap(<InArenaPage />) },
-      { path: "/practice/victory/:sessionId", element: wrap(<VictoryPage />) },
     ],
   },
   { path: "*", element: <NotFoundPage /> },

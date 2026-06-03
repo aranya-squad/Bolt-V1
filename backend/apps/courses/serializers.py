@@ -1,6 +1,18 @@
 from rest_framework import serializers
 
-from .models import Level
+from .models import Level, Lesson
+
+
+class LessonDetailSerializer(serializers.Serializer):
+    """Read-only lesson detail with per-user completion data injected from view context."""
+    id = serializers.UUIDField()
+    order = serializers.IntegerField()
+    name = serializers.CharField()
+    description = serializers.CharField()
+    classwork_completed = serializers.BooleanField()
+    classwork_accuracy_pct = serializers.FloatField(allow_null=True)
+    homework_completed = serializers.BooleanField()
+    is_locked = serializers.BooleanField()
 
 
 class LevelSerializer(serializers.ModelSerializer):

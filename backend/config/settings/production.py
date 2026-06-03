@@ -18,6 +18,14 @@ sentry_dsn = env("SENTRY_DSN", default="")
 if sentry_dsn:
     sentry_sdk.init(dsn=sentry_dsn, traces_sample_rate=0.1)
 
+# ─── Email ────────────────────────────────────────────────────────────────────
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.smtp.EmailBackend")
+EMAIL_HOST = env("EMAIL_HOST", default="smtp.sendgrid.net")
+EMAIL_PORT = env.int("EMAIL_PORT", default=587)
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = env("EMAIL_HOST_USER", default="apikey")
+EMAIL_HOST_PASSWORD = env("EMAIL_HOST_PASSWORD", default="")
+
 # S3 media storage (stub — wired when prod deploys)
 # Uncomment and configure when deploying:
 # DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"

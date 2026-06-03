@@ -18,6 +18,24 @@ apiClient.interceptors.request.use((config) => {
   return config;
 });
 
+// Singleton prevents concurrent 401s from triggering multiple simultaneous refresh calls
+let refreshInFlight: Promise<string> | null = null;
+
+async function doRefresh(): Promise<string> {
+  if (!refreshInFlight) {
+    refreshInFlight = axios
+      .post(`${API_BASE}/api/v1/auth/refresh/`, {}, { withCredentials: true })
+      .then(({ data }) => {
+        useAuthStore.getState().setAccessToken(data.access);
+        return data.access as string;
+      })
+      .finally(() => {
+        refreshInFlight = null;
+      });
+  }
+  return refreshInFlight;
+}
+
 // Refresh access token on 401, then retry once
 apiClient.interceptors.response.use(
   (response) => response,
@@ -26,13 +44,8 @@ apiClient.interceptors.response.use(
     if (error.response?.status === 401 && !original._retry) {
       original._retry = true;
       try {
-        const { data } = await axios.post(
-          `${API_BASE}/api/v1/auth/refresh/`,
-          {},
-          { withCredentials: true }
-        );
-        useAuthStore.getState().setAccessToken(data.access);
-        original.headers.Authorization = `Bearer ${data.access}`;
+        const newToken = await doRefresh();
+        original.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(original);
       } catch {
         useAuthStore.getState().logout();
