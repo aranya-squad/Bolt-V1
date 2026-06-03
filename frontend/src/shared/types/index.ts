@@ -6,6 +6,7 @@ export interface HudStats {
   total_xp: number;
   streak_days: number;
   levels_completed: number;
+  current_level: number;
 }
 
 export interface User {
@@ -92,6 +93,7 @@ export interface AttemptVerdict {
 
 export interface QuestionAttempt {
   question_index: number;
+  attempt_number: number;
   question_text: string;
   expected_answer: number;
   submitted_answer: number;
@@ -99,7 +101,22 @@ export interface QuestionAttempt {
   elapsed_ms: number;
 }
 
+export type QuestionVerdict = "correct" | "wrong" | "fixed";
+
 export interface SessionReport {
   progress: ProgressRecord;
   attempts: QuestionAttempt[];
+  lesson_id: string | null;
+  question_verdicts: Record<number, QuestionVerdict>;
+}
+
+export interface LessonWithCompletion {
+  id: string;
+  order: number;
+  name: string;
+  description: string;
+  classwork_completed: boolean;
+  classwork_accuracy_pct: number | null;
+  homework_completed: boolean;
+  is_locked: boolean;
 }

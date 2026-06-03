@@ -19,6 +19,7 @@ class IsGuardian(BasePermission):
         return request.user.is_authenticated and request.user.role == "GUARDIAN"
 
 
+# Reserved for future teacher portal — no current view uses this.
 class IsTeacher(BasePermission):
     def has_permission(self, request, view):
         return request.user.is_authenticated and request.user.role == "TEACHER"
@@ -34,6 +35,7 @@ class IsGuardianOfStudent(BasePermission):
         ).exists()
 
 
+# Reserved for future teacher portal — no current view uses this.
 class IsTeacherOfStudent(BasePermission):
     def has_object_permission(self, request, view, obj):
         from apps.classroom.models import Enrollment

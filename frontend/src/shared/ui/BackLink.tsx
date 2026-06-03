@@ -6,6 +6,7 @@ interface BackLinkProps {
   onClick: () => void;
 }
 
+/** @deprecated Navigation now handled by browser back + BreadcrumbChip. Delete post-Wave-5 QA. */
 export function BackLink({ label, onClick }: BackLinkProps) {
   return (
     <button

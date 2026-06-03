@@ -53,3 +53,7 @@ htmlcov/
 # Design assets (binary / not source)
 *.zip
 bolt-abacus-design-system/
+design_files/
+
+# Test databases
+db_test.sqlite3

@@ -13,7 +13,7 @@ export function Page({ children, padded = true }: PageProps) {
       style={{
         position: "relative",
         zIndex: 1,
-        minHeight: "calc(100vh - 77px)",
+        minHeight: "100vh",
         padding: padded ? "64px 64px 80px" : 0,
         maxWidth: 1280,
         margin: "0 auto",

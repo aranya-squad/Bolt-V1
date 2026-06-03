@@ -2,8 +2,11 @@ from .base import *  # noqa: F401, F403
 
 DEBUG = True
 
-# Broad CORS for local dev
-CORS_ALLOW_ALL_ORIGINS = True
+# Do NOT use CORS_ALLOW_ALL_ORIGINS — incompatible with CORS_ALLOW_CREDENTIALS (browsers reject it)
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
 
 INSTALLED_APPS += ["debug_toolbar"]  # noqa: F405
 

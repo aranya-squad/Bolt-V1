@@ -23,8 +23,8 @@ export function OperationButton({ op, selected, onClick }: OperationButtonProps)
       onClick={onClick}
       style={{
         flex: 1,
-        padding: "32px 16px",
-        borderRadius: 24,
+        padding: "32px var(--s-md)",
+        borderRadius: "var(--r-xl)",
         background: selected ? "var(--y-bolt)" : "var(--md-surface-container)",
         border: selected ? "2px solid var(--y-bolt)" : "1px solid rgba(255,255,255,0.06)",
         boxShadow: selected ? "0 0 22px rgba(250,204,21,0.45)" : "none",

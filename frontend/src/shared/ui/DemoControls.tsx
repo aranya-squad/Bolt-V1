@@ -29,11 +29,11 @@ function DCToggle({
       onClick={() => onChange(!value)}
       style={{
         width: "100%",
-        marginTop: 8,
+        marginTop: "var(--s-sm)",
         padding: "10px 12px",
-        borderRadius: 12,
+        borderRadius: "var(--r-md)",
         background: value ? "rgba(250,204,21,0.08)" : "transparent",
-        border: `1px solid ${value ? "rgba(250,204,21,0.3)" : "rgba(255,255,255,0.06)"}`,
+        border: `1px solid ${value ? "var(--y-bolt-30)" : "rgba(255,255,255,0.06)"}`,
         cursor: "pointer",
         textAlign: "left",
         display: "flex",
@@ -71,7 +71,7 @@ function DCToggle({
         style={{
           width: 30,
           height: 18,
-          borderRadius: 9999,
+          borderRadius: "var(--r-pill)",
           flexShrink: 0,
           background: value ? "var(--y-bolt)" : "var(--bg-ash)",
           position: "relative",
@@ -84,7 +84,7 @@ function DCToggle({
             left: value ? 14 : 2,
             width: 14,
             height: 14,
-            borderRadius: 9999,
+            borderRadius: "var(--r-pill)",
             background: value ? "var(--y-bolt-ink)" : "var(--fg-sand)",
             transition: "left 200ms",
           }}
@@ -121,10 +121,10 @@ export function DemoControls({ state, setState }: DemoControlsProps) {
           style={{
             width: 44,
             height: 44,
-            borderRadius: 9999,
+            borderRadius: "var(--r-pill)",
             background: "var(--bg-coal)",
             color: "var(--fg-sand)",
-            border: "1px solid rgba(255,255,255,0.1)",
+            border: "1px solid var(--glass-10)",
             boxShadow: "0 10px 24px rgba(0,0,0,0.5), 0 0 12px rgba(250,204,21,0.15)",
             cursor: "pointer",
             display: "flex",
@@ -139,11 +139,11 @@ export function DemoControls({ state, setState }: DemoControlsProps) {
         <div
           style={{
             width: 280,
-            padding: 16,
-            borderRadius: 16,
+            padding: "var(--s-md)",
+            borderRadius: "var(--r-lg)",
             background: "var(--md-surface-container)",
             border: "1px solid rgba(255,255,255,0.08)",
-            boxShadow: "0 24px 48px -12px rgba(0,0,0,0.6), 0 0 18px rgba(250,204,21,0.1)",
+            boxShadow: "0 24px 48px -12px rgba(0,0,0,0.6), 0 0 18px var(--y-bolt-10)",
             color: "var(--fg-bone)",
           }}
         >
@@ -217,8 +217,8 @@ export function DemoControls({ state, setState }: DemoControlsProps) {
                   key={o.v}
                   onClick={() => setState(s => ({ ...s, connection: o.v }))}
                   style={{
-                    padding: "8px 0",
-                    borderRadius: 9999,
+                    padding: "var(--s-sm) 0",
+                    borderRadius: "var(--r-pill)",
                     background: state.connection === o.v ? "var(--y-bolt)" : "var(--bg-graphite)",
                     color: state.connection === o.v ? "var(--y-bolt-ink)" : "var(--fg-sand)",
                     border: "1px solid rgba(255,255,255,0.06)",

@@ -2,9 +2,6 @@ import random
 
 from .base import Question, QuestionGenerator
 
-# Minimum elapsed ms before we accept a submission (anti-cheat: catches bot submissions)
-MIN_ANSWER_MS = 200
-
 
 class ProceduralGenerator(QuestionGenerator):
     """
@@ -32,27 +29,45 @@ class ProceduralGenerator(QuestionGenerator):
 
         lo = 10 ** (digits - 1)
         hi = 10**digits - 1
-        operands = [self.rng.randint(lo, hi) for _ in range(rows)]
 
         if op == "ADD":
+            operands = [self.rng.randint(lo, hi) for _ in range(rows)]
             answer = sum(operands)
             text = " + ".join(map(str, operands))
         elif op == "SUB":
-            # Sort descending so result is non-negative (appropriate for ages 5–10)
-            operands.sort(reverse=True)
-            answer = operands[0] - sum(operands[1:])
-            if answer < 0:
-                answer = abs(answer)
+            # Bounded generation: all operands including minuend stay in [lo, hi], answer >= 0.
+            # When (rows-1)*lo > hi the constraint is infeasible; degrade to 2-operand subtraction.
+            if (rows - 1) * lo > hi:
+                a = self.rng.randint(lo, hi)
+                b = self.rng.randint(lo, a)
+                answer = a - b
+                operands = [a, b]
+            else:
+                # Minuend must be >= lo*rows to leave room for rows-1 subtractors (each >= lo)
+                # plus a non-negative answer; clamp to hi when lo*rows would exceed it.
+                minuend = self.rng.randint(min(lo * rows, hi), hi)
+                remaining = minuend
+                subtractors = []
+                for slots_left in range(rows - 1, 0, -1):
+                    # Reserve lo for each subsequent slot so answer stays >= 0.
+                    upper = min(hi, remaining - lo * (slots_left - 1))
+                    sub = self.rng.randint(lo, max(lo, upper))
+                    subtractors.append(sub)
+                    remaining -= sub
+                answer = remaining
+                operands = [minuend] + subtractors
             text = " - ".join(map(str, operands))
         elif op == "MUL":
-            # Limit to 2 operands for multiplication to keep difficulty sane at v1
-            a, b = operands[0], operands[1]
+            # Exactly 2 operands for multiplication to keep difficulty sane at v1.
+            a, b = self.rng.randint(lo, hi), self.rng.randint(lo, hi)
             answer = a * b
             text = f"{a} × {b}"
         elif op == "DIV":
-            # Generate dividend from a clean multiple to avoid remainders
+            # Generate dividend from a clean multiple to avoid remainders.
+            # quotient_hi raised to avoid collapsed range on 1-digit operands.
             divisor = self.rng.randint(lo, hi)
-            quotient = self.rng.randint(1, hi // max(divisor, 1) or 1)
+            quotient_hi = max(hi // max(divisor, 1), 5)
+            quotient = self.rng.randint(1, quotient_hi)
             dividend = divisor * quotient
             answer = quotient
             text = f"{dividend} ÷ {divisor}"

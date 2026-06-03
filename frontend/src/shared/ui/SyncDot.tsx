@@ -22,7 +22,7 @@ export function SyncDot({ state = "idle" }: SyncDotProps) {
         alignItems: "center",
         gap: 6,
         padding: "4px 10px",
-        borderRadius: 9999,
+        borderRadius: "var(--r-pill)",
         background: "rgba(255,255,255,0.03)",
         border: `1px solid ${s.color}40`,
         fontFamily: "var(--font-label)",
@@ -37,7 +37,7 @@ export function SyncDot({ state = "idle" }: SyncDotProps) {
         style={{
           width: 6,
           height: 6,
-          borderRadius: 9999,
+          borderRadius: "var(--r-pill)",
           background: s.color,
           boxShadow: `0 0 8px ${s.color}`,
           animation: s.pulse ? "sync-pulse 1.2s ease-in-out infinite" : "none",

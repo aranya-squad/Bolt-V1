@@ -27,6 +27,7 @@ DJANGO_APPS = [
 THIRD_PARTY_APPS = [
     "rest_framework",
     "rest_framework_simplejwt",
+    "rest_framework_simplejwt.token_blacklist",
     "corsheaders",
     "drf_spectacular",
 ]
@@ -84,9 +85,14 @@ CACHES = {
         "LOCATION": env("REDIS_URL", default="redis://localhost:6379/0"),
         "OPTIONS": {
             "CLIENT_CLASS": "django_redis.client.DefaultClient",
+            "CONNECTION_POOL_KWARGS": {"max_connections": env.int("REDIS_MAX_CONNECTIONS", default=50)},
         },
     }
 }
+
+# ─── Security cookies ──────────────────────────────────────────────────────────
+CSRF_COOKIE_HTTPONLY = True
+SESSION_COOKIE_HTTPONLY = True  # Django default, but explicit is better
 
 AUTH_PASSWORD_VALIDATORS = [
     {"NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator"},
@@ -128,6 +134,7 @@ REST_FRAMEWORK = {
         "login": "5/min",
         "register": "3/hour",
         "attempt": "120/min",
+        "profile": "30/min",
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
@@ -143,10 +150,14 @@ SIMPLE_JWT = {
         days=env.int("JWT_REFRESH_TOKEN_LIFETIME_DAYS", default=7)
     ),
     "ROTATE_REFRESH_TOKENS": True,
-    "BLACKLIST_AFTER_ROTATION": False,  # we use Redis denylist instead
+    "BLACKLIST_AFTER_ROTATION": True,
     "UPDATE_LAST_LOGIN": True,
     "ALGORITHM": "HS256",
     "AUTH_HEADER_TYPES": ("Bearer",),
+    "REFRESH_COOKIE_NAME": env("REFRESH_COOKIE_NAME", default="refresh_token"),
+    "REFRESH_COOKIE_PATH": "/api/v1/auth/",  # covers /refresh/ AND /logout/
+    "REFRESH_COOKIE_SAMESITE": "Lax",
+    "REFRESH_COOKIE_DOMAIN": env("REFRESH_COOKIE_DOMAIN", default=None),
 }
 
 # ─── drf-spectacular ──────────────────────────────────────────────────────────

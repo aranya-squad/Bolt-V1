@@ -1,3 +1,4 @@
+import logging
 import random
 
 from django.shortcuts import get_object_or_404
@@ -6,14 +7,17 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.courses.models import Level
+from apps.courses.models import Level, Lesson
+from apps.exercises.constants import MAX_SESSION_SECONDS, MIN_ANSWER_MS
 from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
-from apps.progress.models import LevelCompletion, ProgressRecord
+from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
 from apps.progress.services import finalize_session, record_attempt
 
 from .models import ArenaSession, ExerciseTemplate, SessionKind
 from .serializers import AttemptSerializer, ProgressRecordSerializer, SessionMetaSerializer
+
+_log = logging.getLogger("apps.exercises.anticheat")
 
 
 class StartClassworkView(APIView):
@@ -65,10 +69,64 @@ class StartClassworkView(APIView):
         return Response(SessionMetaSerializer(session).data, status=status.HTTP_201_CREATED)
 
 
+class StartLessonClassworkView(APIView):
+    """
+    POST /levels/{level_id}/lessons/{lesson_id}/classwork/start/
+    Lesson-scoped classwork start. Enforces lesson-level locking via LessonCompletion.
+    Returns 200 on resume, 201 on new session, 403 if locked, 400 if no template.
+    """
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, level_id, lesson_id):
+        lesson = get_object_or_404(Lesson, pk=lesson_id, level__id=level_id)
+
+        if lesson.order > 1:
+            prev_lesson = Lesson.objects.filter(
+                level=lesson.level, order=lesson.order - 1
+            ).first()
+            if prev_lesson and not LessonCompletion.objects.filter(
+                user=request.user, lesson=prev_lesson, kind="CLASSWORK"
+            ).exists():
+                return Response({"detail": "Lesson is locked."}, status=status.HTTP_403_FORBIDDEN)
+
+        existing = ArenaSession.objects.filter(
+            user=request.user,
+            kind=SessionKind.CLASSWORK,
+            template__lesson=lesson,
+            submitted_at__isnull=True,
+            abandoned_at__isnull=True,
+        ).first()
+        if existing:
+            return Response(SessionMetaSerializer(existing).data)
+
+        template = ExerciseTemplate.objects.filter(
+            lesson=lesson, kind=SessionKind.CLASSWORK
+        ).first()
+        if template is None:
+            return Response(
+                {"detail": "No content available for this lesson."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        seed = random.getrandbits(63)
+        generator = CuratedGenerator(seed=seed, template_config=template.config_json)
+        questions = generator.generate()
+
+        session = ArenaSession.objects.create(
+            user=request.user,
+            kind=SessionKind.CLASSWORK,
+            template=template,
+            config_json=template.config_json,
+            seed=seed,
+            questions_json=[q.to_dict() for q in questions],
+        )
+        return Response(SessionMetaSerializer(session).data, status=status.HTTP_201_CREATED)
+
+
 class StartPracticeView(APIView):
     permission_classes = [IsAuthenticated]
 
-    VALID_MODES = {"TIME_ATTACK", "ZEN", "CUSTOM"}
+    VALID_MODES = {"TIME_ATTACK", "ZEN", "CUSTOM", "FLASH_CARDS"}
     VALID_OPERATIONS = {"ADD", "SUB", "MUL", "DIV"}
 
     def post(self, request):
@@ -109,8 +167,8 @@ class StartPracticeView(APIView):
 
         try:
             time_limit_sec = int(request.data.get("time_limit_sec", ""))
-            if time_limit_sec < 0:
-                errors["time_limit_sec"] = "Must be >= 0."
+            if not (0 <= time_limit_sec <= MAX_SESSION_SECONDS):
+                errors["time_limit_sec"] = f"Must be between 0 and {MAX_SESSION_SECONDS}."
         except (TypeError, ValueError):
             errors["time_limit_sec"] = "Must be an integer."
 
@@ -151,7 +209,13 @@ class SubmitAttemptView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, session_id):
-        session = get_object_or_404(ArenaSession, pk=session_id, user=request.user)
+        # select_for_update serializes concurrent submissions for the same session,
+        # making count()+1 for attempt_number atomic within ATOMIC_REQUESTS transaction.
+        session = get_object_or_404(
+            ArenaSession.objects.select_for_update(),
+            pk=session_id,
+            user=request.user,
+        )
 
         if not session.is_active:
             return Response({"detail": "Session is not active."}, status=status.HTTP_400_BAD_REQUEST)
@@ -176,24 +240,38 @@ class SubmitAttemptView(APIView):
         except (TypeError, ValueError):
             return Response({"detail": "answer must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
 
-        elapsed_ms = int(request.data.get("elapsed_ms", 0))
+        try:
+            elapsed_ms = int(request.data.get("elapsed_ms", 0))
+        except (TypeError, ValueError):
+            elapsed_ms = 0
+        if elapsed_ms < 0:
+            elapsed_ms = 0
+
+        if elapsed_ms < MIN_ANSWER_MS:
+            _log.warning(
+                "min_answer_ms_violation",
+                extra={
+                    "session_id": str(session.id),
+                    "user_id": str(request.user.id),
+                    "question_index": question_index,
+                    "elapsed_ms": elapsed_ms,
+                },
+            )
 
         from apps.progress.models import QuestionAttempt
 
-        existing_attempt = QuestionAttempt.objects.filter(
-            session=session, question_index=question_index
-        ).first()
-        if existing_attempt:
-            return Response({
-                "question_index": existing_attempt.question_index,
-                "is_correct": existing_attempt.is_correct,
-                "xp_delta": 0,
-            })
+        attempt_number = (
+            QuestionAttempt.objects.filter(
+                session=session, question_index=question_index
+            ).count()
+            + 1
+        )
 
         q = session.questions_json[question_index]
         attempt = record_attempt(
             session=session,
             question_index=question_index,
+            attempt_number=attempt_number,
             question_text=q["text"],
             expected_answer=q["answer"],
             submitted_answer=answer,
@@ -226,7 +304,14 @@ class FinalizeSessionView(APIView):
         try:
             record = finalize_session(session)
         except ValueError as e:
-            return Response({"detail": str(e)}, status=status.HTTP_400_BAD_REQUEST)
+            if "already finalized" not in str(e):
+                raise  # unexpected — surface with traceback rather than swallow
+            # Race: another request finalized between our check and our call.
+            session.refresh_from_db()
+            try:
+                record = session.progress_record
+            except ProgressRecord.DoesNotExist:
+                return Response({"detail": "Session finalization failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         return Response(ProgressRecordSerializer(record).data)
 
@@ -235,7 +320,11 @@ class SessionReportView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, session_id):
-        session = get_object_or_404(ArenaSession, pk=session_id, user=request.user)
+        session = get_object_or_404(
+            ArenaSession.objects.select_related("template__lesson"),
+            pk=session_id,
+            user=request.user,
+        )
 
         try:
             record = session.progress_record
@@ -245,8 +334,24 @@ class SessionReportView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        attempts = session.attempts.order_by("question_index")
+        attempts = list(session.attempts.order_by("question_index", "attempt_number"))
+        lesson_id = str(session.template.lesson.id) if session.template else None
+
+        # Group attempts by question_index to derive per-question verdict.
+        groups: dict[int, list] = {}
+        for a in attempts:
+            groups.setdefault(a.question_index, []).append(a)
+
+        question_verdicts: dict[int, str] = {}
+        for q_idx, group in groups.items():
+            if group[-1].is_correct:
+                question_verdicts[q_idx] = "fixed" if not group[0].is_correct else "correct"
+            else:
+                question_verdicts[q_idx] = "wrong"
+
         return Response({
             "progress": ProgressRecordSerializer(record).data,
             "attempts": AttemptSerializer(attempts, many=True).data,
+            "lesson_id": lesson_id,
+            "question_verdicts": question_verdicts,
         })

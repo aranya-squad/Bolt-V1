@@ -27,7 +27,7 @@ const VARIANTS: Record<Variant, CSSProperties> = {
     background: "var(--y-bolt)",
     color: "var(--y-bolt-ink)",
     border: "none",
-    boxShadow: "0 0 22px rgba(250,204,21,0.4)",
+    boxShadow: "0 0 22px rgba(250,204,21,0.4)", // primary CTA glow — between --glow-primary-xl and --glow-primary-bright, kept literal for visual fidelity
   },
   ghost: {
     background: "transparent",

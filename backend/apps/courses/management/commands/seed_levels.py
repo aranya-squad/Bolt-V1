@@ -3,6 +3,9 @@ from django.core.management.base import BaseCommand
 from apps.courses.models import Level, Lesson
 from apps.exercises.models import ExerciseTemplate, SessionKind
 
+# Must match courses/migrations/0003_level_xp_thresholds.py — re-running seed preserves these values.
+XP_THRESHOLDS = [0, 200, 500, 900, 1400, 2000, 2700, 3500, 4400, 5500]
+
 LEVEL_CONFIGS = [
     {"operation": "ADD", "digits": 1, "rows": 2, "question_count": 30},  # 1 Foundations
     {"operation": "ADD", "digits": 2, "rows": 2, "question_count": 30},  # 2 Big Friend
@@ -29,7 +32,7 @@ class Command(BaseCommand):
             order = i + 1
             level, level_new = Level.objects.get_or_create(
                 order=order,
-                defaults={"name": name, "description": "", "xp_threshold": 0, "is_advanced": False},
+                defaults={"name": name, "description": "", "xp_threshold": XP_THRESHOLDS[i], "is_advanced": False},
             )
             if level_new:
                 levels_created += 1

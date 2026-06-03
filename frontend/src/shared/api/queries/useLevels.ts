@@ -8,8 +8,8 @@ export function useLevels() {
   return useQuery<Level[]>({
     queryKey: LEVELS_QUERY_KEY,
     queryFn: async () => {
-      const { data } = await apiClient.get<Level[]>("/levels/");
-      return data;
+      const { data } = await apiClient.get<{ results: Level[] }>("/levels/");
+      return data.results;
     },
     staleTime: 1000 * 60 * 10, // 10 min — level list doesn't change often
   });

@@ -6,7 +6,8 @@ import { useSession, useSubmitAttempt, useFinalizeSession } from "@/shared/api/q
 import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
 import type { AttemptVerdict } from "@/shared/types";
 import { BoltButton } from "@/shared/ui/BoltButton";
-import { Chip } from "@/shared/ui/Chip";
+import { ProblemCanvas } from "@/shared/ui/ProblemCanvas";
+import { FeedbackToast } from "@/shared/ui/FeedbackToast";
 
 export default function InArenaPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -67,6 +68,16 @@ export default function InArenaPage() {
     });
   };
 
+  const handleVerdictDismiss = () => {
+    setVerdict(null);
+    setInput("");
+    if (sessionMeta && currentIndex + 1 >= sessionMeta.questions.length) {
+      handleFinalize();
+    } else {
+      setCurrentIndex((i) => i + 1);
+    }
+  };
+
   const handleSubmit = () => {
     if (!sessionMeta || submitting || verdict) return;
     const parsed = parseInt(input, 10);
@@ -78,15 +89,6 @@ export default function InArenaPage() {
       {
         onSuccess: (v) => {
           setVerdict(v);
-          setTimeout(() => {
-            setVerdict(null);
-            setInput("");
-            if (currentIndex + 1 >= sessionMeta.questions.length) {
-              handleFinalize();
-            } else {
-              setCurrentIndex((i) => i + 1);
-            }
-          }, 600);
         },
       }
     );
@@ -100,10 +102,18 @@ export default function InArenaPage() {
     return (
       <div
         className="page-loading"
-        style={{ flexDirection: "column", gap: 16 }}
+        style={{ flexDirection: "column", gap: "var(--s-md)" }}
       >
         <p style={{ color: "var(--err)" }}>Failed to load session.</p>
-        <BoltButton variant="ghost" size="sm" onClick={() => navigate("/practice")}>
+        <BoltButton
+          variant="ghost"
+          size="sm"
+          onClick={() => {
+            if (window.confirm("Abandon this session?")) {
+              navigate("/practice");
+            }
+          }}
+        >
           Back to Arena
         </BoltButton>
       </div>
@@ -116,6 +126,12 @@ export default function InArenaPage() {
   const timeLimitSec = sessionMeta.time_limit_sec;
   const timerPct = hasTimer && timeLeft !== null ? (timeLeft / timeLimitSec) * 100 : 100;
   const timerColor = timerPct < 20 ? "var(--err)" : "var(--y-bolt)";
+
+  const verdictKey: "correct" | "wrong" | null = verdict
+    ? verdict.is_correct
+      ? "correct"
+      : "wrong"
+    : null;
 
   return (
     <main className="page-wrap" style={{ display: "flex", flexDirection: "column" }}>
@@ -146,14 +162,12 @@ export default function InArenaPage() {
       >
         {/* Progress + timer */}
         <div
+          className="t-label"
           style={{
             display: "flex",
             justifyContent: "space-between",
             width: "100%",
             maxWidth: 480,
-            color: "var(--fg-sand)",
-            fontSize: "0.9rem",
-            fontFamily: "var(--font-label)",
           }}
         >
           <span>Q {currentIndex + 1} / {sessionMeta.questions.length}</span>
@@ -165,43 +179,20 @@ export default function InArenaPage() {
         </div>
 
         {/* Question */}
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 56,
-            color: "var(--fg-bone)",
-            letterSpacing: "0.02em",
-            textAlign: "center",
-            fontVariantNumeric: "tabular-nums",
-            padding: verdict ? "16px 32px" : undefined,
-            borderRadius: verdict ? 16 : undefined,
-            border: verdict
-              ? `1px solid ${verdict.is_correct ? "var(--ok)" : "var(--err)"}`
-              : undefined,
-            boxShadow: verdict
-              ? verdict.is_correct
-                ? "0 0 18px rgba(74,222,128,0.6)"
-                : "0 0 18px rgba(255,180,171,0.6)"
-              : undefined,
-            transition: "border 150ms, box-shadow 150ms",
-          }}
-        >
-          {question.text} = ?
+        <div style={{ width: "100%", maxWidth: 480 }}>
+          <ProblemCanvas question={question.text} verdict={verdictKey} />
         </div>
 
-        {/* Verdict feedback chip */}
-        {verdict && (
-          <Chip
-            tone={verdict.is_correct ? "ok" : "err"}
-            icon={verdict.is_correct ? "check-circle-2" : "x-circle"}
-          >
-            {verdict.is_correct ? `+${verdict.xp_delta} XP` : "RECALCULATE"}
-          </Chip>
-        )}
+        {/* Verdict feedback */}
+        <FeedbackToast
+          verdict={verdictKey}
+          xpDelta={verdict?.xp_delta ?? 0}
+          onDismiss={handleVerdictDismiss}
+        />
 
         {/* Answer input */}
         {!verdict && (
-          <div style={{ display: "flex", gap: 16, width: "100%", maxWidth: 480 }}>
+          <div style={{ display: "flex", gap: "var(--s-md)", width: "100%", maxWidth: 480 }}>
             <input
               ref={inputRef}
               type="text"

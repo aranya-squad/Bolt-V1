@@ -6,12 +6,6 @@ import { LevelChip } from "./LevelChip";
 import { Avatar } from "./Avatar";
 import { ConnectionChip } from "./ConnectionChip";
 
-declare global {
-  interface Window {
-    __BOLT_DEMO__?: { focusMode?: boolean; skeleton?: boolean; connection?: string };
-  }
-}
-
 interface TopNavProps {
   onNavigate?: (route: string) => void;
   current?: string;
@@ -26,13 +20,14 @@ interface TopNavProps {
   connection?: string;
 }
 
+/** @deprecated Use ShellLayout (Sidebar + BottomNav). Delete post-Wave-5 QA. */
 export function TopNav({
   onNavigate,
   current = "hub",
-  level = 12,
-  xp = 8450,
-  streak = 7,
-  trophies = 14,
+  level,
+  xp = 0,
+  streak = 0,
+  trophies = 0,
   avatar,
   showBack = false,
   backLabel = "ABANDON RUN",

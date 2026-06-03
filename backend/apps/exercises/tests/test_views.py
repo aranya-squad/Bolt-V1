@@ -271,3 +271,82 @@ def test_session_detail_no_answers(auth_client, session1):
         assert "text" in q
         assert "index" in q
         assert "operation" in q
+
+
+# ---------------------------------------------------------------------------
+# Fix 2E/2F — elapsed_ms guard + MIN_ANSWER_MS warning
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_submit_attempt_handles_non_integer_elapsed_ms(auth_client, session1):
+    url = reverse("session-attempt", kwargs={"session_id": session1.id})
+    response = auth_client.post(
+        url,
+        {"question_index": 0, "answer": 2, "elapsed_ms": "not_a_number"},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_200_OK  # must not 500
+
+
+@pytest.mark.django_db
+def test_submit_attempt_handles_negative_elapsed_ms(auth_client, session1):
+    url = reverse("session-attempt", kwargs={"session_id": session1.id})
+    response = auth_client.post(
+        url,
+        {"question_index": 0, "answer": 2, "elapsed_ms": -500},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_200_OK  # must not 500
+
+
+@pytest.mark.django_db
+def test_min_answer_ms_logs_warning_but_does_not_block(auth_client, session1):
+    import logging
+    from unittest.mock import patch
+
+    url = reverse("session-attempt", kwargs={"session_id": session1.id})
+    with patch.object(logging.getLogger("apps.exercises.anticheat"), "warning") as mock_warn:
+        response = auth_client.post(
+            url,
+            {"question_index": 0, "answer": 2, "elapsed_ms": 10},
+            format="json",
+        )
+    assert response.status_code == status.HTTP_200_OK  # must not block
+    mock_warn.assert_called_once()
+    assert "min_answer_ms_violation" in mock_warn.call_args[0][0]
+
+
+# ---------------------------------------------------------------------------
+# Fix 2G — time_limit_sec upper bound
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_start_practice_rejects_time_limit_above_3600(auth_client):
+    url = reverse("practice-start")
+    payload = {**_PRACTICE_PAYLOAD, "time_limit_sec": 9999}
+    response = auth_client.post(url, payload, format="json")
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "time_limit_sec" in response.json()
+
+
+# ---------------------------------------------------------------------------
+# Fix 2H — schema endpoint requires admin
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_schema_endpoint_requires_admin(auth_client):
+    response = auth_client.get("/api/v1/schema/")
+    assert response.status_code in (401, 403)
+
+
+@pytest.mark.django_db
+def test_schema_endpoint_accessible_to_admin(client):
+    from apps.users.tests.factories import UserFactory
+    admin_user = UserFactory(role="ADMIN", is_staff=True)
+    c = APIClient()
+    c.force_authenticate(user=admin_user)
+    response = c.get("/api/v1/schema/")
+    assert response.status_code == 200

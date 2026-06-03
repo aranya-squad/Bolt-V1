@@ -1,4 +1,3 @@
-// Figma frame 1:619 — Classwork Practice session
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
@@ -8,10 +7,13 @@ import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
 import { useFinalizeSession, useSubmitAttempt } from "@/shared/api/queries/useSession";
 import type { AttemptVerdict } from "@/shared/types";
 import { BoltButton } from "@/shared/ui/BoltButton";
-import { Chip } from "@/shared/ui/Chip";
+import { BreadcrumbChip } from "@/shared/ui/BreadcrumbChip";
+import { FeedbackToast } from "@/shared/ui/FeedbackToast";
+import { ProblemCanvas } from "@/shared/ui/ProblemCanvas";
+import { ProgressBar } from "@/shared/ui/ProgressBar";
 
 export default function ClassworkPage() {
-  const { levelId } = useParams<{ levelId: string }>();
+  const { levelId, lessonId } = useParams<{ levelId: string; lessonId?: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
@@ -24,7 +26,7 @@ export default function ClassworkPage() {
   const isFinalizingRef = useRef(false);
 
   const { mutate: startSession, data: sessionMeta, isPending: starting, isError: startError } =
-    useStartClasswork(levelId!);
+    useStartClasswork(levelId!, lessonId);
   const { mutate: submitAttempt, isPending: submitting } = useSubmitAttempt(
     sessionMeta?.session_id ?? ""
   );
@@ -34,11 +36,11 @@ export default function ClassworkPage() {
   useEffect(() => {
     startSession(undefined, {
       onSuccess: (meta) => {
-        setTimeLeft(meta.time_limit_sec);
+        setTimeLeft(meta.time_limit_sec > 0 ? meta.time_limit_sec : null);
       },
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [levelId]);
+  }, [levelId, lessonId]);
 
   // Countdown timer — setTimeout chain (idiomatic React pattern, no drift)
   useEffect(() => {
@@ -68,6 +70,9 @@ export default function ClassworkPage() {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: LEVELS_QUERY_KEY });
         queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+        if (levelId && lessonId) {
+          queryClient.invalidateQueries({ queryKey: ["levels", levelId, "lessons"] });
+        }
         navigate(`/learn/level/${levelId}/report/${sessionMeta!.session_id}`);
       },
     });
@@ -84,23 +89,26 @@ export default function ClassworkPage() {
       {
         onSuccess: (v) => {
           setVerdict(v);
-          setTimeout(() => {
-            setVerdict(null);
-            setInput("");
-            if (currentIndex + 1 >= sessionMeta.questions.length) {
-              handleFinalize();
-            } else {
-              setCurrentIndex((i) => i + 1);
-            }
-          }, 600);
         },
       }
     );
   };
 
+  const handleVerdictDismiss = () => {
+    setVerdict(null);
+    setInput("");
+    if (sessionMeta && currentIndex + 1 >= sessionMeta.questions.length) {
+      handleFinalize();
+    } else {
+      setCurrentIndex((i) => i + 1);
+    }
+  };
+
   const timeLimitSec = sessionMeta?.time_limit_sec ?? 600;
-  const timerPct = timeLeft !== null ? (timeLeft / timeLimitSec) * 100 : 100;
-  const timerColor = timerPct < 20 ? "var(--err)" : "var(--y-bolt)";
+  const timerValue = timeLeft !== null ? timeLeft : timeLimitSec;
+  const timerMax = Math.max(timeLimitSec, 1);
+  const timerPct = (timerValue / timerMax) * 100;
+  const timerAccent = timerPct < 20 ? ("streak" as const) : ("yellow" as const);
   const question = sessionMeta?.questions[currentIndex];
 
   if (starting) {
@@ -109,10 +117,7 @@ export default function ClassworkPage() {
 
   if (startError) {
     return (
-      <div
-        className="page-loading"
-        style={{ flexDirection: "column", gap: 16 }}
-      >
+      <div className="page-loading" style={{ flexDirection: "column", gap: "var(--s-md)" }}>
         <p style={{ color: "var(--err)" }}>Failed to start session.</p>
         <BoltButton variant="ghost" size="sm" onClick={() => navigate("/learn")}>
           Back to Levels
@@ -123,19 +128,12 @@ export default function ClassworkPage() {
 
   if (!sessionMeta || !question) return null;
 
+  const verdictKey = verdict ? (verdict.is_correct ? "correct" : "wrong") : null;
+
   return (
     <main className="page-wrap" style={{ display: "flex", flexDirection: "column" }}>
       {/* Timer bar */}
-      <div style={{ width: "100%", height: 4, background: "var(--bg-ash)" }}>
-        <div
-          style={{
-            width: `${timerPct}%`,
-            height: "100%",
-            background: timerColor,
-            transition: "width 1s linear, background 0.3s",
-          }}
-        />
-      </div>
+      <ProgressBar value={timerValue} max={timerMax} accent={timerAccent} height={4} />
 
       <div
         style={{
@@ -148,62 +146,42 @@ export default function ClassworkPage() {
           gap: "var(--s-xl)",
         }}
       >
-        {/* Progress + timer */}
+        {/* Breadcrumb + progress */}
         <div
           style={{
             display: "flex",
             justifyContent: "space-between",
+            alignItems: "center",
             width: "100%",
             maxWidth: 480,
-            color: "var(--fg-sand)",
-            fontSize: "0.9rem",
-            fontFamily: "var(--font-label)",
           }}
         >
-          <span>Q {currentIndex + 1} / {sessionMeta.questions.length}</span>
-          <span style={{ color: timerPct < 20 ? "var(--err)" : "var(--fg-sand)" }}>
-            {timeLeft}s
+          <BreadcrumbChip items={["LEARN", "CLASSWORK"]} />
+          <span className="t-label" style={{ color: "var(--fg-sand)" }}>
+            Q {currentIndex + 1} / {sessionMeta.questions.length}
+            {timeLeft !== null && (
+              <span style={{ marginLeft: "var(--s-sm)", color: timerPct < 20 ? "var(--err)" : "var(--fg-sand)" }}>
+                {" "}· {timeLeft}s
+              </span>
+            )}
           </span>
         </div>
 
-        {/* Question */}
-        <div
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: 56,
-            color: "var(--fg-bone)",
-            letterSpacing: "0.02em",
-            textAlign: "center",
-            fontVariantNumeric: "tabular-nums",
-            padding: verdict ? "16px 32px" : undefined,
-            borderRadius: verdict ? 16 : undefined,
-            border: verdict
-              ? `1px solid ${verdict.is_correct ? "var(--ok)" : "var(--err)"}`
-              : undefined,
-            boxShadow: verdict
-              ? verdict.is_correct
-                ? "0 0 18px rgba(74,222,128,0.6)"
-                : "0 0 18px rgba(255,180,171,0.6)"
-              : undefined,
-            transition: "border 150ms, box-shadow 150ms",
-          }}
-        >
-          {question.text} = ?
+        {/* Problem */}
+        <div style={{ width: "100%", maxWidth: 480 }}>
+          <ProblemCanvas question={question.text} verdict={verdictKey} />
         </div>
 
-        {/* Verdict feedback chip */}
-        {verdict && (
-          <Chip
-            tone={verdict.is_correct ? "ok" : "err"}
-            icon={verdict.is_correct ? "check-circle-2" : "x-circle"}
-          >
-            {verdict.is_correct ? `+${verdict.xp_delta} XP` : "RECALCULATE"}
-          </Chip>
-        )}
+        {/* Verdict feedback */}
+        <FeedbackToast
+          verdict={verdictKey}
+          xpDelta={verdict?.xp_delta ?? 0}
+          onDismiss={handleVerdictDismiss}
+        />
 
         {/* Answer input */}
         {!verdict && (
-          <div style={{ display: "flex", gap: 16, width: "100%", maxWidth: 480 }}>
+          <div style={{ display: "flex", gap: "var(--s-md)", width: "100%", maxWidth: 480 }}>
             <input
               ref={inputRef}
               type="text"

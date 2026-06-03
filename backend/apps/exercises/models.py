@@ -18,8 +18,6 @@ class ExerciseTemplate(models.Model):
     Procedural Practice (Zen, Time Attack, Custom) does not use this — it uses config_json directly.
     """
 
-    from apps.courses.models import Lesson
-
     lesson = models.ForeignKey(
         "courses.Lesson", related_name="templates", on_delete=models.CASCADE
     )
