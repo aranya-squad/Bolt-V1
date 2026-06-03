@@ -209,7 +209,13 @@ class SubmitAttemptView(APIView):
     permission_classes = [IsAuthenticated]
 
     def post(self, request, session_id):
-        session = get_object_or_404(ArenaSession, pk=session_id, user=request.user)
+        # select_for_update serializes concurrent submissions for the same session,
+        # making count()+1 for attempt_number atomic within ATOMIC_REQUESTS transaction.
+        session = get_object_or_404(
+            ArenaSession.objects.select_for_update(),
+            pk=session_id,
+            user=request.user,
+        )
 
         if not session.is_active:
             return Response({"detail": "Session is not active."}, status=status.HTTP_400_BAD_REQUEST)
@@ -297,7 +303,9 @@ class FinalizeSessionView(APIView):
 
         try:
             record = finalize_session(session)
-        except ValueError:
+        except ValueError as e:
+            if "already finalized" not in str(e):
+                raise  # unexpected — surface with traceback rather than swallow
             # Race: another request finalized between our check and our call.
             session.refresh_from_db()
             try:
@@ -336,12 +344,8 @@ class SessionReportView(APIView):
 
         question_verdicts: dict[int, str] = {}
         for q_idx, group in groups.items():
-            first_wrong = not group[0].is_correct
-            any_later_correct = any(a.is_correct for a in group[1:])
-            if first_wrong and any_later_correct:
-                question_verdicts[q_idx] = "fixed"
-            elif group[-1].is_correct:
-                question_verdicts[q_idx] = "correct"
+            if group[-1].is_correct:
+                question_verdicts[q_idx] = "fixed" if not group[0].is_correct else "correct"
             else:
                 question_verdicts[q_idx] = "wrong"
 

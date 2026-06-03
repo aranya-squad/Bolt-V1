@@ -35,6 +35,15 @@ def record_attempt(
     )
 
 
+def _is_better_record(new: ProgressRecord, old: ProgressRecord) -> bool:
+    """3-tier tiebreak: accuracy → score_correct → time_taken_sec (lower is better)."""
+    if new.accuracy_pct != old.accuracy_pct:
+        return new.accuracy_pct > old.accuracy_pct
+    if new.score_correct != old.score_correct:
+        return new.score_correct > old.score_correct
+    return new.time_taken_sec < old.time_taken_sec
+
+
 @transaction.atomic
 def finalize_session(session: ArenaSession) -> ProgressRecord:
     """
@@ -55,11 +64,21 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
 
     accuracy = (score_correct / score_total * 100) if score_total else 0
 
-    is_first = not LevelCompletion.objects.filter(
-        user=session.user,
-        level=session.template.lesson.level if session.template else None,
-        kind=session.kind,
-    ).exists() if session.template else False
+    # Acquire LevelCompletion lock before computing is_first so that concurrent
+    # finalize calls cannot both see is_first=True and double-award the first-completion bonus.
+    if session.template is not None:
+        lesson = session.template.lesson
+        level = lesson.level
+        level_completion = (
+            LevelCompletion.objects
+            .select_for_update()
+            .filter(user=session.user, level=level, kind=session.kind)
+            .first()
+        )
+        is_first = level_completion is None
+    else:
+        lesson = level = level_completion = None
+        is_first = False
 
     xp = compute_session_xp(score_correct, score_total, is_first)
 
@@ -81,36 +100,17 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     )
 
     if session.template is not None:
-        lesson = session.template.lesson
-        level = lesson.level
-
-        # Level-granular completion
-        existing = (
-            LevelCompletion.objects
-            .select_for_update()
-            .filter(user=session.user, level=level, kind=session.kind)
-            .first()
-        )
-        if existing is None:
+        # Level-granular completion (lock already held above)
+        if level_completion is None:
             LevelCompletion.objects.create(
                 user=session.user,
                 level=level,
                 kind=session.kind,
                 best_progress_record=record,
             )
-        else:
-            prev = existing.best_progress_record
-            if (
-                record.accuracy_pct > prev.accuracy_pct
-                or (record.accuracy_pct == prev.accuracy_pct and record.score_correct > prev.score_correct)
-                or (
-                    record.accuracy_pct == prev.accuracy_pct
-                    and record.score_correct == prev.score_correct
-                    and record.time_taken_sec < prev.time_taken_sec
-                )
-            ):
-                existing.best_progress_record = record
-                existing.save(update_fields=["best_progress_record"])
+        elif _is_better_record(record, level_completion.best_progress_record):
+            level_completion.best_progress_record = record
+            level_completion.save(update_fields=["best_progress_record"])
 
         # Lesson-granular completion (drives PathOfConquest accordion status chips)
         lesson_existing = (
@@ -127,7 +127,7 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
                 best_accuracy_pct=record.accuracy_pct,
                 best_progress_record=record,
             )
-        elif record.accuracy_pct > lesson_existing.best_accuracy_pct:
+        elif _is_better_record(record, lesson_existing.best_progress_record):
             lesson_existing.best_accuracy_pct = record.accuracy_pct
             lesson_existing.best_progress_record = record
             lesson_existing.save(update_fields=["best_accuracy_pct", "best_progress_record"])

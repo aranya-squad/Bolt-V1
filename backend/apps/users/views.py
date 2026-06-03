@@ -9,9 +9,11 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.cache import cache
 from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
-from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.views import TokenObtainPairView
 
 from .constants import PRESET_AVATAR_URLS
 from .models import AuditEvent, ConsentRecord, Guardianship, Profile, User
@@ -95,22 +97,24 @@ class CookieTokenObtainPairView(TokenObtainPairView):
         return response
 
 
-class CookieTokenRefreshView(TokenRefreshView):
-    """Refresh: reads refresh token from cookie, not request body."""
+class CookieTokenRefreshView(APIView):
+    """Refresh: reads refresh token from cookie, validates via TokenRefreshSerializer."""
 
-    def post(self, request, *args, **kwargs):
-        token = request.COOKIES.get(_COOKIE_NAME)
-        if not token:
+    permission_classes = []
+
+    def post(self, request):
+        token_str = request.COOKIES.get(_COOKIE_NAME)
+        if not token_str:
             return Response({"detail": "No refresh token."}, status=status.HTTP_401_UNAUTHORIZED)
-        # DRF's parser caches request.data; inject the cookie token before the parent reads it
-        data = request.data.copy() if hasattr(request.data, "copy") else dict(request.data)
-        data["refresh"] = token
-        request._full_data = data
-        response = super().post(request, *args, **kwargs)
-        if response.status_code == 200:
-            new_refresh = response.data.pop("refresh", None)
-            if new_refresh:
-                _set_refresh_cookie(response, new_refresh)
+        serializer = TokenRefreshSerializer(data={"refresh": token_str})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as e:
+            return Response({"detail": str(e)}, status=status.HTTP_401_UNAUTHORIZED)
+        response = Response({"access": serializer.validated_data["access"]})
+        new_refresh = serializer.validated_data.get("refresh")
+        if new_refresh:
+            _set_refresh_cookie(response, new_refresh)
         return response
 
 
@@ -204,22 +208,19 @@ class ProfileUpdateView(APIView):
         if avatar_url is not None and avatar_url not in PRESET_AVATAR_URLS:
             return Response({"detail": "Invalid avatar_url."}, status=status.HTTP_400_BAD_REQUEST)
 
-        update_fields = {}
-        if display_name is not None:
-            update_fields["display_name"] = display_name
-        if avatar_url is not None:
-            update_fields["avatar_url"] = avatar_url
+        with transaction.atomic():
+            profile = Profile.objects.select_for_update().get(user=request.user)
+            changed = []
+            if display_name is not None:
+                profile.display_name = display_name
+                changed.append("display_name")
+            if avatar_url is not None:
+                profile.avatar_url = avatar_url
+                changed.append("avatar_url")
+            if changed:
+                profile.save(update_fields=changed)
 
-        if update_fields:
-            Profile.objects.filter(user=request.user).update(**update_fields)
-
-        try:
-            from django.core.cache import cache
-            cache.delete(f"user_stats:{request.user.pk}")
-        except Exception:
-            pass
-
-        profile = Profile.objects.get(user=request.user)
+        cache.delete(f"user_stats:{request.user.pk}")
         return Response(ProfileSerializer(profile).data)
 
 

@@ -35,13 +35,27 @@ class ProceduralGenerator(QuestionGenerator):
             answer = sum(operands)
             text = " + ".join(map(str, operands))
         elif op == "SUB":
-            # Constructive generation: pick subtractors and answer first, compute minuend.
-            # Guarantees answer >= 0 without rejection sampling (which can infinite-loop for
-            # large rows with small digits, e.g. digits=1, rows=8 → all combos are negative).
-            subtractors = [self.rng.randint(lo, hi) for _ in range(rows - 1)]
-            answer = self.rng.randint(0, hi)
-            minuend = sum(subtractors) + answer
-            operands = [minuend] + subtractors
+            # Bounded generation: all operands including minuend stay in [lo, hi], answer >= 0.
+            # When (rows-1)*lo > hi the constraint is infeasible; degrade to 2-operand subtraction.
+            if (rows - 1) * lo > hi:
+                a = self.rng.randint(lo, hi)
+                b = self.rng.randint(lo, a)
+                answer = a - b
+                operands = [a, b]
+            else:
+                # Minuend must be >= lo*rows to leave room for rows-1 subtractors (each >= lo)
+                # plus a non-negative answer; clamp to hi when lo*rows would exceed it.
+                minuend = self.rng.randint(min(lo * rows, hi), hi)
+                remaining = minuend
+                subtractors = []
+                for slots_left in range(rows - 1, 0, -1):
+                    # Reserve lo for each subsequent slot so answer stays >= 0.
+                    upper = min(hi, remaining - lo * (slots_left - 1))
+                    sub = self.rng.randint(lo, max(lo, upper))
+                    subtractors.append(sub)
+                    remaining -= sub
+                answer = remaining
+                operands = [minuend] + subtractors
             text = " - ".join(map(str, operands))
         elif op == "MUL":
             # Exactly 2 operands for multiplication to keep difficulty sane at v1.
