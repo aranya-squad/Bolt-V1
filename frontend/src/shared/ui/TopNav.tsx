@@ -6,12 +6,6 @@ import { LevelChip } from "./LevelChip";
 import { Avatar } from "./Avatar";
 import { ConnectionChip } from "./ConnectionChip";
 
-declare global {
-  interface Window {
-    __BOLT_DEMO__?: { focusMode?: boolean; skeleton?: boolean; connection?: string };
-  }
-}
-
 interface TopNavProps {
   onNavigate?: (route: string) => void;
   current?: string;

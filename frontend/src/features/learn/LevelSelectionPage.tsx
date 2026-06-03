@@ -8,6 +8,7 @@ import { BoltButton } from "@/shared/ui/BoltButton";
 export default function LevelSelectionPage() {
   const navigate = useNavigate();
   const { data: levels, isLoading, isError, refetch } = useLevels();
+  const demoSkeleton = window.__BOLT_DEMO__?.skeleton ?? false;
 
   return (
     <Page>
@@ -34,7 +35,7 @@ export default function LevelSelectionPage() {
         </div>
       )}
 
-      {isLoading && (
+      {(isLoading || demoSkeleton) && (
         <div className="level-grid" style={{ marginBottom: "var(--s-xl)" }}>
           {Array.from({ length: 10 }, (_, i) => (
             <Skeleton key={i} height={180} radius={20} />
@@ -42,7 +43,7 @@ export default function LevelSelectionPage() {
         </div>
       )}
 
-      {levels && (
+      {levels && !demoSkeleton && (
         <>
           <div className="level-grid">
             {levels.map((level) => (

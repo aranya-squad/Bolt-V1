@@ -18,6 +18,7 @@ export default function MissionReportPage() {
   const { levelId, sessionId } = useParams<{ levelId: string; sessionId: string }>();
   const navigate = useNavigate();
   const { data: report, isLoading, isError, refetch } = useSessionReport(sessionId);
+  const demoSkeleton = window.__BOLT_DEMO__?.skeleton ?? false;
   const { data: xp } = useXpProgress();
 
   const p = report?.progress;
@@ -34,7 +35,7 @@ export default function MissionReportPage() {
           MISSION REPORT
         </h1>
 
-        {isLoading && <p className="t-body">Loading…</p>}
+        {(isLoading || demoSkeleton) && <p className="t-body">Loading…</p>}
 
         {isError && (
           <div style={{ marginBottom: "var(--s-xl)" }}>
@@ -47,7 +48,7 @@ export default function MissionReportPage() {
           </div>
         )}
 
-        {p && (
+        {p && !demoSkeleton && (
           <>
             <div className="stats-row" style={{ marginBottom: "var(--s-xl)" }}>
               <StatBentoCard
