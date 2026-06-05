@@ -2,7 +2,14 @@ from rest_framework import serializers
 
 from apps.progress.models import ProgressRecord, QuestionAttempt
 
-from .models import ArenaSession
+from .models import ArenaSession, SessionKind
+
+_PRACTICE_KINDS = frozenset([
+    SessionKind.FLASH_CARDS,
+    SessionKind.ZEN,
+    SessionKind.TIME_ATTACK,
+    SessionKind.CUSTOM,
+])
 
 
 class SessionMetaSerializer(serializers.Serializer):
@@ -12,9 +19,15 @@ class SessionMetaSerializer(serializers.Serializer):
     time_limit_sec = serializers.SerializerMethodField()
 
     def get_questions(self, session):
+        include_answer = session.kind in _PRACTICE_KINDS
         return [
-            {"index": i, "text": q["text"], "operation": q["operation"]}
-            for i, q in enumerate(session.questions_for_client())
+            {
+                "index": i,
+                "text": q["text"],
+                "operation": q["operation"],
+                **({"answer": q["answer"]} if include_answer else {}),
+            }
+            for i, q in enumerate(session.questions_json)
         ]
 
     def get_time_limit_sec(self, session):

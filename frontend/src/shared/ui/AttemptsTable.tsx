@@ -59,10 +59,15 @@ export function AttemptsTable({ attempts, questionVerdicts }: AttemptsTableProps
           {Array.from(groups.entries()).map(([qIndex, group]) => {
             const verdict = questionVerdicts?.[qIndex];
             const fixed = verdict === "fixed";
+            const skipped = verdict === "skipped";
             return group.map((a, i) => {
               const isRetry = i > 0;
               return (
-                <tr key={`${qIndex}-${a.attempt_number}`} className="table-row">
+                <tr
+                  key={`${qIndex}-${a.attempt_number}`}
+                  className="table-row"
+                  style={skipped && !isRetry ? { opacity: 0.6 } : undefined}
+                >
                   <td style={{ ...CELL, color: "var(--fg-sand)" }}>
                     {isRetry ? (
                       <span style={{ color: "var(--fg-sand-30)", paddingLeft: 8 }}>
@@ -76,11 +81,17 @@ export function AttemptsTable({ attempts, questionVerdicts }: AttemptsTableProps
                     {a.question_text}
                   </td>
                   <td style={{ ...CELL, color: a.is_correct ? "var(--ok)" : "var(--err)" }}>
-                    {a.submitted_answer}
+                    {verdict === "skipped" && !isRetry ? (
+                      <span style={{ color: "var(--fg-sand)" }}>—</span>
+                    ) : (
+                      a.submitted_answer
+                    )}
                   </td>
                   <td style={{ ...CELL, color: "var(--fg-sand)" }}>{a.expected_answer}</td>
                   <td style={{ ...CELL }}>
-                    {!isRetry && fixed ? (
+                    {!isRetry && verdict === "skipped" ? (
+                      <Icon name="minus" size={14} color="var(--fg-sand)" />
+                    ) : !isRetry && fixed ? (
                       <Icon name="wrench" size={14} color="var(--y-bolt)" />
                     ) : (
                       <span style={{ color: a.is_correct ? "var(--ok)" : "var(--err)" }}>

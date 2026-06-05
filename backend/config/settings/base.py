@@ -79,6 +79,13 @@ DATABASES = {
 }
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
 
+# Optional read replica — active only when REPLICA_DATABASE_URL is set.
+# Routes read-only apps (courses, progress) to the replica; all writes go to default.
+_replica_url = env("REPLICA_DATABASE_URL", default="")
+if _replica_url:
+    DATABASES["replica"] = env.db("REPLICA_DATABASE_URL")
+    DATABASE_ROUTERS = ["config.dbrouter.PrimaryReplicaRouter"]
+
 CACHES = {
     "default": {
         "BACKEND": "django_redis.cache.RedisCache",
@@ -207,3 +214,10 @@ CELERY_BROKER_URL = env("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_RESULT_BACKEND = env("REDIS_URL", default="redis://localhost:6379/0")
 CELERY_ACCEPT_CONTENT = ["json"]
 CELERY_TASK_SERIALIZER = "json"
+CELERY_BEAT_SCHEDULE = {
+    # Mark sessions abandoned_at when inactive > 2× time_limit_sec.
+    "abandon-stale-sessions": {
+        "task": "apps.exercises.tasks.abandon_stale_sessions",
+        "schedule": 300.0,  # every 5 minutes
+    },
+}

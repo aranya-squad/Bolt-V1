@@ -3,6 +3,7 @@ Progress write layer. Only this module writes to append-only progress tables.
 No other code should call .save() on ProgressRecord, QuestionAttempt, or XPEvent directly.
 """
 
+from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 
@@ -60,6 +61,10 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     # Use total questions in session, not submitted attempts — partial sessions
     # (e.g. timer expired) should show "8/30", not "8/8".
     score_total = len(session.questions_json)
+    # time_taken_sec is the sum of per-attempt elapsed_ms, NOT wall-clock duration.
+    # Wall-clock includes idle gaps (student walked away mid-session) which would
+    # unfairly inflate time and break personal-best tiebreaking. Sum-of-elapsed
+    # measures only active thinking time.
     elapsed_total = sum(a.elapsed_ms for a in attempts) // 1000
 
     accuracy = (score_correct / score_total * 100) if score_total else 0
@@ -132,8 +137,11 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
             lesson_existing.best_progress_record = record
             lesson_existing.save(update_fields=["best_accuracy_pct", "best_progress_record"])
 
-    from django.core.cache import cache
-    cache.delete(f"user_stats:{session.user_id}")
+    # Invalidate after commit so no request can repopulate the cache with
+    # pre-commit state between our delete and the transaction COMMIT.
+    user_id = session.user_id
+    transaction.on_commit(lambda: cache.delete(f"user_stats:{user_id}"))
+    transaction.on_commit(lambda: cache.delete(f"level_context:{user_id}"))
 
     session.submitted_at = timezone.now()
     session.save(update_fields=["submitted_at"])

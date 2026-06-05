@@ -2,12 +2,16 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSession, useSubmitAttempt, useFinalizeSession } from "@/shared/api/queries/useSession";
+import { useSession, useBulkSubmit, useFinalizeSession } from "@/shared/api/queries/useSession";
 import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
 import type { AttemptVerdict } from "@/shared/types";
+import type { BulkAttemptItem } from "@/shared/api/queries/useSession";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { ProblemCanvas } from "@/shared/ui/ProblemCanvas";
 import { FeedbackToast } from "@/shared/ui/FeedbackToast";
+
+const FLUSH_RETRIES = 3;
+const FLUSH_RETRY_DELAY_MS = 2000;
 
 export default function InArenaPage() {
   const { sessionId } = useParams<{ sessionId: string }>();
@@ -21,9 +25,11 @@ export default function InArenaPage() {
   const questionStartMs = useRef(Date.now());
   const inputRef = useRef<HTMLInputElement>(null);
   const isFinalizingRef = useRef(false);
+  // Buffer of all attempts, flushed to bulk endpoint on session finish.
+  const pendingAttemptsRef = useRef<BulkAttemptItem[]>([]);
 
   const { data: sessionMeta, isLoading, isError } = useSession(sessionId!);
-  const { mutate: submitAttempt, isPending: submitting } = useSubmitAttempt(sessionId!);
+  const { mutateAsync: bulkSubmitAsync } = useBulkSubmit(sessionId!);
   const { mutate: finalizeSession } = useFinalizeSession(sessionId!);
 
   const hasTimer = (sessionMeta?.time_limit_sec ?? 0) > 0;
@@ -57,9 +63,30 @@ export default function InArenaPage() {
     inputRef.current?.focus();
   }, [currentIndex]);
 
-  const handleFinalize = () => {
+  // Flush buffered attempts to bulk endpoint with retry on failure.
+  // Errors after all retries are swallowed — finalizeSession is the safety net.
+  const flushAttempts = async () => {
+    const attempts = pendingAttemptsRef.current;
+    if (!attempts.length) return;
+    let delay = FLUSH_RETRY_DELAY_MS;
+    for (let i = 0; i < FLUSH_RETRIES; i++) {
+      try {
+        await bulkSubmitAsync({ attempts });
+        pendingAttemptsRef.current = [];
+        return;
+      } catch {
+        if (i < FLUSH_RETRIES - 1) {
+          await new Promise((r) => setTimeout(r, delay));
+          delay *= 2;
+        }
+      }
+    }
+  };
+
+  const handleFinalize = async () => {
     if (isFinalizingRef.current) return;
     isFinalizingRef.current = true;
+    await flushAttempts();
     finalizeSession(undefined, {
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
@@ -79,19 +106,20 @@ export default function InArenaPage() {
   };
 
   const handleSubmit = () => {
-    if (!sessionMeta || submitting || verdict) return;
+    if (!sessionMeta || verdict) return;
     const parsed = parseInt(input, 10);
     if (isNaN(parsed)) return;
     const elapsed = Date.now() - questionStartMs.current;
+    const question = sessionMeta.questions[currentIndex];
 
-    submitAttempt(
+    // Grade client-side against the answer included in the practice payload.
+    const isCorrect = parsed === question.answer;
+    setVerdict({ question_index: currentIndex, is_correct: isCorrect, xp_delta: 0 });
+
+    pendingAttemptsRef.current = [
+      ...pendingAttemptsRef.current,
       { question_index: currentIndex, answer: parsed, elapsed_ms: elapsed },
-      {
-        onSuccess: (v) => {
-          setVerdict(v);
-        },
-      }
-    );
+    ];
   };
 
   if (isLoading) {
@@ -210,7 +238,7 @@ export default function InArenaPage() {
               variant="primary"
               size="md"
               onClick={handleSubmit}
-              disabled={submitting || input.trim() === ""}
+              disabled={input.trim() === ""}
             >
               SUBMIT
             </BoltButton>

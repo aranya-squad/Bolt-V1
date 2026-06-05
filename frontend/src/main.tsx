@@ -5,6 +5,15 @@ import App from "./App";
 import "./i18n";
 import "./styles/globals.css";
 
+async function enableMocking() {
+  if (!import.meta.env.DEV) return;
+  const { worker } = await import("./mocks/browser");
+  return worker.start({
+    onUnhandledRequest: "warn",
+    serviceWorker: { url: "/mockServiceWorker.js" },
+  });
+}
+
 const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
@@ -14,10 +23,12 @@ const queryClient = new QueryClient({
   },
 });
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
-  <React.StrictMode>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </React.StrictMode>
-);
+enableMocking().then(() => {
+  ReactDOM.createRoot(document.getElementById("root")!).render(
+    <React.StrictMode>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </React.StrictMode>
+  );
+});

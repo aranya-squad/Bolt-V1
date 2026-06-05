@@ -1,0 +1,438 @@
+openapi: "3.0.3"
+info:
+  title: Bolt Abacus API
+  version: "1.0.0"
+  description: >
+    API contract for the Bolt Abacus learning platform.
+    Frontend mocks via MSW in dev; backend must implement all endpoints to spec.
+    Any deviation from this spec requires a spec PR before implementation changes.
+
+servers:
+  - url: /api/v1
+    description: Vite dev proxy (localhost:8000) and production base
+
+# ── Security ────────────────────────────────────────────────────────────────
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+  schemas:
+    User:
+      type: object
+      required: [id, email, role]
+      properties:
+        id:        { type: string }
+        email:     { type: string, format: email }
+        role:      { type: string, enum: [STUDENT, GUARDIAN, TEACHER, ADMIN] }
+        profile:
+          nullable: true
+          type: object
+          properties:
+            display_name: { type: string }
+            avatar_url:   { type: string }
+            locale:       { type: string }
+            timezone:     { type: string }
+        stats:
+          type: object
+          properties:
+            total_xp:          { type: integer }
+            streak_days:       { type: integer }
+            levels_completed:  { type: integer }
+            current_level:     { type: integer }
+
+    XpProgressData:
+      type: object
+      required: [total_xp, current_level, streak_days, current_level_threshold, next_level_threshold, xp_to_next_level]
+      properties:
+        total_xp:                { type: integer }
+        current_level:           { type: integer }
+        streak_days:             { type: integer }
+        current_level_threshold: { type: integer }
+        next_level_threshold:    { type: integer }
+        xp_to_next_level:        { type: integer }
+
+    Level:
+      type: object
+      required: [id, order, name, description, xp_threshold, is_advanced, is_locked, is_completed]
+      properties:
+        id:           { type: string }
+        order:        { type: integer }
+        name:         { type: string }
+        description:  { type: string }
+        xp_threshold: { type: integer }
+        is_advanced:  { type: boolean }
+        is_locked:    { type: boolean }
+        is_completed: { type: boolean }
+
+    LessonWithCompletion:
+      type: object
+      required: [id, order, name, description, classwork_completed, homework_completed, is_locked]
+      properties:
+        id:                    { type: string }
+        order:                 { type: integer }
+        name:                  { type: string }
+        description:           { type: string }
+        classwork_completed:   { type: boolean }
+        classwork_accuracy_pct:
+          type: number
+          nullable: true
+        homework_completed:    { type: boolean }
+        is_locked:             { type: boolean }
+
+    SessionQuestion:
+      type: object
+      required: [index, text, operation]
+      properties:
+        index:     { type: integer }
+        text:      { type: string, description: "Display text for the question (formatted math)" }
+        operation: { type: string, enum: [ADD, SUB, MUL, DIV] }
+
+    SessionMeta:
+      type: object
+      required: [session_id, kind, questions, time_limit_sec]
+      properties:
+        session_id:     { type: string }
+        kind:           { type: string, enum: [CLASSWORK, HOMEWORK, FLASH_CARDS, ZEN, TIME_ATTACK, CUSTOM] }
+        questions:      { type: array, items: { $ref: "#/components/schemas/SessionQuestion" } }
+        time_limit_sec: { type: integer, description: "0 means no time limit" }
+
+    AttemptVerdict:
+      type: object
+      required: [question_index, is_correct, xp_delta]
+      properties:
+        question_index: { type: integer }
+        is_correct:     { type: boolean }
+        xp_delta:       { type: integer }
+
+    ProgressRecord:
+      type: object
+      required: [id, session_id, score_correct, score_total, accuracy_pct, time_taken_sec, xp_earned, created_at]
+      properties:
+        id:              { type: string }
+        session_id:      { type: string }
+        score_correct:   { type: integer }
+        score_total:     { type: integer }
+        accuracy_pct:    { type: number }
+        time_taken_sec:  { type: integer }
+        xp_earned:       { type: integer }
+        created_at:      { type: string, format: date-time }
+
+    QuestionAttempt:
+      type: object
+      required: [question_index, attempt_number, question_text, expected_answer, submitted_answer, is_correct, elapsed_ms]
+      properties:
+        question_index:   { type: integer }
+        attempt_number:   { type: integer }
+        question_text:    { type: string }
+        expected_answer:  { type: integer }
+        submitted_answer: { type: integer }
+        is_correct:       { type: boolean }
+        elapsed_ms:       { type: integer }
+
+    QuestionVerdict:
+      type: string
+      enum: [correct, wrong, fixed]
+
+    SessionReport:
+      type: object
+      required: [progress, attempts, question_verdicts]
+      properties:
+        progress:
+          $ref: "#/components/schemas/ProgressRecord"
+        attempts:
+          type: array
+          items: { $ref: "#/components/schemas/QuestionAttempt" }
+        lesson_id:
+          type: string
+          nullable: true
+        question_verdicts:
+          type: object
+          additionalProperties: { $ref: "#/components/schemas/QuestionVerdict" }
+          description: "Map of question_index → verdict"
+
+security:
+  - BearerAuth: []
+
+# ── Paths ────────────────────────────────────────────────────────────────────
+paths:
+  /auth/login/:
+    post:
+      summary: Authenticate a user
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password]
+              properties:
+                email:    { type: string, format: email }
+                password: { type: string }
+      responses:
+        200:
+          description: Access token returned; refresh token set as httpOnly cookie
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access: { type: string }
+        401:
+          description: Invalid credentials
+
+  /auth/register/:
+    post:
+      summary: Register a new student account
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, password, display_name]
+              properties:
+                email:        { type: string, format: email }
+                password:     { type: string }
+                display_name: { type: string }
+      responses:
+        201:
+          description: User created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+
+  /auth/refresh/:
+    post:
+      summary: Refresh the access token using the httpOnly refresh cookie
+      security: []
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  access: { type: string }
+        401:
+          description: Refresh token expired or invalid
+
+  /auth/me/:
+    get:
+      summary: Get the authenticated user
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/User" }
+
+  /auth/me/xp-progress/:
+    get:
+      summary: Get XP progress for the authenticated user
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/XpProgressData" }
+
+  /auth/me/profile/:
+    patch:
+      summary: Update display name or avatar
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                display_name: { type: string }
+                avatar_url:   { type: string }
+      responses:
+        204:
+          description: Profile updated
+
+  /auth/avatar-presets/:
+    get:
+      summary: List available avatar image URLs
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  presets:
+                    type: array
+                    items: { type: string }
+
+  /levels/:
+    get:
+      summary: List all levels with per-user unlock status
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  results:
+                    type: array
+                    items: { $ref: "#/components/schemas/Level" }
+
+  /levels/{id}/:
+    get:
+      summary: Get a single level
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Level" }
+        404:
+          description: Level not found
+
+  /levels/{levelId}/lessons/:
+    get:
+      summary: List lessons for a level with per-user completion state
+      parameters:
+        - name: levelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/LessonWithCompletion" }
+
+  /levels/{levelId}/classwork/start/:
+    post:
+      summary: Start a classwork session for a level (no specific lesson)
+      parameters:
+        - name: levelId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        201:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionMeta" }
+
+  /levels/{levelId}/lessons/{lessonId}/classwork/start/:
+    post:
+      summary: Start a classwork session for a specific lesson
+      parameters:
+        - name: levelId
+          in: path
+          required: true
+          schema: { type: string }
+        - name: lessonId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        201:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionMeta" }
+
+  /practice/start/:
+    post:
+      summary: Start a practice session (arena mode)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [mode, operation, digits, rows, question_count, time_limit_sec]
+              properties:
+                mode:           { type: string, enum: [FLASH_CARDS, ZEN, TIME_ATTACK, CUSTOM] }
+                operation:      { type: string, enum: [ADD, SUB, MUL, DIV, MIXED] }
+                digits:         { type: integer, minimum: 1, maximum: 4 }
+                rows:           { type: integer, minimum: 1, maximum: 6 }
+                question_count: { type: integer, minimum: 5, maximum: 100 }
+                time_limit_sec: { type: integer, description: "0 = no limit (Zen)" }
+      responses:
+        201:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionMeta" }
+
+  /sessions/{sessionId}/:
+    get:
+      summary: Get active session metadata
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionMeta" }
+
+  /sessions/{sessionId}/attempts/:
+    post:
+      summary: Submit an answer attempt for a question
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [question_index, answer, elapsed_ms]
+              properties:
+                question_index: { type: integer }
+                answer:         { type: integer }
+                elapsed_ms:     { type: integer }
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/AttemptVerdict" }
+
+  /sessions/{sessionId}/submit/:
+    post:
+      summary: Finalize a session and persist results
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ProgressRecord" }
+
+  /sessions/{sessionId}/report/:
+    get:
+      summary: Get the detailed report for a completed session
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      responses:
+        200:
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionReport" }
+        404:
+          description: Session not found or not yet finalized

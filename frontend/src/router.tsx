@@ -15,7 +15,6 @@ const PathOfConquestPage = lazy(() => import("@/features/learn/PathOfConquestPag
 const ClassworkPage = lazy(() => import("@/features/learn/ClassworkPage"));
 const MissionReportPage = lazy(() => import("@/features/learn/MissionReportPage"));
 const TrainingArenaPage = lazy(() => import("@/features/practice/TrainingArenaPage"));
-const ArenaSetupPage = lazy(() => import("@/features/practice/ArenaSetupPage"));
 const InArenaPage = lazy(() => import("@/features/practice/InArenaPage"));
 const VictoryPage = lazy(() => import("@/features/practice/VictoryPage"));
 const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
@@ -51,7 +50,7 @@ export const router = createBrowserRouter([
             element: wrap(<MissionReportPage />),
           },
           { path: "/practice", element: wrap(<TrainingArenaPage />) },
-          { path: "/practice/setup/:mode", element: wrap(<ArenaSetupPage />) },
+          { path: "/practice/setup/:mode", element: <Navigate to="/practice" replace /> },
           { path: "/practice/victory/:sessionId", element: wrap(<VictoryPage />) },
           { path: "/profile", element: wrap(<ProfilePage />) },
         ],

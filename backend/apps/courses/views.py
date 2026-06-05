@@ -1,22 +1,33 @@
+from django.core.cache import cache
+from django.shortcuts import get_object_or_404
+from django.utils.cache import patch_cache_control
 from rest_framework import generics, status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.shortcuts import get_object_or_404
 
 from apps.progress.models import LessonCompletion, LevelCompletion
 
 from .models import Level, Lesson
 from .serializers import LevelSerializer
 
+_LEVEL_CONTEXT_TTL = 60  # seconds; invalidated by finalize_session on completion change
+
 
 def _level_context(user):
+    cache_key = f"level_context:{user.pk}"
+    cached = cache.get(cache_key)
+    if cached is not None:
+        return cached
+
     completed_ids = set(
         str(lid)
         for lid in LevelCompletion.objects.filter(user=user, kind="CLASSWORK").values_list("level_id", flat=True)
     )
     ordered_ids = [str(lid) for lid in Level.objects.order_by("order").values_list("id", flat=True)]
-    return {"completed_level_ids": completed_ids, "ordered_level_ids": ordered_ids}
+    result = {"completed_level_ids": completed_ids, "ordered_level_ids": ordered_ids}
+    cache.set(cache_key, result, _LEVEL_CONTEXT_TTL)
+    return result
 
 
 class LevelListView(generics.ListAPIView):
@@ -29,6 +40,12 @@ class LevelListView(generics.ListAPIView):
         context.update(_level_context(self.request.user))
         return context
 
+    def list(self, request, *args, **kwargs):
+        response = super().list(request, *args, **kwargs)
+        # Per-user data: private so CDN won't cache; browser may cache briefly.
+        patch_cache_control(response, private=True, max_age=30)
+        return response
+
 
 class LevelDetailView(generics.RetrieveAPIView):
     serializer_class = LevelSerializer
@@ -39,6 +56,11 @@ class LevelDetailView(generics.RetrieveAPIView):
         context = super().get_serializer_context()
         context.update(_level_context(self.request.user))
         return context
+
+    def retrieve(self, request, *args, **kwargs):
+        response = super().retrieve(request, *args, **kwargs)
+        patch_cache_control(response, private=True, max_age=30)
+        return response
 
 
 class LessonListView(APIView):
@@ -82,4 +104,6 @@ class LessonListView(APIView):
                 "is_locked": is_locked,
             })
 
-        return Response(data)
+        response = Response(data)
+        patch_cache_control(response, private=True, max_age=30)
+        return response

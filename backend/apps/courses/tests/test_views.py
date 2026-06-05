@@ -132,3 +132,61 @@ def test_level_detail(auth_client, level1):
     assert data["order"] == 1
     assert "is_locked" in data
     assert "is_completed" in data
+
+
+# ---------------------------------------------------------------------------
+# Cache-Control headers
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_level_list_has_private_cache_control(auth_client, level1):
+    response = auth_client.get(reverse("level-list"))
+    cc = response.get("Cache-Control", "")
+    assert "private" in cc
+    assert "max-age=30" in cc
+
+
+@pytest.mark.django_db
+def test_level_detail_has_private_cache_control(auth_client, level1):
+    response = auth_client.get(reverse("level-detail", kwargs={"pk": level1.id}))
+    cc = response.get("Cache-Control", "")
+    assert "private" in cc
+
+
+# ---------------------------------------------------------------------------
+# level_context Redis cache — population and invalidation
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_level_context_cache_populated_on_first_request(auth_client, user, level1):
+    from django.core.cache import cache
+    cache.delete(f"level_context:{user.pk}")
+
+    auth_client.get(reverse("level-list"))
+
+    cached = cache.get(f"level_context:{user.pk}")
+    assert cached is not None
+    assert "completed_level_ids" in cached
+    assert "ordered_level_ids" in cached
+
+
+@pytest.mark.django_db(transaction=True)
+def test_level_context_cache_invalidated_by_finalize_session(user, template1, level1):
+    # transaction=True is required: transaction.on_commit fires only on real COMMIT.
+    # The default @pytest.mark.django_db wraps tests in a rolled-back transaction,
+    # so on_commit callbacks never fire in that mode.
+    from django.core.cache import cache
+    from apps.exercises.tests.factories import ArenaSessionFactory
+    from apps.progress.services import finalize_session, record_attempt
+
+    # Pre-populate the cache with stale data (no completions yet).
+    cache.set(f"level_context:{user.pk}", {"completed_level_ids": set(), "ordered_level_ids": []}, 60)
+
+    session = ArenaSessionFactory(user=user, template=template1)
+    record_attempt(session, 0, 1, "1+1", 2, 2, 500)
+    finalize_session(session)
+
+    # on_commit fires because the transaction was genuinely committed.
+    assert cache.get(f"level_context:{user.pk}") is None

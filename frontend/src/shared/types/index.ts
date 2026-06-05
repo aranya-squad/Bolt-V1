@@ -75,7 +75,8 @@ export interface SessionQuestion {
   index: number;
   text: string;
   operation: string;
-  // Note: answer is intentionally absent — never sent to client
+  // Present only for practice kinds (FLASH_CARDS, ZEN, TIME_ATTACK, CUSTOM) — never for CLASSWORK/HOMEWORK.
+  answer?: number;
 }
 
 export interface SessionMeta {
@@ -101,7 +102,7 @@ export interface QuestionAttempt {
   elapsed_ms: number;
 }
 
-export type QuestionVerdict = "correct" | "wrong" | "fixed";
+export type QuestionVerdict = "correct" | "wrong" | "fixed" | "skipped";
 
 export interface SessionReport {
   progress: ProgressRecord;

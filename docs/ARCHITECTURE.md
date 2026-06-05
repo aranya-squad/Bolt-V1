@@ -605,19 +605,27 @@ Answers are in `ArenaSession.questions_json` server-side only. The API strips an
 
 | Threat | Mitigation |
 |---|---|
-| Modifying JS to mark all answers correct | Answers never sent to client; verdict computed server-side |
-| Submitting answers instantly to skip timing | Server records `submitted_at`; rejects implausibly fast submissions |
+| Modifying JS to mark all answers correct | Answers never sent to client for CLASSWORK/HOMEWORK; verdict computed server-side |
+| Submitting answers instantly to skip timing | Server records `elapsed_ms`; implausibly fast submissions logged as `min_answer_ms_violation` (log-only in v1; enforcement is a deferred action) |
 | Replaying a session for higher XP | `LevelCompletion.best_progress_record` keeps the best; XP only on first completion |
-| Brute-forcing answers (submit, see verdict, retry) | One submission per `question_index`; second returns 409 |
+| Brute-forcing answers via retry | Multi-attempt is supported (first wrong + second correct = "Fixed" verdict, tracked via `attempt_number`); the server records every attempt with a unique `attempt_number` per `question_index` |
 | Generating fake `XPEvent` rows via API | No client-writable endpoint; XP written only by `apps/progress/services.py` |
+
+**Note on answers and practice kinds:** `FLASH_CARDS`, `ZEN`, `TIME_ATTACK`, and `CUSTOM` sessions include answers in the session payload so the client can grade locally and advance without a per-question round-trip. Answers are intentionally withheld for `CLASSWORK` and `HOMEWORK`.
 
 ### 10.2 Session progression
 
-A session can only advance in order (`question_index = N + 1`). Skipping returns 422.
+Questions can be submitted in any order — the server does not enforce sequential `question_index` progression. Skipping is supported: the client submits `answer = -999999` for a skipped question, which the server records as an incorrect attempt and which appears as "Skipped" in the Mission Report.
+
+The bulk endpoint (`POST /sessions/{id}/attempts/bulk/`) accepts a list of attempts in one call. Practice sessions use it to submit all answers after client-side grading. Classwork sessions flush the buffer to it periodically and on session finalization.
 
 ### 10.3 Abandonment
 
-Session with no attempts for > 2× the time limit is marked `abandoned_at` by a Celery beat task (wired in scaffold, job added in feature work).
+Session with no attempts for > 2× the time limit is marked `abandoned_at` by the `abandon_stale_sessions` Celery beat task (`apps/exercises/tasks.py`), scheduled every 5 minutes. ZEN sessions (no time limit) use `MAX_SESSION_SECONDS` as the timeout.
+
+### 10.4 Time taken definition
+
+`ProgressRecord.time_taken_sec` is the **sum of per-attempt `elapsed_ms`** divided by 1000, not wall-clock (`submitted_at - started_at`). Wall-clock inflates time when a student pauses mid-session; sum-of-elapsed measures only active thinking time. The personal-best tiebreaker in `_is_better_record` uses this field (lower is better), so the definition is consistent: slower wall-clock due to breaks does not penalise the player.
 
 ---
 
@@ -657,6 +665,7 @@ Session with no attempts for > 2× the time limit is marked `abandoned_at` by a 
 | `POST` | `/api/v1/sessions/practice/` | Create Practice session |
 | `GET` | `/api/v1/sessions/{id}/` | Session metadata + next question index |
 | `POST` | `/api/v1/sessions/{id}/attempts/` | Submit one answer |
+| `POST` | `/api/v1/sessions/{id}/attempts/bulk/` | Submit multiple answers in one call |
 | `POST` | `/api/v1/sessions/{id}/submit/` | Finalize, return report |
 | `POST` | `/api/v1/sessions/{id}/abandon/` | Explicit abandonment |
 | `GET` | `/api/v1/progress/me/` | Aggregate stats for HUD |
@@ -767,11 +776,18 @@ All UI strings in `public/locales/en/*.json` from day 1. Translation pipeline ad
 
 ### 16.2 CI pipeline (GitHub Actions)
 
-1. **Backend**: ruff lint, mypy, pytest with Postgres service, generate OpenAPI schema
-2. **Frontend**: eslint, tsc, vitest, vite build, Playwright E2E
-3. **Schema diff**: backend-generated vs. checked-in `openapi.yml` — fail on drift
-4. **Lighthouse CI**: fail on regression beyond §13 thresholds
-5. **Security**: pip-audit + npm audit --audit-level=high
+Implemented in `.github/workflows/ci.yml`. Jobs:
+
+| Job | Trigger | Steps |
+|---|---|---|
+| `backend` | every PR + main push | ruff lint → pytest (Postgres + Redis services) |
+| `frontend` | every PR + main push | eslint → tsc --noEmit → vitest run |
+| `build` | main push only (after both pass) | npm run build → upload dist/ artifact |
+
+Deferred (not yet wired):
+- OpenAPI schema drift check (backend-generated vs. checked-in `openapi.yml`)
+- Lighthouse CI regression gate
+- pip-audit + npm audit
 
 ### 16.3 Environments
 
@@ -887,7 +903,7 @@ Referrer-Policy: strict-origin-when-cross-origin
 | Celery workers | First async job |
 | WebSocket / real-time | Multi-student classroom features specced |
 | Feature flag system | First A/B test |
-| XPEvent table partitioning | Approaching 10M rows |
+| XPEvent + QuestionAttempt table partitioning | Approaching 10M rows — run `manage.py migrate_to_partitioned_tables` |
 | Full teacher dashboard | Teacher beta cohort |
 | Full guardian dashboard | Guardian beta cohort |
 
@@ -950,3 +966,4 @@ Referrer-Policy: strict-origin-when-cross-origin
 |---|---|---|
 | 1.0 | May 2026 | Initial scaffold plan |
 | 1.1 | May 2026 | Added compliance, anti-cheat, question generation, multi-role relations, testing harness, i18n, performance budget, CI/CD, security — see §1.2 |
+| 1.2 | June 2026 | Wave 1–3 architecture fixes: bulk attempt endpoint, answer-tier by kind, client-side grading, CDN split, CI wired, Celery beat abandonment sweep, DB router for read replica, personal-best Redis cache, time_taken_sec definition, partitioning management command |

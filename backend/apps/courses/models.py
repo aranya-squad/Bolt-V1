@@ -23,12 +23,12 @@ class Level(models.Model):
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
-    order = models.PositiveSmallIntegerField(unique=True)  # 1..10 (12 with future levels)
+    order = models.PositiveSmallIntegerField(unique=True)  # 1..10
     name = models.CharField(max_length=64)
     description = models.TextField(blank=True)
     # TODO(debt): xp_threshold value stubbed at 0; replace when XP formula is finalized
     xp_threshold = models.PositiveIntegerField(default=0)
-    is_advanced = models.BooleanField(default=False)  # true for levels 11–12 when added
+    is_advanced = models.BooleanField(default=False)
 
     class Meta:
         db_table = "courses_level"

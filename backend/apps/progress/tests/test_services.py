@@ -98,6 +98,17 @@ def test_finalize_score_total_uses_questions_json(session_with_template):
 
 
 @pytest.mark.django_db
+def test_finalize_time_taken_is_sum_of_elapsed_not_wall_clock(session_with_template):
+    # Sum-of-elapsed = 3500 + 4500 = 8000 ms = 8 seconds.
+    # Wall-clock for a test run is <1 second → 0 seconds via integer div.
+    # Asserting == 8 therefore only passes with the sum-of-elapsed definition.
+    record_attempt(session_with_template, 0, 1, "1+1", 2, 2, 3500)
+    record_attempt(session_with_template, 1, 1, "2+2", 4, 4, 4500)
+    record = finalize_session(session_with_template)
+    assert record.time_taken_sec == 8  # 3500ms + 4500ms = 8000ms = 8s
+
+
+@pytest.mark.django_db
 def test_finalize_creates_xp_event(user, session_with_template):
     finalize_session(session_with_template)
     event = XPEvent.objects.filter(user=user, event_type="SESSION_COMPLETE").first()

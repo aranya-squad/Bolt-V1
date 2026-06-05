@@ -1,72 +1,337 @@
 import { useNavigate } from "react-router-dom";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { Page } from "@/shared/ui/Page";
-import { BentoModeCard } from "@/shared/ui/BentoModeCard";
+import { BoltButton } from "@/shared/ui/BoltButton";
+import { ConfigSlider } from "@/shared/ui/ConfigSlider";
+import { AdvancedToggleRow } from "@/shared/ui/AdvancedToggleRow";
+import { Icon } from "@/shared/ui/Icon";
+import { useStartPractice } from "@/shared/api/queries/usePractice";
+import { useArenaConfig, type ArenaOperation, type ArenaMode } from "./useArenaConfig";
 
-const MODES = [
+const OPERATIONS: { value: ArenaOperation; label: string; icon: string }[] = [
+  { value: "MIXED",  label: "Add & Subtract",  icon: "plus" },
+  { value: "MUL",    label: "Multiplication",   icon: "x" },
+  { value: "DIV",    label: "Division",          icon: "divide" },
+];
+
+const MODES: { value: ArenaMode; label: string; description: string; icon: string; color: string }[] = [
   {
-    mode: "FLASH_CARDS",
-    title: "Memory Master",
-    description: "Master the abacus with flash card speed drills",
+    value: "FLASH_CARDS",
+    label: "Flash Cards",
+    description: "Speed drills with flash card timing",
     icon: "zap",
     color: "var(--y-bolt)",
   },
   {
-    mode: "ZEN",
-    title: "Zen Mode",
-    description: "No pressure. No timer. Pure focus.",
+    value: "ZEN",
+    label: "No Rush Mastery",
+    description: "No timer. Pure focus and accuracy.",
     icon: "wind",
     color: "var(--bolt-blue)",
   },
   {
-    mode: "TIME_ATTACK",
-    title: "Sonic Speed",
+    value: "TIME_ATTACK",
+    label: "Time Attack",
     description: "Race the clock and push your limits",
     icon: "timer",
     color: "var(--orange-streak)",
   },
-  {
-    mode: "CUSTOM",
-    title: "The Lab",
-    description: "Build your own challenge with custom rules",
-    icon: "settings",
-    color: "var(--p-cyber)",
-  },
-] as const;
+];
+
+const STEP_LABEL_STYLE: React.CSSProperties = {
+  fontFamily: "var(--font-label)",
+  fontSize: "0.7rem",
+  letterSpacing: "0.15em",
+  color: "var(--fg-sand)",
+  textTransform: "uppercase",
+  marginBottom: "var(--s-sm)",
+};
+
+function OperationChip({
+  label,
+  icon,
+  selected,
+  onClick,
+}: {
+  label: string;
+  icon: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        padding: "var(--s-md) var(--s-sm)",
+        borderRadius: "var(--r-lg)",
+        background: selected ? "rgba(250,204,21,0.12)" : "rgba(53,53,52,0.6)",
+        border: selected
+          ? "1px solid var(--y-bolt)"
+          : "1px solid rgba(255,255,255,0.08)",
+        color: selected ? "var(--y-bolt)" : "var(--fg-sand)",
+        fontFamily: "var(--font-label)",
+        fontWeight: 600,
+        fontSize: 13,
+        letterSpacing: "0.05em",
+        textTransform: "uppercase",
+        cursor: "pointer",
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "center",
+        gap: 6,
+        transition: "border-color 180ms, background 180ms, color 180ms",
+        boxShadow: selected ? "0 0 12px rgba(250,204,21,0.2)" : "none",
+      }}
+    >
+      <Icon name={icon} size={18} color={selected ? "var(--y-bolt)" : "var(--fg-sand)"} />
+      {label}
+    </button>
+  );
+}
+
+function ModeCard({
+  label,
+  description,
+  icon,
+  color,
+  selected,
+  onClick,
+}: {
+  label: string;
+  description: string;
+  icon: string;
+  color: string;
+  selected: boolean;
+  onClick: () => void;
+}) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      style={{
+        flex: 1,
+        minWidth: 0,
+        padding: "var(--s-lg) var(--s-md)",
+        borderRadius: "var(--r-xl)",
+        background: selected ? "rgba(250,204,21,0.06)" : "var(--glass-05)",
+        backdropFilter: "var(--blur-glass)",
+        WebkitBackdropFilter: "var(--blur-glass)",
+        border: selected
+          ? "1px solid var(--y-bolt)"
+          : "1px solid rgba(255,255,255,0.06)",
+        cursor: "pointer",
+        textAlign: "left",
+        display: "flex",
+        flexDirection: "column",
+        gap: 8,
+        position: "relative",
+        boxShadow: selected ? "0 0 18px rgba(250,204,21,0.15)" : "none",
+        transition: "border-color 180ms, box-shadow 180ms, background 180ms",
+      }}
+    >
+      {selected && (
+        <span style={{ position: "absolute", top: 10, right: 10 }}>
+          <Icon name="check-circle-2" size={16} color="var(--y-bolt)" />
+        </span>
+      )}
+      <Icon name={icon} size={24} color={color} />
+      <div
+        style={{
+          fontFamily: "var(--font-display)",
+          fontSize: "0.9rem",
+          color: "var(--fg-bone)",
+          letterSpacing: "0.04em",
+        }}
+      >
+        {label}
+      </div>
+      <div className="t-body-sm" style={{ color: "var(--fg-sand)", lineHeight: 1.5 }}>
+        {description}
+      </div>
+    </button>
+  );
+}
 
 export default function TrainingArenaPage() {
   const navigate = useNavigate();
+  const { config, setOperation, setMode, setQuestions, setDigits, setRows, setTimeLimitMin, setFlashSpeedMs, setAudio, toPracticePayload } =
+    useArenaConfig();
+  const { mutate: startPractice, isPending, isError } = useStartPractice();
+
+  const isMulDiv = config.operation === "MUL" || config.operation === "DIV";
+  const effectiveRows = isMulDiv ? 2 : config.rows;
+
+  const handleStart = () => {
+    const payload = toPracticePayload();
+    startPractice(
+      { ...payload, rows: effectiveRows },
+      {
+        onSuccess: (session) => {
+          navigate(`/practice/session/${session.session_id}`);
+        },
+      }
+    );
+  };
 
   return (
     <>
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <AmbientScene accents={["orange", "blue", "purple"] as any} />
       <Page>
+        <div style={{ maxWidth: 600 }}>
         <h1
           className="t-h1"
-          style={{ color: "var(--y-bolt)", marginBottom: "var(--s-xl)" }}
+          style={{ color: "var(--y-bolt)", marginBottom: "var(--s-2xl)" }}
         >
           TRAINING ARENA
         </h1>
 
-        <div
-          style={{
-            display: "grid",
-            gridTemplateColumns: "repeat(2, 1fr)",
-            gap: "var(--s-lg)",
-          }}
-        >
-          {MODES.map((m) => (
-            <BentoModeCard
-              key={m.mode}
-              mode={m.mode}
-              title={m.title}
-              description={m.description}
-              icon={m.icon}
-              color={m.color}
-              onClick={() => navigate(`/practice/setup/${m.mode}`)}
+        {/* Step 01 — Choose Operation */}
+        <div style={{ marginBottom: "var(--s-xl)" }}>
+          <div style={STEP_LABEL_STYLE}>Step 01 — Operation</div>
+          <div style={{ display: "flex", gap: "var(--s-sm)" }}>
+            {OPERATIONS.map((op) => (
+              <OperationChip
+                key={op.value}
+                label={op.label}
+                icon={op.icon}
+                selected={config.operation === op.value}
+                onClick={() => setOperation(op.value)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Step 02 — Combat Style */}
+        <div style={{ marginBottom: "var(--s-xl)" }}>
+          <div style={STEP_LABEL_STYLE}>Step 02 — Combat Style</div>
+          <div
+            style={{
+              display: "flex",
+              gap: "var(--s-sm)",
+              flexWrap: "wrap",
+            }}
+          >
+            {MODES.map((m) => (
+              <ModeCard
+                key={m.value}
+                label={m.label}
+                description={m.description}
+                icon={m.icon}
+                color={m.color}
+                selected={config.mode === m.value}
+                onClick={() => setMode(m.value)}
+              />
+            ))}
+          </div>
+        </div>
+
+        {/* Step 03 — Configuration */}
+        <div style={{ marginBottom: "var(--s-xl)" }}>
+          <div style={STEP_LABEL_STYLE}>Step 03 — Configuration</div>
+
+          <ConfigSlider
+            label="QUESTIONS"
+            icon="list-ordered"
+            min={5}
+            max={50}
+            step={5}
+            value={config.questions}
+            onChange={setQuestions}
+          />
+
+          {config.mode !== "FLASH_CARDS" && (
+            <ConfigSlider
+              label="DIGITS"
+              icon="hash"
+              min={1}
+              max={4}
+              value={config.digits}
+              onChange={setDigits}
             />
-          ))}
+          )}
+
+          <ConfigSlider
+            label="ROWS"
+            icon="rows-3"
+            min={2}
+            max={5}
+            value={effectiveRows}
+            onChange={setRows}
+            disabled={isMulDiv}
+            description={isMulDiv ? "Fixed at 2 rows for multiplication and division" : undefined}
+          />
+
+          {config.mode === "FLASH_CARDS" && (
+            <ConfigSlider
+              label="FLASH SPEED"
+              icon="zap"
+              min={500}
+              max={5000}
+              step={500}
+              value={config.flashSpeedMs}
+              onChange={setFlashSpeedMs}
+              suffix="ms"
+            />
+          )}
+
+          {config.mode === "TIME_ATTACK" && (
+            <ConfigSlider
+              label="TIME LIMIT"
+              icon="timer"
+              min={1}
+              max={10}
+              value={config.timeLimitMin}
+              onChange={setTimeLimitMin}
+              suffix="min"
+            />
+          )}
+
+          {config.mode === "FLASH_CARDS" && (
+            <AdvancedToggleRow
+              label="Audio Mode"
+              hint="Play sounds with each flash card"
+              icon="volume-2"
+              value={config.audio}
+              onChange={setAudio}
+            />
+          )}
+        </div>
+
+        {/* Personal Best stub */}
+        <div style={{ marginBottom: "var(--s-xl)", display: "flex", alignItems: "center", gap: 8 }}>
+          <Icon name="trophy" size={14} color="var(--y-bolt)" />
+          <span
+            style={{
+              fontFamily: "var(--font-label)",
+              fontSize: 12,
+              color: "var(--fg-sand)",
+              letterSpacing: "0.08em",
+              textTransform: "uppercase",
+            }}
+          >
+            Personal Best: 87% accuracy
+          </span>
+        </div>
+
+        {isError && (
+          <p style={{ color: "var(--err)", marginBottom: "var(--s-md)", fontSize: "0.9rem" }}>
+            Failed to start session. Please try again.
+          </p>
+        )}
+
+        <BoltButton
+          variant="primary"
+          size="lg"
+          icon="rocket"
+          onClick={handleStart}
+          disabled={isPending}
+          style={{ width: "100%" }}
+        >
+          {isPending ? "STARTING…" : "ENTER ARENA"}
+        </BoltButton>
         </div>
       </Page>
     </>

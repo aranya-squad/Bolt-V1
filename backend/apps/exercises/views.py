@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.courses.models import Level, Lesson
-from apps.exercises.constants import MAX_SESSION_SECONDS, MIN_ANSWER_MS
+from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_SESSION_SECONDS, MIN_ANSWER_MS
 from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
@@ -255,8 +255,14 @@ class SubmitAttemptView(APIView):
                     "user_id": str(request.user.id),
                     "question_index": question_index,
                     "elapsed_ms": elapsed_ms,
+                    "session_kind": session.kind,
                 },
             )
+            if session.kind in ANTICHEAT_ENFORCE_KINDS:
+                return Response(
+                    {"detail": "Submission rejected: answer submitted implausibly fast."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         from apps.progress.models import QuestionAttempt
 
@@ -283,6 +289,126 @@ class SubmitAttemptView(APIView):
             "is_correct": attempt.is_correct,
             "xp_delta": 0,
         })
+
+
+class BulkSubmitAttemptView(APIView):
+    """
+    POST /sessions/{id}/attempts/bulk/
+    Submit multiple attempts in one call.  Intended for:
+      - Practice: client-side grading sessions submitting all answers at once.
+      - Classwork: debounced background flushes to protect against data loss.
+
+    Idempotent on (session, question_index, attempt_number): if an attempt for the
+    computed attempt_number already exists, its verdict is returned without a new row.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, session_id):
+        session = get_object_or_404(
+            ArenaSession.objects.select_for_update(),
+            pk=session_id,
+            user=request.user,
+        )
+
+        if not session.is_active:
+            return Response({"detail": "Session is not active."}, status=status.HTTP_400_BAD_REQUEST)
+
+        attempts_data = request.data.get("attempts")
+        if not isinstance(attempts_data, list):
+            return Response({"detail": "attempts must be a list."}, status=status.HTTP_400_BAD_REQUEST)
+
+        if not attempts_data:
+            return Response({"verdicts": []})
+
+        q_count = len(session.questions_json)
+        for i, item in enumerate(attempts_data):
+            try:
+                idx = int(item.get("question_index"))
+            except (TypeError, ValueError):
+                return Response(
+                    {"detail": f"Item {i}: question_index must be an integer."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if idx < 0 or idx >= q_count:
+                return Response(
+                    {"detail": f"Item {i}: question_index {idx} out of bounds (0..{q_count - 1})."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+        from apps.progress.models import QuestionAttempt
+
+        verdicts = []
+        for item in attempts_data:
+            question_index = int(item["question_index"])
+            try:
+                answer = int(item["answer"])
+            except (TypeError, ValueError):
+                return Response({"detail": "answer must be an integer."}, status=status.HTTP_400_BAD_REQUEST)
+
+            try:
+                elapsed_ms = int(item.get("elapsed_ms", 0))
+            except (TypeError, ValueError):
+                elapsed_ms = 0
+            elapsed_ms = max(0, elapsed_ms)
+
+            if elapsed_ms < MIN_ANSWER_MS:
+                _log.warning(
+                    "min_answer_ms_violation",
+                    extra={
+                        "session_id": str(session.id),
+                        "user_id": str(request.user.id),
+                        "question_index": question_index,
+                        "elapsed_ms": elapsed_ms,
+                        "session_kind": session.kind,
+                        "endpoint": "bulk",
+                    },
+                )
+                if session.kind in ANTICHEAT_ENFORCE_KINDS:
+                    # Skip this attempt rather than abort the whole bulk call;
+                    # the other attempts in the batch are still recorded.
+                    verdicts.append({
+                        "question_index": question_index,
+                        "is_correct": False,
+                        "xp_delta": 0,
+                        "rejected": True,
+                    })
+                    continue
+
+            attempt_number = (
+                QuestionAttempt.objects.filter(
+                    session=session, question_index=question_index
+                ).count()
+                + 1
+            )
+
+            q = session.questions_json[question_index]
+            existing = QuestionAttempt.objects.filter(
+                session=session,
+                question_index=question_index,
+                attempt_number=attempt_number,
+            ).first()
+
+            if existing is not None:
+                attempt = existing
+            else:
+                attempt = record_attempt(
+                    session=session,
+                    question_index=question_index,
+                    attempt_number=attempt_number,
+                    question_text=q["text"],
+                    expected_answer=q["answer"],
+                    submitted_answer=answer,
+                    elapsed_ms=elapsed_ms,
+                )
+
+            verdicts.append({
+                "question_index": question_index,
+                "is_correct": attempt.is_correct,
+                "xp_delta": 0,
+            })
+
+        return Response({"verdicts": verdicts})
 
 
 class FinalizeSessionView(APIView):
