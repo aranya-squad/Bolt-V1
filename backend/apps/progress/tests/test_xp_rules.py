@@ -1,6 +1,12 @@
 import pytest
 
-from apps.progress.xp_rules import FIRST_COMPLETION_BONUS, PERFECT_SCORE_BONUS, XP_PER_CORRECT, compute_session_xp
+from apps.progress.xp_rules import (
+    FIRST_COMPLETION_BONUS,
+    PERFECT_SCORE_BONUS,
+    XP_ON_RETAKE,
+    XP_PER_CORRECT,
+    compute_session_xp,
+)
 
 
 def test_xp_basic():
@@ -21,3 +27,11 @@ def test_xp_first_completion_bonus():
 def test_xp_perfect_and_first():
     xp = compute_session_xp(score_correct=30, score_total=30, is_first_completion=True)
     assert xp == 30 * XP_PER_CORRECT + PERFECT_SCORE_BONUS + FIRST_COMPLETION_BONUS
+
+
+def test_xp_retake_earns_zero():
+    """A retake earns XP_ON_RETAKE regardless of score or bonuses."""
+    xp = compute_session_xp(
+        score_correct=30, score_total=30, is_first_completion=False, is_retake=True
+    )
+    assert xp == XP_ON_RETAKE == 0

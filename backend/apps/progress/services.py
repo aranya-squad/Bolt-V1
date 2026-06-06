@@ -71,6 +71,7 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
 
     # Acquire LevelCompletion lock before computing is_first so that concurrent
     # finalize calls cannot both see is_first=True and double-award the first-completion bonus.
+    # Lock order is level-then-lesson; the later best-record updates reuse these same rows.
     if session.template is not None:
         lesson = session.template.lesson
         level = lesson.level
@@ -81,11 +82,21 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
             .first()
         )
         is_first = level_completion is None
+        # Retake is lesson-granular: a lesson+kind that already has a completion.
+        # (is_first is level-granular and only controls the first-completion bonus.)
+        lesson_completion = (
+            LessonCompletion.objects
+            .select_for_update()
+            .filter(user=session.user, lesson=lesson, kind=session.kind)
+            .first()
+        )
+        is_retake = lesson_completion is not None
     else:
-        lesson = level = level_completion = None
+        lesson = level = level_completion = lesson_completion = None
         is_first = False
+        is_retake = False
 
-    xp = compute_session_xp(score_correct, score_total, is_first)
+    xp = compute_session_xp(score_correct, score_total, is_first, is_retake)
 
     record = ProgressRecord.objects.create(
         session=session,
@@ -117,14 +128,9 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
             level_completion.best_progress_record = record
             level_completion.save(update_fields=["best_progress_record"])
 
-        # Lesson-granular completion (drives PathOfConquest accordion status chips)
-        lesson_existing = (
-            LessonCompletion.objects
-            .select_for_update()
-            .filter(user=session.user, lesson=lesson, kind=session.kind)
-            .first()
-        )
-        if lesson_existing is None:
+        # Lesson-granular completion (drives PathOfConquest accordion status chips).
+        # Reuses the lesson_completion row locked above.
+        if lesson_completion is None:
             LessonCompletion.objects.create(
                 user=session.user,
                 lesson=lesson,
@@ -132,10 +138,10 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
                 best_accuracy_pct=record.accuracy_pct,
                 best_progress_record=record,
             )
-        elif _is_better_record(record, lesson_existing.best_progress_record):
-            lesson_existing.best_accuracy_pct = record.accuracy_pct
-            lesson_existing.best_progress_record = record
-            lesson_existing.save(update_fields=["best_accuracy_pct", "best_progress_record"])
+        elif _is_better_record(record, lesson_completion.best_progress_record):
+            lesson_completion.best_accuracy_pct = record.accuracy_pct
+            lesson_completion.best_progress_record = record
+            lesson_completion.save(update_fields=["best_accuracy_pct", "best_progress_record"])
 
     # Invalidate after commit so no request can repopulate the cache with
     # pre-commit state between our delete and the transaction COMMIT.

@@ -18,8 +18,21 @@ FIRST_COMPLETION_BONUS = 100
 XP_ON_RETAKE = 0
 
 
-def compute_session_xp(score_correct: int, score_total: int, is_first_completion: bool) -> int:
-    """Return the XP delta for a completed session."""
+def compute_session_xp(
+    score_correct: int,
+    score_total: int,
+    is_first_completion: bool,
+    is_retake: bool = False,
+) -> int:
+    """
+    Return the XP delta for a completed session.
+
+    A retake (re-finalizing a lesson+kind that already has a completion) earns
+    XP_ON_RETAKE so XP can't be farmed by replaying mastered content. Practice
+    sessions are never retakes (they have no lesson), so they keep earning XP.
+    """
+    if is_retake:
+        return XP_ON_RETAKE
     xp = score_correct * XP_PER_CORRECT
     if score_correct == score_total:
         xp += PERFECT_SCORE_BONUS

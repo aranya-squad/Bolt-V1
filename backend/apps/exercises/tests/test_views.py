@@ -88,6 +88,27 @@ def test_start_practice_zen_zero_timer(auth_client):
 
 
 @pytest.mark.django_db
+def test_start_practice_mixed_operation(auth_client):
+    """MIXED is a valid practice operation; questions resolve to an ADD/SUB mix."""
+    url = reverse("practice-start")
+    payload = {**_PRACTICE_PAYLOAD, "operation": "MIXED"}
+    response = auth_client.post(url, payload, format="json")
+    assert response.status_code == status.HTTP_201_CREATED
+    questions = response.json()["questions"]
+    assert len(questions) == 5
+    assert all(q["operation"] in {"ADD", "SUB"} for q in questions)
+
+
+@pytest.mark.django_db
+def test_start_practice_invalid_operation(auth_client):
+    url = reverse("practice-start")
+    payload = {**_PRACTICE_PAYLOAD, "operation": "BOGUS"}
+    response = auth_client.post(url, payload, format="json")
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "operation" in response.json()
+
+
+@pytest.mark.django_db
 def test_start_practice_invalid_mode(auth_client):
     url = reverse("practice-start")
     payload = {**_PRACTICE_PAYLOAD, "mode": "INVALID"}
@@ -600,3 +621,44 @@ def test_bulk_submit_on_finalized_session(auth_client, practice_session):
         format="json",
     )
     assert response.status_code == status.HTTP_400_BAD_REQUEST
+
+
+@pytest.mark.django_db
+def test_bulk_submit_rejects_duplicate_question_index(auth_client, practice_session):
+    """Duplicate question_index in one bulk call is rejected before any DB writes."""
+    url = reverse("session-attempts-bulk", kwargs={"session_id": practice_session.id})
+    response = auth_client.post(
+        url,
+        {"attempts": [
+            {"question_index": 0, "answer": 1, "elapsed_ms": 500},
+            {"question_index": 0, "answer": 2, "elapsed_ms": 500},
+        ]},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_400_BAD_REQUEST
+    assert "duplicate" in response.json()["detail"].lower()
+
+
+@pytest.mark.django_db
+def test_bulk_submit_rejects_when_attempt_cap_reached(auth_client, practice_session):
+    """Once MAX_ATTEMPTS_PER_QUESTION attempts exist for an index, bulk is rejected."""
+    from apps.exercises.constants import MAX_ATTEMPTS_PER_QUESTION
+    from apps.exercises.models import ArenaSession
+
+    url = reverse("session-attempts-bulk", kwargs={"session_id": practice_session.id})
+
+    for _ in range(MAX_ATTEMPTS_PER_QUESTION):
+        resp = auth_client.post(
+            url,
+            {"attempts": [{"question_index": 0, "answer": 99, "elapsed_ms": 500}]},
+            format="json",
+        )
+        assert resp.status_code == status.HTTP_200_OK
+
+    over_cap = auth_client.post(
+        url,
+        {"attempts": [{"question_index": 0, "answer": 99, "elapsed_ms": 500}]},
+        format="json",
+    )
+    assert over_cap.status_code == status.HTTP_400_BAD_REQUEST
+    assert "maximum" in over_cap.json()["detail"].lower()

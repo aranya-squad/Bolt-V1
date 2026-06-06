@@ -77,3 +77,33 @@ def test_div_quotient_variance():
     g = ProceduralGenerator(seed=7, config=_config(op="DIV", digits=1, count=1000))
     quotients = {q.answer for q in g.generate()}
     assert len(quotients) >= 4, f"Only {len(quotients)} distinct quotients — variance too low"
+
+
+def test_mixed_only_produces_add_or_sub():
+    """MIXED resolves to ADD/SUB per question; operation and text must match a + or - expression."""
+    g = ProceduralGenerator(seed=11, config=_config(op="MIXED", count=50))
+    for q in g.generate():
+        assert q.operation in {"ADD", "SUB"}, f"Unexpected operation {q.operation!r}"
+        if q.operation == "ADD":
+            assert "+" in q.text and "-" not in q.text
+            operands = [int(x.strip()) for x in q.text.split("+")]
+            assert sum(operands) == q.answer
+        else:
+            assert "-" in q.text and "+" not in q.text
+            parts = [int(x.strip()) for x in q.text.split("-")]
+            assert parts[0] - sum(parts[1:]) == q.answer
+        assert q.answer >= 0
+
+
+def test_mixed_is_deterministic():
+    """Same seed + MIXED config must produce identical questions (including the ADD/SUB choice)."""
+    g1 = ProceduralGenerator(seed=3, config=_config(op="MIXED", count=30))
+    g2 = ProceduralGenerator(seed=3, config=_config(op="MIXED", count=30))
+    assert [q.to_dict() for q in g1.generate()] == [q.to_dict() for q in g2.generate()]
+
+
+def test_mixed_actually_mixes():
+    """Over enough questions MIXED should yield both ADD and SUB, not collapse to one."""
+    g = ProceduralGenerator(seed=17, config=_config(op="MIXED", count=100))
+    ops = {q.operation for q in g.generate()}
+    assert ops == {"ADD", "SUB"}, f"MIXED produced only {ops}"

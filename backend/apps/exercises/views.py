@@ -1,6 +1,7 @@
 import logging
 import random
 
+from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -8,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.courses.models import Level, Lesson
-from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_SESSION_SECONDS, MIN_ANSWER_MS
+from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_ATTEMPTS_PER_QUESTION, MAX_SESSION_SECONDS, MIN_ANSWER_MS
 from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
@@ -127,7 +128,8 @@ class StartPracticeView(APIView):
     permission_classes = [IsAuthenticated]
 
     VALID_MODES = {"TIME_ATTACK", "ZEN", "CUSTOM", "FLASH_CARDS"}
-    VALID_OPERATIONS = {"ADD", "SUB", "MUL", "DIV"}
+    # MIXED is practice-only: the generator resolves it to a per-question ADD/SUB mix.
+    VALID_OPERATIONS = {"ADD", "SUB", "MUL", "DIV", "MIXED"}
 
     def post(self, request):
         errors = {}
@@ -322,6 +324,7 @@ class BulkSubmitAttemptView(APIView):
             return Response({"verdicts": []})
 
         q_count = len(session.questions_json)
+        seen_indices: set[int] = set()
         for i, item in enumerate(attempts_data):
             try:
                 idx = int(item.get("question_index"))
@@ -335,8 +338,30 @@ class BulkSubmitAttemptView(APIView):
                     {"detail": f"Item {i}: question_index {idx} out of bounds (0..{q_count - 1})."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
+            if idx in seen_indices:
+                return Response(
+                    {"detail": f"Item {i}: duplicate question_index {idx}. Each index may appear once per bulk call."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            seen_indices.add(idx)
 
         from apps.progress.models import QuestionAttempt
+
+        # Reject if any question has already reached the attempt cap. Checked once
+        # before the loop so the entire batch is rejected rather than partially applied.
+        existing_counts = {
+            row["question_index"]: row["cnt"]
+            for row in QuestionAttempt.objects.filter(
+                session=session,
+                question_index__in=seen_indices,
+            ).values("question_index").annotate(cnt=Count("id"))
+        }
+        for idx in seen_indices:
+            if existing_counts.get(idx, 0) >= MAX_ATTEMPTS_PER_QUESTION:
+                return Response(
+                    {"detail": f"question_index {idx} has reached the maximum of {MAX_ATTEMPTS_PER_QUESTION} attempts."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
         verdicts = []
         for item in attempts_data:

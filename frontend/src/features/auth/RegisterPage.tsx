@@ -57,21 +57,23 @@ export default function RegisterPage() {
         }}
       >
         <GlassCard variant="default" style={{ width: "100%", maxWidth: 420, padding: 40 }}>
-          <div
-            style={{
-              fontFamily: "var(--font-label)",
-              fontSize: 11,
-              letterSpacing: "0.15em",
-              textTransform: "uppercase",
-              color: "var(--fg-sand-50)",
-              marginBottom: 24,
-              padding: "8px 12px",
-              background: "rgba(255,255,255,0.03)",
-              borderRadius: 8,
-            }}
-          >
-            DEV REGISTER — production design pending
-          </div>
+          {import.meta.env.DEV && (
+            <div
+              style={{
+                fontFamily: "var(--font-label)",
+                fontSize: 11,
+                letterSpacing: "0.15em",
+                textTransform: "uppercase",
+                color: "var(--fg-sand-50)",
+                marginBottom: 24,
+                padding: "8px 12px",
+                background: "rgba(255,255,255,0.03)",
+                borderRadius: 8,
+              }}
+            >
+              DEV REGISTER — production design pending
+            </div>
+          )}
 
           <h1 className="t-h2" style={{ color: "var(--y-bolt)", marginBottom: 32 }}>
             CREATE ACCOUNT

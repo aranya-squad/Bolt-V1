@@ -202,3 +202,40 @@ def test_progress_record_update_raises_value_error(session_with_template):
     record = finalize_session(session_with_template)
     with pytest.raises(ValueError, match="append-only"):
         record.save()
+
+
+# ---------------------------------------------------------------------------
+# Zero XP on retake (lesson-granular)
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.django_db
+def test_retake_of_completed_lesson_earns_zero_xp(user, session_with_template, session2):
+    """Second finalize of the same lesson+kind earns 0 XP but still records progress."""
+    record_attempt(session_with_template, 0, 1, "1+1", 2, 2, 500)
+    first_record = finalize_session(session_with_template)
+    assert first_record.xp_earned > 0
+
+    # Retake: same template/lesson, perfect score this time.
+    for i in range(3):
+        record_attempt(session2, i, 1, "1+1", 2, 2, 500)
+    retake_record = finalize_session(session2)
+
+    assert retake_record.xp_earned == 0
+    # ProgressRecord and accuracy are still recorded for the retake.
+    assert retake_record.score_correct == 3
+    # The retake's XPEvent carries a zero delta (no farming), original event unchanged.
+    retake_event = XPEvent.objects.get(source_session=session2)
+    assert retake_event.delta == 0
+    first_event = XPEvent.objects.get(source_session=session_with_template)
+    assert first_event.delta > 0
+
+
+@pytest.mark.django_db
+def test_practice_session_still_earns_xp_on_every_finalize(user, practice_session):
+    """Regression guard: practice (template=None) is never a retake — XP awarded each time."""
+    for i in range(3):
+        record_attempt(practice_session, i, 1, "1+1", 2, 2, 500)
+    record = finalize_session(practice_session)
+    assert record.xp_earned > 0
+    assert XPEvent.objects.get(source_session=practice_session).delta > 0

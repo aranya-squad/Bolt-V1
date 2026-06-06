@@ -11,3 +11,7 @@ ANTICHEAT_ENFORCE_KINDS = frozenset(["CLASSWORK", "TIME_ATTACK"])
 
 # Maximum allowed session duration in seconds. ZEN mode passes 0 ("no limit").
 MAX_SESSION_SECONDS = 3600
+
+# Maximum number of attempts allowed per question per session.
+# Prevents answer enumeration via repeated submissions to the same question index.
+MAX_ATTEMPTS_PER_QUESTION = 3

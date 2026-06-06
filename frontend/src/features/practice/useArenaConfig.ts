@@ -11,7 +11,6 @@ interface ArenaConfig {
   rows: number;
   timeLimitMin: number;
   flashSpeedMs: number;
-  audio: boolean;
 }
 
 const DEFAULTS: ArenaConfig = {
@@ -22,7 +21,6 @@ const DEFAULTS: ArenaConfig = {
   rows: 2,
   timeLimitMin: 2,
   flashSpeedMs: 2000,
-  audio: false,
 };
 
 export interface UseArenaConfigReturn {
@@ -34,7 +32,6 @@ export interface UseArenaConfigReturn {
   setRows: (n: number) => void;
   setTimeLimitMin: (n: number) => void;
   setFlashSpeedMs: (n: number) => void;
-  setAudio: (v: boolean) => void;
   toPracticePayload: () => {
     mode: string;
     operation: string;
@@ -55,7 +52,6 @@ export function useArenaConfig(): UseArenaConfigReturn {
   const setRows = (rows: number) => setConfig((c) => ({ ...c, rows }));
   const setTimeLimitMin = (timeLimitMin: number) => setConfig((c) => ({ ...c, timeLimitMin }));
   const setFlashSpeedMs = (flashSpeedMs: number) => setConfig((c) => ({ ...c, flashSpeedMs }));
-  const setAudio = (audio: boolean) => setConfig((c) => ({ ...c, audio }));
 
   const toPracticePayload = () => ({
     mode: config.mode,
@@ -75,7 +71,6 @@ export function useArenaConfig(): UseArenaConfigReturn {
     setRows,
     setTimeLimitMin,
     setFlashSpeedMs,
-    setAudio,
     toPracticePayload,
   };
 }

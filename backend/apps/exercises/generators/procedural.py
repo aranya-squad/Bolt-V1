@@ -9,7 +9,7 @@ class ProceduralGenerator(QuestionGenerator):
     Used by Practice sessions (Custom, Time Attack, Zen, Flash Cards).
 
     Config keys:
-        operation:      ADD | SUB | MUL | DIV
+        operation:      ADD | SUB | MUL | DIV | MIXED (MIXED picks ADD or SUB per question)
         digits:         int (1–4) — digit count of each operand
         rows:           int (2–8) — number of operands
         question_count: int
@@ -24,6 +24,11 @@ class ProceduralGenerator(QuestionGenerator):
 
     def _one(self, _idx: int) -> Question:
         op = self.config["operation"]
+        # Resolve MIXED to a concrete operation per question so the stored
+        # Question.operation reflects what was actually generated. Drawn only in
+        # the MIXED branch so non-MIXED seeds keep an identical RNG sequence.
+        if op == "MIXED":
+            op = self.rng.choice(["ADD", "SUB"])
         digits = self.config.get("digits", 2)
         rows = self.config.get("rows", 2)
 

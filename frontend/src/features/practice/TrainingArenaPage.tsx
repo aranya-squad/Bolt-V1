@@ -3,7 +3,6 @@ import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { Page } from "@/shared/ui/Page";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { ConfigSlider } from "@/shared/ui/ConfigSlider";
-import { AdvancedToggleRow } from "@/shared/ui/AdvancedToggleRow";
 import { Icon } from "@/shared/ui/Icon";
 import { useStartPractice } from "@/shared/api/queries/usePractice";
 import { useArenaConfig, type ArenaOperation, type ArenaMode } from "./useArenaConfig";
@@ -156,7 +155,7 @@ function ModeCard({
 
 export default function TrainingArenaPage() {
   const navigate = useNavigate();
-  const { config, setOperation, setMode, setQuestions, setDigits, setRows, setTimeLimitMin, setFlashSpeedMs, setAudio, toPracticePayload } =
+  const { config, setOperation, setMode, setQuestions, setDigits, setRows, setTimeLimitMin, setFlashSpeedMs, toPracticePayload } =
     useArenaConfig();
   const { mutate: startPractice, isPending, isError } = useStartPractice();
 
@@ -289,31 +288,6 @@ export default function TrainingArenaPage() {
             />
           )}
 
-          {config.mode === "FLASH_CARDS" && (
-            <AdvancedToggleRow
-              label="Audio Mode"
-              hint="Play sounds with each flash card"
-              icon="volume-2"
-              value={config.audio}
-              onChange={setAudio}
-            />
-          )}
-        </div>
-
-        {/* Personal Best stub */}
-        <div style={{ marginBottom: "var(--s-xl)", display: "flex", alignItems: "center", gap: 8 }}>
-          <Icon name="trophy" size={14} color="var(--y-bolt)" />
-          <span
-            style={{
-              fontFamily: "var(--font-label)",
-              fontSize: 12,
-              color: "var(--fg-sand)",
-              letterSpacing: "0.08em",
-              textTransform: "uppercase",
-            }}
-          >
-            Personal Best: 87% accuracy
-          </span>
         </div>
 
         {isError && (
