@@ -5,3 +5,5 @@ declare global {
     __BOLT_DEMO__?: { focusMode?: boolean; skeleton?: boolean; connection?: string };
   }
 }
+
+export {};

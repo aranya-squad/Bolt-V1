@@ -10,8 +10,6 @@ set -euo pipefail
 
 PLATFORM=${PLATFORM:-fly}
 IMAGE_TAG=${IMAGE_TAG:-latest}
-# Host port bound by the app instances — must match Gunicorn bind in gunicorn.conf.py
-APP_HOST_PORT=${APP_HOST_PORT:-8000}
 
 log() { echo "[deploy] $*"; }
 
@@ -30,33 +28,11 @@ rolling_restart() {
   if [[ "$PLATFORM" == "fly" ]]; then
     fly deploy --strategy rolling --image "registry.fly.io/bolt-abacus-api:$IMAGE_TAG"
   else
-    INSTANCES=$(docker ps --filter "name=bolt_web" --format "{{.Names}}")
-    if [[ -z "$INSTANCES" ]]; then
-      log "ERROR: No running bolt_web instances found. Cannot perform rolling restart."
-      exit 1
-    fi
-
-    for inst in $INSTANCES; do
-      log "  Restarting $inst..."
-      docker pull "bolt-abacus-api:$IMAGE_TAG"
-      docker stop --time 30 "$inst"  # 30s matches gunicorn timeout for graceful shutdown
-      docker run -d --name "$inst" \
-        --env-file .env.production \
-        -p "${APP_HOST_PORT}:8000" \
-        "bolt-abacus-api:$IMAGE_TAG"
-      # Wait for health check to pass before moving to the next instance.
-      for i in $(seq 1 10); do
-        if curl -sf "http://localhost:${APP_HOST_PORT}/api/v1/health/" > /dev/null; then
-          log "  $inst healthy."
-          break
-        fi
-        sleep 3
-        if [[ $i -eq 10 ]]; then
-          log "ERROR: $inst failed health check after 30s. Aborting."
-          exit 1
-        fi
-      done
-    done
+    # Compose brings up web + worker + beat from docker-compose.prod.yml.
+    # Image is selected via IMAGE_NAME/IMAGE_TAG (export IMAGE_NAME=<ecr-uri> for ECR).
+    # --wait blocks until the web healthcheck passes before returning.
+    docker compose -f docker-compose.prod.yml pull
+    docker compose -f docker-compose.prod.yml up -d --wait
   fi
 }
 

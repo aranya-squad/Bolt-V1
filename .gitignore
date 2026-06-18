@@ -22,6 +22,8 @@ db.sqlite3-journal
 # Environment variables
 .env
 .env.*
+# ...but keep the committed, secret-free template
+!.env.production.example
 
 # Node / Frontend
 node_modules/

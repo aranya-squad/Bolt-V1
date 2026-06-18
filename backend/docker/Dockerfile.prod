@@ -23,8 +23,8 @@ COPY --from=builder /usr/local/bin /usr/local/bin
 
 COPY . .
 
-RUN python manage.py collectstatic --noinput
-
+# Static files are collected at deploy time against S3 (see deploy plan Track D),
+# not baked into the image — collectstatic here would need prod settings + AWS creds.
 EXPOSE 8000
 
 CMD ["gunicorn", "config.wsgi:application", "--config", "gunicorn.conf.py"]
