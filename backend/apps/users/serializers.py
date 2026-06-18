@@ -48,16 +48,27 @@ class GuardianRegisterSerializer(serializers.ModelSerializer):
         return user
 
 
-class StudentRegisterSerializer(serializers.ModelSerializer):
-    """Guardian-only: create a child sub-account."""
+class StudentRegisterSerializer(serializers.Serializer):
+    """
+    Guardian-only: create a child sub-account.
+    Students log in with call_sign + PIN — no email ever required or shown.
+    An internal email is auto-generated so the User model constraint is satisfied.
+    PIN must be exactly 4 digits.
+    """
 
-    password = serializers.CharField(write_only=True, min_length=6)
-    display_name = serializers.CharField(write_only=True, max_length=64)
+    call_sign = serializers.CharField(max_length=64)
+    pin = serializers.CharField(write_only=True, min_length=4, max_length=4)
     date_of_birth = serializers.DateField()
 
-    class Meta:
-        model = User
-        fields = ["email", "password", "display_name", "date_of_birth"]
+    def validate_pin(self, value: str) -> str:
+        if not value.isdigit():
+            raise serializers.ValidationError("PIN must be exactly 4 digits.")
+        return value
+
+    def validate_call_sign(self, value: str) -> str:
+        if Profile.objects.filter(display_name__iexact=value).exists():
+            raise serializers.ValidationError("This call sign is already taken.")
+        return value
 
     def validate_date_of_birth(self, value):
         from datetime import date
@@ -71,13 +82,19 @@ class StudentRegisterSerializer(serializers.ModelSerializer):
         return value
 
     def create(self, validated_data):
-        display_name = validated_data.pop("display_name")
-        dob = validated_data.pop("date_of_birth")
+        import re
+        import uuid
+        call_sign = validated_data["call_sign"]
+        pin = validated_data["pin"]
+        dob = validated_data["date_of_birth"]
+        # Internal-only email — never shown or used for login
+        slug = re.sub(r"[^a-z0-9]", "", call_sign.lower())
+        internal_email = f"{slug}-{uuid.uuid4().hex[:6]}@students.boltabacus.internal"
         user = User.objects.create_user(
-            email=validated_data["email"],
-            password=validated_data["password"],
+            email=internal_email,
+            password=pin,
             role="STUDENT",
             date_of_birth=dob,
         )
-        Profile.objects.create(user=user, display_name=display_name)
+        Profile.objects.create(user=user, display_name=call_sign)
         return user

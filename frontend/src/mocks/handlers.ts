@@ -23,6 +23,16 @@ export const handlers = [
     return HttpResponse.json({ access: "mock-access-token" });
   }),
 
+  // Student login — call-sign + PIN
+  http.post(`${BASE}/auth/callsign-login/`, async ({ request }) => {
+    const body = await request.json() as { call_sign?: string; pin?: string };
+    // Any non-empty call_sign + 4-digit PIN succeeds in dev
+    if (!body.call_sign || !body.pin || body.pin.length !== 4) {
+      return HttpResponse.json({ detail: "Wrong call sign or PIN." }, { status: 401 });
+    }
+    return HttpResponse.json({ access: "mock-access-token" });
+  }),
+
   http.post(`${BASE}/auth/register/`, async () => {
     return HttpResponse.json(MOCK_USER, { status: 201 });
   }),

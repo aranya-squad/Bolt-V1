@@ -15,10 +15,13 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from .backends import CallSignBackend
 from .constants import PRESET_AVATAR_URLS
 from .models import AuditEvent, ConsentRecord, Guardianship, Profile, User
 from .permissions import IsGuardian
 from .serializers import GuardianRegisterSerializer, ProfileSerializer, StudentRegisterSerializer, UserMeSerializer
+
+_callsign_backend = CallSignBackend()
 
 _log = logging.getLogger("apps.users")
 
@@ -130,6 +133,45 @@ class LogoutView(APIView):
                 pass
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(_COOKIE_NAME, path=_COOKIE_PATH, domain=_COOKIE_DOMAIN)
+        return response
+
+
+class CallSignLoginView(APIView):
+    """
+    Student login: POST { call_sign, pin } → access token + HttpOnly refresh cookie.
+    call_sign maps to Profile.display_name (case-insensitive).
+    pin is the student's 4-digit password set by the guardian at account creation.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_scope = "login"
+
+    def post(self, request):
+        call_sign = (request.data.get("call_sign") or "").strip()
+        pin = (request.data.get("pin") or "").strip()
+
+        if not call_sign or not pin:
+            return Response(
+                {"detail": "call_sign and pin are required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        if not pin.isdigit() or len(pin) != 4:
+            return Response(
+                {"detail": "pin must be exactly 4 digits."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = _callsign_backend.authenticate(request, call_sign=call_sign, pin=pin)
+        if user is None:
+            return Response(
+                {"detail": "Invalid call sign or PIN."},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        refresh = RefreshToken.for_user(user)
+        response = Response({"access": str(refresh.access_token)})
+        _set_refresh_cookie(response, str(refresh))
         return response
 
 

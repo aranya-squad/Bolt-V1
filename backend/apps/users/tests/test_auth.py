@@ -190,9 +190,8 @@ def test_student_create_persists_consent_record_with_correct_fields(client):
     guardian = GuardianFactory()
     client.force_authenticate(user=guardian)
     payload = {
-        "email": "child@test.com",
-        "password": "pass1234",
-        "display_name": "Kid",
+        "call_sign": "Kid",
+        "pin": "1234",
         "date_of_birth": "2018-01-15",
         "jurisdiction": "IN",
         "relationship": "parent",
@@ -200,7 +199,6 @@ def test_student_create_persists_consent_record_with_correct_fields(client):
     response = client.post(reverse("auth-register-student"), payload, format="json")
     assert response.status_code == status.HTTP_201_CREATED
 
-    student = User.objects.get(email="child@test.com")
     consent = ConsentRecord.objects.get(guardian_email=guardian.email)
     assert str(consent.student_dob) == "2018-01-15"
     assert consent.jurisdiction == "IN"
@@ -212,13 +210,12 @@ def test_student_create_persists_guardianship_with_consent_fk(client):
     guardian = GuardianFactory()
     client.force_authenticate(user=guardian)
     payload = {
-        "email": "child2@test.com",
-        "password": "pass1234",
-        "display_name": "Kid2",
+        "call_sign": "Kid2",
+        "pin": "1234",
         "date_of_birth": "2016-06-01",
     }
     client.post(reverse("auth-register-student"), payload, format="json")
-    student = User.objects.get(email="child2@test.com")
+    student = User.objects.get(profile__display_name="Kid2")
     guardianship = Guardianship.objects.get(guardian=guardian, student=student)
     assert guardianship.consent_record_id is not None
 
@@ -228,13 +225,12 @@ def test_student_create_writes_audit_event(client):
     guardian = GuardianFactory()
     client.force_authenticate(user=guardian)
     payload = {
-        "email": "child3@test.com",
-        "password": "pass1234",
-        "display_name": "Kid3",
+        "call_sign": "Kid3",
+        "pin": "1234",
         "date_of_birth": "2017-03-20",
     }
     client.post(reverse("auth-register-student"), payload, format="json")
-    student = User.objects.get(email="child3@test.com")
+    student = User.objects.get(profile__display_name="Kid3")
     assert AuditEvent.objects.filter(actor=guardian, subject=student, action="student_created").exists()
 
 
@@ -258,9 +254,8 @@ def test_student_register_rejects_future_dob(client):
     guardian = GuardianFactory()
     client.force_authenticate(user=guardian)
     payload = {
-        "email": "child5@test.com",
-        "password": "pass1234",
-        "display_name": "Kid5",
+        "call_sign": "Kid5",
+        "pin": "1234",
         "date_of_birth": "2099-01-01",
     }
     response = client.post(reverse("auth-register-student"), payload, format="json")
