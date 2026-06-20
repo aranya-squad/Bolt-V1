@@ -5,14 +5,16 @@ from .base import env
 
 DEBUG = False
 
-SECURE_HSTS_SECONDS = 31536000
+# HTTPS enforcement defaults ON; disable via env for HTTP-only bring-up before
+# TLS (a domain + ALB/CDN) is in front. Flip these back on once TLS terminates.
+SECURE_HSTS_SECONDS = env.int("SECURE_HSTS_SECONDS", default=31536000)
 SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-SECURE_SSL_REDIRECT = True
+SECURE_SSL_REDIRECT = env.bool("SECURE_SSL_REDIRECT", default=True)
 # TLS is terminated at the load balancer / CDN; trust its forwarded-proto header
 # so SECURE_SSL_REDIRECT does not loop on requests Django sees as plain HTTP.
 SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
-SESSION_COOKIE_SECURE = True
-CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = env.bool("SESSION_COOKIE_SECURE", default=True)
+CSRF_COOKIE_SECURE = env.bool("CSRF_COOKIE_SECURE", default=True)
 SECURE_BROWSER_XSS_FILTER = True
 SECURE_CONTENT_TYPE_NOSNIFF = True
 X_FRAME_OPTIONS = "DENY"
