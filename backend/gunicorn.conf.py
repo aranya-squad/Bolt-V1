@@ -8,6 +8,9 @@ threads = 2
 
 timeout = 30
 bind = "0.0.0.0:8000"
+# Safe only after port 8000 is closed to the public and only Caddy reaches gunicorn.
+# Without this, DRF throttle keys on the Caddy container IP rather than the real client.
+forwarded_allow_ips = "*"
 # Load the app once in the master process; workers copy via fork (CoW).
 preload_app = True
 accesslog = "-"

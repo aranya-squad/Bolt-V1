@@ -9,8 +9,6 @@ services:
     env_file: .env.production
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.production
-    ports:
-      - "8000:8000"
     restart: unless-stopped
     healthcheck:
       # Python instead of curl — curl is not installed in the slim image.
