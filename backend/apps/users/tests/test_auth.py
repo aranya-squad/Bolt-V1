@@ -5,7 +5,7 @@ from rest_framework import status
 from rest_framework.test import APIClient
 
 from apps.users.models import User
-from apps.users.tests.factories import GuardianFactory
+from apps.users.tests.factories import GuardianFactory, TeacherFactory
 
 
 _COOKIE_NAME = settings.SIMPLE_JWT["REFRESH_COOKIE_NAME"]
@@ -31,47 +31,30 @@ def test_health_ok(client):
 
 
 # ---------------------------------------------------------------------------
-# Guardian registration
+# Guardian deprecation (plan §1e)
 # ---------------------------------------------------------------------------
 
 
 @pytest.mark.django_db
-def test_guardian_register(client):
-    url = reverse("auth-register")
-    payload = {
-        "email": "guardian@test.com",
-        "password": "StrongPass1!",
-        "display_name": "Test Guardian",
-    }
-    response = client.post(url, payload, format="json")
-    assert response.status_code == status.HTTP_201_CREATED
-    assert "access" in response.json()
-    assert User.objects.filter(email="guardian@test.com", role="GUARDIAN").exists()
+def test_guardian_register_is_gone(client):
+    response = client.post(
+        reverse("auth-register"),
+        {"email": "guardian@test.com", "password": "StrongPass1!", "display_name": "Test Guardian"},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_410_GONE
+    assert not User.objects.filter(email="guardian@test.com").exists()
 
 
 @pytest.mark.django_db
-def test_guardian_register_short_password(client):
-    url = reverse("auth-register")
-    payload = {"email": "g@test.com", "password": "short", "display_name": "G"}
-    response = client.post(url, payload, format="json")
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
-
-
-@pytest.mark.django_db
-def test_guardian_register_sets_refresh_cookie(client):
-    url = reverse("auth-register")
-    payload = {
-        "email": "guardian@test.com",
-        "password": "StrongPass1!",
-        "display_name": "Test Guardian",
-    }
-    response = client.post(url, payload, format="json")
-    assert response.status_code == status.HTTP_201_CREATED
-    assert _COOKIE_NAME in response.cookies
-    cookie = response.cookies[_COOKIE_NAME]
-    assert cookie["httponly"]
-    assert cookie["path"] == _COOKIE_PATH
-    assert cookie["samesite"].lower() == "lax"
+def test_guardian_login_is_blocked(client):
+    guardian = GuardianFactory()
+    response = client.post(
+        reverse("auth-login"),
+        {"email": guardian.email, "password": "testpass123"},
+        format="json",
+    )
+    assert response.status_code == status.HTTP_410_GONE
 
 
 # ---------------------------------------------------------------------------
@@ -81,7 +64,7 @@ def test_guardian_register_sets_refresh_cookie(client):
 
 @pytest.mark.django_db
 def test_login_returns_access_token(client):
-    user = GuardianFactory()
+    user = TeacherFactory()
     url = reverse("auth-login")
     response = client.post(url, {"email": user.email, "password": "testpass123"}, format="json")
     assert response.status_code == status.HTTP_200_OK
@@ -90,7 +73,7 @@ def test_login_returns_access_token(client):
 
 @pytest.mark.django_db
 def test_login_sets_refresh_cookie(client):
-    user = GuardianFactory()
+    user = TeacherFactory()
     url = reverse("auth-login")
     response = client.post(url, {"email": user.email, "password": "testpass123"}, format="json")
     assert response.status_code == status.HTTP_200_OK
@@ -109,7 +92,7 @@ def test_login_sets_refresh_cookie(client):
 
 @pytest.mark.django_db
 def test_refresh_uses_cookie_not_body(client):
-    user = GuardianFactory()
+    user = TeacherFactory()
     login_resp = client.post(
         reverse("auth-login"),
         {"email": user.email, "password": "testpass123"},
@@ -137,7 +120,7 @@ def test_refresh_without_cookie_returns_401(client):
 
 @pytest.mark.django_db
 def test_logout_clears_cookie(client):
-    user = GuardianFactory()
+    user = TeacherFactory()
     login_resp = client.post(
         reverse("auth-login"),
         {"email": user.email, "password": "testpass123"},
@@ -166,7 +149,7 @@ def test_me_requires_auth(client):
 
 @pytest.mark.django_db
 def test_me_returns_stats(client):
-    user = GuardianFactory()
+    user = TeacherFactory()
     client.force_authenticate(user=user)
     url = reverse("auth-me")
     response = client.get(url)

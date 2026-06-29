@@ -19,6 +19,11 @@ class GuardianFactory(UserFactory):
     email = factory.Sequence(lambda n: f"guardian{n}@example.com")
 
 
+class TeacherFactory(UserFactory):
+    role = Role.TEACHER
+    email = factory.Sequence(lambda n: f"teacher{n}@example.com")
+
+
 class ProfileFactory(DjangoModelFactory):
     class Meta:
         model = Profile

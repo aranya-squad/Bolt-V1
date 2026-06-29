@@ -23,7 +23,6 @@ from .backends import CallSignBackend
 from .constants import PRESET_AVATAR_URLS
 from .models import AuditEvent, Profile, User
 from .serializers import (
-    GuardianRegisterSerializer,
     ProfileSerializer,
     StudentRegisterSerializer,
     TeacherRegisterSerializer,
@@ -108,6 +107,16 @@ class CookieTokenObtainPairView(TokenObtainPairView):
     def post(self, request, *args, **kwargs):
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
+            # Deprecated guardian accounts: creds are valid (200) but login is blocked
+            # (plan §1e / pass-3 #3). Checked only after a successful auth, so it never
+            # reveals whether an arbitrary email belongs to a guardian.
+            email = request.data.get("email", "")
+            role = User.objects.filter(email__iexact=email).values_list("role", flat=True).first()
+            if role == "GUARDIAN":
+                return Response(
+                    {"detail": "Guardian accounts are no longer supported."},
+                    status=status.HTTP_410_GONE,
+                )
             refresh = response.data.pop("refresh", None)
             if refresh:
                 _set_refresh_cookie(response, refresh)
@@ -190,20 +199,15 @@ class CallSignLoginView(APIView):
 
 
 class GuardianRegisterView(APIView):
+    """Deprecated — guardian self-registration is no longer supported (plan §1e)."""
+
     permission_classes = [AllowAny]
-    throttle_scope = "register"
 
     def post(self, request):
-        serializer = GuardianRegisterSerializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
-        refresh = RefreshToken.for_user(user)
-        response = Response(
-            {"access": str(refresh.access_token)},
-            status=status.HTTP_201_CREATED,
+        return Response(
+            {"detail": "Guardian accounts are no longer supported."},
+            status=status.HTTP_410_GONE,
         )
-        _set_refresh_cookie(response, str(refresh))
-        return response
 
 
 class TeacherRegisterView(APIView):
