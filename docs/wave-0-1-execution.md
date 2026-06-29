@@ -69,5 +69,5 @@ DoD: [ ] role-shell split; [ ] type-check + lint pass.
 ## Wave Completion Log
 | Wave | Tickets Completed | Drift Notes | Review |
 |---|---|---|---|
-| W0 | | | |
-| W1 | | | |
+| W0 | T01 (no live users → reseed path), T02 (console email + TEACHER_SIGNUP_SECRET, fail-closed), T03 (baseline 27 green) | Email = dev console; real SMTP provider deferred to deploy | PASS |
+| W1 | T01–T07 all complete. Backend **128 pytest green**; frontend **25 vitest + type-check + lint green** | (1) Tests are pytest, not `manage.py test`. (2) call_sign = dedicated nullable `Profile.call_sign` (functional-unique), not a relation-spanning partial index. (3) Guardian models retained but deprecated (register/login → 410); IsGuardian/Guardianship kept dormant. (4) pass-3 #6 "Skipped" verdict is Wave-2 (task 2i) — frontend type already has fixed/skipped; deferred. | PASS |
