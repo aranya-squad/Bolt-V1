@@ -1,7 +1,7 @@
 import logging
 
 from django.conf import settings
-from django.db import transaction
+from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.utils import timezone
 from django.views import View
@@ -246,21 +246,41 @@ class ProfileUpdateView(APIView):
     def patch(self, request):
         display_name = request.data.get("display_name")
         avatar_url = request.data.get("avatar_url")
+        call_sign = request.data.get("call_sign")
 
         if avatar_url is not None and avatar_url not in PRESET_AVATAR_URLS:
             return Response({"detail": "Invalid avatar_url."}, status=status.HTTP_400_BAD_REQUEST)
 
-        with transaction.atomic():
-            profile = Profile.objects.select_for_update().get(user=request.user)
-            changed = []
-            if display_name is not None:
-                profile.display_name = display_name
-                changed.append("display_name")
-            if avatar_url is not None:
-                profile.avatar_url = avatar_url
-                changed.append("avatar_url")
-            if changed:
-                profile.save(update_fields=changed)
+        if call_sign is not None:
+            if request.user.role != "STUDENT":
+                return Response({"detail": "Only students have a call sign."}, status=status.HTTP_400_BAD_REQUEST)
+            # Renaming the login credential is allowed but must stay unique (Q7 / pass-3 #2).
+            clash = (
+                Profile.objects.filter(call_sign__iexact=call_sign)
+                .exclude(user=request.user)
+                .exists()
+            )
+            if clash:
+                return Response({"detail": "This call sign is already taken."}, status=status.HTTP_409_CONFLICT)
+
+        try:
+            with transaction.atomic():
+                profile = Profile.objects.select_for_update().get(user=request.user)
+                changed = []
+                if display_name is not None:
+                    profile.display_name = display_name
+                    changed.append("display_name")
+                if avatar_url is not None:
+                    profile.avatar_url = avatar_url
+                    changed.append("avatar_url")
+                if call_sign is not None:
+                    profile.call_sign = call_sign
+                    changed.append("call_sign")
+                if changed:
+                    profile.save(update_fields=changed)
+        except IntegrityError:
+            # DB unique constraint backstops a race between the check above and the save.
+            return Response({"detail": "This call sign is already taken."}, status=status.HTTP_409_CONFLICT)
 
         cache.delete(f"user_stats:{request.user.pk}")
         return Response(ProfileSerializer(profile).data)

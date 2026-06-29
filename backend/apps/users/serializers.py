@@ -6,7 +6,7 @@ from .models import Profile, User
 class ProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = Profile
-        fields = ["display_name", "avatar_url", "locale", "timezone"]
+        fields = ["display_name", "call_sign", "avatar_url", "locale", "timezone"]
 
 
 class UserMeSerializer(serializers.ModelSerializer):
@@ -66,7 +66,7 @@ class StudentRegisterSerializer(serializers.Serializer):
         return value
 
     def validate_call_sign(self, value: str) -> str:
-        if Profile.objects.filter(display_name__iexact=value).exists():
+        if Profile.objects.filter(call_sign__iexact=value).exists():
             raise serializers.ValidationError("This call sign is already taken.")
         return value
 
@@ -96,5 +96,5 @@ class StudentRegisterSerializer(serializers.Serializer):
             role="STUDENT",
             date_of_birth=dob,
         )
-        Profile.objects.create(user=user, display_name=call_sign)
+        Profile.objects.create(user=user, display_name=call_sign, call_sign=call_sign)
         return user

@@ -2,6 +2,7 @@ import uuid
 
 from django.contrib.auth.models import AbstractBaseUser, PermissionsMixin
 from django.db import models
+from django.db.models.functions import Lower
 
 from .managers import UserManager
 
@@ -39,12 +40,20 @@ class User(AbstractBaseUser, PermissionsMixin):
 class Profile(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name="profile")
     display_name = models.CharField(max_length=64)
+    # Login identifier for students (call-sign + PIN). NULL for non-students.
+    # Case-insensitively unique among populated values — see the functional constraint below.
+    # Students are the only role that logs in by call_sign, so uniqueness is scoped to them
+    # by the NULL-for-others convention (NULLs are distinct in a unique index).
+    call_sign = models.CharField(max_length=64, null=True, blank=True)
     avatar_url = models.URLField(blank=True)
     locale = models.CharField(max_length=8, default="en")
     timezone = models.CharField(max_length=64, default="UTC")
 
     class Meta:
         db_table = "users_profile"
+        constraints = [
+            models.UniqueConstraint(Lower("call_sign"), name="uniq_profile_call_sign_ci"),
+        ]
 
     def __str__(self) -> str:
         return self.display_name

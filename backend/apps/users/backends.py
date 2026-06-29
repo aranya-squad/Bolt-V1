@@ -10,8 +10,9 @@ from .models import Profile
 
 class CallSignBackend:
     """
-    Authenticate by Profile.display_name (call-sign) + password (PIN for students).
-    Lookup is case-insensitive on display_name.
+    Authenticate a STUDENT by Profile.call_sign + password (PIN).
+    Lookup is case-insensitive on call_sign and scoped to role=STUDENT, so a teacher/guardian
+    sharing a display name can never shadow or 500 a student login (pass-3 #1).
     """
 
     def authenticate(self, request, call_sign: str = "", pin: str = ""):
@@ -20,7 +21,7 @@ class CallSignBackend:
         try:
             profile = (
                 Profile.objects.select_related("user")
-                .get(display_name__iexact=call_sign)
+                .get(call_sign__iexact=call_sign, user__role="STUDENT")
             )
         except Profile.DoesNotExist:
             # Constant-time dummy check to prevent call-sign enumeration via timing.
