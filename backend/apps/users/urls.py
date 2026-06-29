@@ -11,6 +11,7 @@ from .views import (
     MeView,
     ProfileUpdateView,
     StudentRegisterView,
+    TeacherRegisterView,
     XpProgressView,
 )
 
@@ -18,6 +19,7 @@ urlpatterns = [
     path("health/", HealthView.as_view(), name="health"),
     path("auth/register/", GuardianRegisterView.as_view(), name="auth-register"),
     path("auth/register-student/", StudentRegisterView.as_view(), name="auth-register-student"),
+    path("auth/register-teacher/", TeacherRegisterView.as_view(), name="auth-register-teacher"),
     path("auth/login/", CookieTokenObtainPairView.as_view(), name="auth-login"),
     # Student login — call-sign + 4-digit PIN (no email required)
     path("auth/callsign-login/", CallSignLoginView.as_view(), name="auth-callsign-login"),

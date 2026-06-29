@@ -98,3 +98,24 @@ class StudentRegisterSerializer(serializers.Serializer):
         )
         Profile.objects.create(user=user, display_name=call_sign, call_sign=call_sign)
         return user
+
+
+class TeacherRegisterSerializer(serializers.ModelSerializer):
+    """Self-service teacher signup (gate enforced in the view). Creates a TEACHER + Profile."""
+
+    password = serializers.CharField(write_only=True, min_length=10)
+    display_name = serializers.CharField(write_only=True, max_length=64)
+
+    class Meta:
+        model = User
+        fields = ["email", "password", "display_name"]
+
+    def create(self, validated_data):
+        display_name = validated_data.pop("display_name")
+        user = User.objects.create_user(
+            email=validated_data["email"],
+            password=validated_data["password"],
+            role="TEACHER",
+        )
+        Profile.objects.create(user=user, display_name=display_name)
+        return user

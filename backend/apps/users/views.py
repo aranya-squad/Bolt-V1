@@ -1,4 +1,5 @@
 import logging
+import secrets
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
@@ -19,7 +20,13 @@ from .backends import CallSignBackend
 from .constants import PRESET_AVATAR_URLS
 from .models import AuditEvent, ConsentRecord, Guardianship, Profile, User
 from .permissions import IsGuardian
-from .serializers import GuardianRegisterSerializer, ProfileSerializer, StudentRegisterSerializer, UserMeSerializer
+from .serializers import (
+    GuardianRegisterSerializer,
+    ProfileSerializer,
+    StudentRegisterSerializer,
+    TeacherRegisterSerializer,
+    UserMeSerializer,
+)
 
 _callsign_backend = CallSignBackend()
 
@@ -188,6 +195,33 @@ class GuardianRegisterView(APIView):
             {"access": str(refresh.access_token)},
             status=status.HTTP_201_CREATED,
         )
+        _set_refresh_cookie(response, str(refresh))
+        return response
+
+
+class TeacherRegisterView(APIView):
+    """
+    Self-service teacher signup, gated by a shared secret (plan §1c / S1).
+    Empty TEACHER_SIGNUP_SECRET ⇒ disabled (fail closed). Full approval/invite system
+    is deferred to v3 — docs/backlog.md BL-1.
+    """
+
+    permission_classes = [AllowAny]
+    throttle_scope = "register"
+
+    def post(self, request):
+        configured = settings.TEACHER_SIGNUP_SECRET
+        provided = request.data.get("signup_secret", "")
+        if not configured or not secrets.compare_digest(str(provided), str(configured)):
+            return Response(
+                {"detail": "Teacher signup is not available."},
+                status=status.HTTP_403_FORBIDDEN,
+            )
+        serializer = TeacherRegisterSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
+        refresh = RefreshToken.for_user(user)
+        response = Response({"access": str(refresh.access_token)}, status=status.HTTP_201_CREATED)
         _set_refresh_cookie(response, str(refresh))
         return response
 
