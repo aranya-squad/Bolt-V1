@@ -5,6 +5,7 @@ from .views import (
     CallSignLoginView,
     CookieTokenObtainPairView,
     CookieTokenRefreshView,
+    DeleteAccountView,
     GuardianRegisterView,
     HealthView,
     LogoutView,
@@ -29,4 +30,5 @@ urlpatterns = [
     path("auth/me/xp-progress/", XpProgressView.as_view(), name="auth-me-xp-progress"),
     path("auth/me/profile/", ProfileUpdateView.as_view(), name="auth-me-profile"),
     path("auth/avatar-presets/", AvatarPresetsView.as_view(), name="auth-avatar-presets"),
+    path("auth/delete-account/", DeleteAccountView.as_view(), name="auth-delete-account"),
 ]

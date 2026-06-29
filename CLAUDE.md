@@ -28,7 +28,7 @@ extended for a senior engineering manager and indie game studio context.
 Before implementing:
 - State your assumptions explicitly. If uncertain, ask.
 - If multiple interpretations exist, present them — don't pick silently.
-- If a simpler approach exists, say so. Push back when warranted.
+- If a simpler approach exists, say so. Push back when warranted: "Do you actually need X, or does Y cover it?"
 - If something is unclear, stop. Name what's confusing. Ask.
 - For game systems: call out design implications (performance, feel, player impact) before writing code.
 
@@ -36,10 +36,20 @@ Before implementing:
 
 **Minimum code that solves the problem. Nothing speculative.**
 
+Before writing any code, stop at the first rung that holds:
+1. Does this need to exist? (YAGNI) — no: skip it.
+2. Does the stdlib already do this? — use it.
+3. Is there a native platform feature? — use it.
+4. Does an installed dependency already solve it? — use it.
+5. Can it be one line? — make it one line.
+6. Only then: write the minimum code that works.
+
 - No features beyond what was asked.
 - No abstractions for single-use code.
+- No new dependency if the problem can be solved without one.
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
+- Deletion over addition. Boring over clever. Fewest files possible.
 - If you write 200 lines and it could be 50, rewrite it.
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.
@@ -89,6 +99,8 @@ For multi-step tasks, state a brief plan:
 
 Strong success criteria let you loop independently. Weak criteria ("make it work") require constant clarification.
 
+Non-trivial logic must leave one runnable check behind: the smallest thing that fails if the logic breaks (an assert-based self-check or one small test file; no frameworks, no fixtures). Trivial one-liners need nothing.
+
 ---
 
 ## 5. Engineering Manager Standards
@@ -98,6 +110,7 @@ Strong success criteria let you loop independently. Weak criteria ("make it work
 - Add a one-line comment only when the WHY is non-obvious: a hidden constraint, a subtle invariant, a workaround. If removing the comment wouldn't confuse a future reader, don't write it.
 - Public APIs must have clear contracts (inputs, outputs, failure modes).
 - Flag tech debt with `// TODO(debt):` — don't silently accumulate it.
+- Mark intentional simplifications with a `// ponytail:` comment. If the shortcut has a known ceiling (O(n²) scan, global lock, naive heuristic), name the ceiling and the upgrade path.
 - If a decision has architectural implications, surface it before committing.
 - PR/diff hygiene: one logical change per commit. Don't bundle unrelated fixes.
 - Name things for the reader, not the writer. `playerHealthAfterDamage` > `phad`.
@@ -146,6 +159,11 @@ Workflow:
 # Build command: [e.g., `./build.sh` or CI pipeline]
 ```
 
+### Daily status log (personal tracking, on demand)
+- Maintain a per-day status report at `daily-logs/<YYYY-MM-DD>_log.md` capturing upgrades, tasks completed, decisions, and pending/next items.
+- This folder is local-only: ignored via `.git/info/exclude`. Never commit or push it.
+- Write/update on demand (when the user asks at end of day), not automatically. Prefer writing at the end of an active session so the report reflects the actual conversation, not just git state.
+
 ---
 
 ## 7. Proactive Nudges
@@ -173,6 +191,10 @@ Speak up when you notice these conditions. One sentence, no preamble, at the sta
 **Memory for recurring context**
 - If the same context, preference, or constraint has been stated more than once across the session: suggest saving it to memory so it doesn't need to be repeated.
 - Format: "Note: I can save this preference to memory so you don't have to repeat it."
+
+**Daily status log**
+- After a long or substantive session (meaningful work shipped: deploys, multi-step tasks, several fixes): remind the user to update the daily log before wrapping up.
+- Format: "Note: long session — want me to update today's `daily-logs/<date>_log.md` before we stop?"
 
 **Nudge rules:**
 - One nudge per response maximum. Don't stack them.

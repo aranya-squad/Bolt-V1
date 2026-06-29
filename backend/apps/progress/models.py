@@ -29,6 +29,7 @@ class QuestionAttempt(models.Model):
     expected_answer = models.IntegerField()
     submitted_answer = models.IntegerField()
     is_correct = models.BooleanField()
+    is_skip = models.BooleanField(default=False)
     elapsed_ms = models.PositiveIntegerField()
     submitted_at = models.DateTimeField(auto_now_add=True)
 

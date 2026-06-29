@@ -142,6 +142,7 @@ REST_FRAMEWORK = {
         "register": "3/hour",
         "attempt": "120/min",
         "profile": "30/min",
+        "join": "10/hour",
     },
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,

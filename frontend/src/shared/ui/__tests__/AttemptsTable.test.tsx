@@ -11,6 +11,7 @@ function makeAttempt(overrides: Partial<QuestionAttempt> = {}): QuestionAttempt 
     expected_answer: 20,
     submitted_answer: 20,
     is_correct: true,
+    is_skip: false,
     elapsed_ms: 5000,
     ...overrides,
   };

@@ -4,6 +4,7 @@ import { useMe } from "@/shared/api/queries/useMe";
 import { useAvatarPresets, usePatchProfile } from "@/shared/api/queries/useProfile";
 import { useXpProgress } from "@/shared/api/queries/useXpProgress";
 import { useAuthStore } from "@/shared/store/authStore";
+import { apiClient } from "@/shared/api/client";
 import { Page } from "@/shared/ui/Page";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { XpProgressBar } from "@/shared/ui/XpProgressBar";
@@ -18,6 +19,9 @@ export default function ProfilePage() {
 
   const [displayName, setDisplayName] = useState<string>("");
   const [nameEdited, setNameEdited] = useState(false);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const [deleteCredential, setDeleteCredential] = useState("");
+  const [deleteError, setDeleteError] = useState("");
 
   const currentDisplayName = me?.profile?.display_name ?? "";
   const currentAvatarUrl = me?.profile?.avatar_url ?? "";
@@ -41,6 +45,18 @@ export default function ProfilePage() {
   const handleLogout = () => {
     useAuthStore.getState().logout();
     navigate("/login");
+  };
+
+  const handleDeleteAccount = async () => {
+    setDeleteError("");
+    try {
+      await apiClient.post("/auth/delete-account/", { credential: deleteCredential });
+      useAuthStore.getState().logout();
+      navigate("/login");
+    } catch (err: unknown) {
+      const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;
+      setDeleteError(detail ?? "Deletion failed. Try again.");
+    }
   };
 
   if (isLoading) {
@@ -177,6 +193,58 @@ export default function ProfilePage() {
         >
           LOG OUT
         </BoltButton>
+
+        {/* Delete account */}
+        <div style={{ marginTop: "var(--s-xl)", borderTop: "1px solid var(--glass-10)", paddingTop: "var(--s-xl)" }}>
+          {!deleteConfirm ? (
+            <BoltButton
+              variant="ghost"
+              size="sm"
+              style={{ color: "var(--err)", borderColor: "var(--err)", width: "100%" }}
+              onClick={() => setDeleteConfirm(true)}
+            >
+              DELETE ACCOUNT
+            </BoltButton>
+          ) : (
+            <div>
+              <p className="t-body-sm" style={{ color: "var(--err)", marginBottom: "var(--s-sm)" }}>
+                This is permanent. Enter your PIN (students) or password (teachers) to confirm.
+              </p>
+              <input
+                className="field"
+                type="password"
+                placeholder={me?.role === "STUDENT" ? "4-digit PIN" : "Password"}
+                value={deleteCredential}
+                onChange={(e) => setDeleteCredential(e.target.value)}
+                style={{ width: "100%", marginBottom: "var(--s-sm)" }}
+              />
+              {deleteError && (
+                <p className="t-body-sm" style={{ color: "var(--err)", marginBottom: "var(--s-sm)" }}>
+                  {deleteError}
+                </p>
+              )}
+              <div style={{ display: "flex", gap: "var(--s-sm)" }}>
+                <BoltButton
+                  variant="ghost"
+                  size="sm"
+                  style={{ flex: 1 }}
+                  onClick={() => { setDeleteConfirm(false); setDeleteCredential(""); setDeleteError(""); }}
+                >
+                  CANCEL
+                </BoltButton>
+                <BoltButton
+                  variant="ghost"
+                  size="sm"
+                  style={{ flex: 1, color: "var(--err)", borderColor: "var(--err)" }}
+                  disabled={!deleteCredential}
+                  onClick={handleDeleteAccount}
+                >
+                  CONFIRM DELETE
+                </BoltButton>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
     </Page>
   );

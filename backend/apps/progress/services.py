@@ -21,9 +21,10 @@ def record_attempt(
     expected_answer: int,
     submitted_answer: int,
     elapsed_ms: int,
+    is_skip: bool = False,
 ) -> QuestionAttempt:
     """Write a single question attempt. Raises IntegrityError on duplicate (index, attempt_number)."""
-    is_correct = submitted_answer == expected_answer
+    is_correct = (not is_skip) and (submitted_answer == expected_answer)
     return QuestionAttempt.objects.create(
         session=session,
         question_index=question_index,
@@ -32,6 +33,7 @@ def record_attempt(
         expected_answer=expected_answer,
         submitted_answer=submitted_answer,
         is_correct=is_correct,
+        is_skip=is_skip,
         elapsed_ms=elapsed_ms,
     )
 

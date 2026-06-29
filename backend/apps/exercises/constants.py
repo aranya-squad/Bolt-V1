@@ -15,3 +15,7 @@ MAX_SESSION_SECONDS = 3600
 # Maximum number of attempts allowed per question per session.
 # Prevents answer enumeration via repeated submissions to the same question index.
 MAX_ATTEMPTS_PER_QUESTION = 3
+
+# Sentinel submitted_answer value used by the frontend to signal a student skip.
+# Never a valid numeric answer (no curriculum question expects -999999).
+SKIP_ANSWER_SENTINEL = -999999

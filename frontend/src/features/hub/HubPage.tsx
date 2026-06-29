@@ -7,6 +7,52 @@ import { GlassCard } from "@/shared/ui/GlassCard";
 import { HudStatTile } from "@/shared/ui/HudStatTile";
 import { XpProgressBar } from "@/shared/ui/XpProgressBar";
 
+function PortalCard({
+  bgSrc,
+  onClick,
+  children,
+}: {
+  bgSrc: string;
+  onClick: () => void;
+  children: React.ReactNode;
+}) {
+  return (
+    <GlassCard variant="default" style={{ flex: 1, minHeight: 280, cursor: "pointer" }} onClick={onClick}>
+      {/* Background image — hidden if asset is missing */}
+      <img
+        src={bgSrc}
+        alt=""
+        aria-hidden="true"
+        loading="lazy"
+        onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+        style={{
+          position: "absolute",
+          inset: 0,
+          width: "100%",
+          height: "100%",
+          objectFit: "cover",
+          opacity: 0.18,
+          pointerEvents: "none",
+          borderRadius: "inherit",
+        }}
+      />
+      <div
+        style={{
+          position: "relative",
+          display: "flex",
+          flexDirection: "column",
+          justifyContent: "flex-end",
+          height: "100%",
+          minHeight: 280,
+          padding: "var(--s-xl)",
+        }}
+      >
+        {children}
+      </div>
+    </GlassCard>
+  );
+}
+
 export default function HubPage() {
   const navigate = useNavigate();
   const { data: user } = useMe();
@@ -17,6 +63,7 @@ export default function HubPage() {
   const streak: number = user?.stats?.streak_days ?? 0;
   const levels: number = user?.stats?.levels_completed ?? 0;
   const currentLevel: number = user?.stats?.current_level ?? 1;
+  const bestAcc = user?.stats?.best_accuracy_pct;
 
   return (
     <>
@@ -41,6 +88,12 @@ export default function HubPage() {
           <HudStatTile icon="flame"  value={String(streak)}      label="Day Streak"  color="var(--orange-streak)" />
           <HudStatTile icon="trophy" value={String(levels)}      label="Levels Done" color="var(--bolt-blue)"     />
           <HudStatTile icon="target" value={`LVL ${currentLevel}`} label="Current Level" color="var(--p-cyber)" />
+          <HudStatTile
+            icon="award"
+            value={bestAcc !== null && bestAcc !== undefined ? `${bestAcc}%` : "—"}
+            label="Personal Best"
+            color="var(--ok-50)"
+          />
         </div>
 
         <div style={{ marginBottom: "var(--s-xl)" }}>
@@ -53,53 +106,29 @@ export default function HubPage() {
 
         {/* ── Portal cards ─────────────────────────────────────── */}
         <div style={{ display: "flex", gap: 20 }}>
-          <GlassCard
-            variant="default"
-            style={{ flex: 1, minHeight: 280, cursor: "pointer" }}
+          <PortalCard
+            bgSrc="/images/hub-learn.jpg"
             onClick={() => navigate("/learn")}
           >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                height: "100%",
-                minHeight: 280,
-                padding: "var(--s-xl)",
-              }}
-            >
-              <h2 className="t-h2" style={{ color: "var(--y-bolt)", marginBottom: 8 }}>
-                LEARN
-              </h2>
-              <p className="t-body-md" style={{ margin: 0 }}>
-                Classwork &amp; structured lessons
-              </p>
-            </div>
-          </GlassCard>
+            <h2 className="t-h2" style={{ color: "var(--y-bolt)", marginBottom: 8 }}>
+              LEARN
+            </h2>
+            <p className="t-body-md" style={{ margin: 0 }}>
+              Classwork &amp; structured lessons
+            </p>
+          </PortalCard>
 
-          <GlassCard
-            variant="default"
-            style={{ flex: 1, minHeight: 280, cursor: "pointer" }}
+          <PortalCard
+            bgSrc="/images/hub-practice.jpg"
             onClick={() => navigate("/practice")}
           >
-            <div
-              style={{
-                display: "flex",
-                flexDirection: "column",
-                justifyContent: "flex-end",
-                height: "100%",
-                minHeight: 280,
-                padding: "var(--s-xl)",
-              }}
-            >
-              <h2 className="t-h2" style={{ color: "var(--orange-streak)", marginBottom: 8 }}>
-                PRACTICE ARENA
-              </h2>
-              <p className="t-body-md" style={{ margin: 0 }}>
-                Time Attack, Zen Mode &amp; custom drills
-              </p>
-            </div>
-          </GlassCard>
+            <h2 className="t-h2" style={{ color: "var(--orange-streak)", marginBottom: 8 }}>
+              PRACTICE ARENA
+            </h2>
+            <p className="t-body-md" style={{ margin: 0 }}>
+              Time Attack, Zen Mode &amp; custom drills
+            </p>
+          </PortalCard>
         </div>
       </Page>
     </>

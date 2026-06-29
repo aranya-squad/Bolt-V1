@@ -1,85 +1,25 @@
-import { useRef, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { apiClient } from "@/shared/api/client";
 import { useAuthStore } from "@/shared/store/authStore";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { BoltButton } from "@/shared/ui/BoltButton";
-
-// PIN digit box width/height
-const PIN_BOX = 52;
-
-function PinInput({
-  value,
-  onChange,
-}: {
-  value: string;
-  onChange: (v: string) => void;
-}) {
-  const inputRef = useRef<HTMLInputElement>(null);
-
-  return (
-    <div
-      style={{ display: "flex", gap: 10, justifyContent: "center", cursor: "text" }}
-      onClick={() => inputRef.current?.focus()}
-    >
-      {[0, 1, 2, 3].map((i) => (
-        <div
-          key={i}
-          style={{
-            width: PIN_BOX,
-            height: PIN_BOX,
-            borderRadius: "var(--r-lg)",
-            border: `2px solid ${value.length === i ? "var(--y-bolt)" : value[i] ? "rgba(255,255,255,0.25)" : "rgba(255,255,255,0.1)"}`,
-            background: value[i] ? "rgba(250,204,21,0.08)" : "rgba(53,53,52,0.6)",
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            fontFamily: "var(--font-mono)",
-            fontSize: 22,
-            fontWeight: 700,
-            color: "var(--fg-bone)",
-            transition: "border-color 150ms, background 150ms",
-          }}
-        >
-          {value[i] ? "•" : ""}
-        </div>
-      ))}
-      {/* Hidden actual input — overlaid invisibly so native keyboard appears */}
-      <input
-        ref={inputRef}
-        type="tel"
-        inputMode="numeric"
-        maxLength={4}
-        value={value}
-        onChange={(e) => onChange(e.target.value.replace(/\D/g, "").slice(0, 4))}
-        style={{
-          position: "absolute",
-          opacity: 0,
-          pointerEvents: "none",
-          width: 1,
-          height: 1,
-        }}
-        aria-label="4-digit PIN"
-        autoComplete="one-time-code"
-      />
-    </div>
-  );
-}
+import { PinInput } from "@/shared/ui/PinInput";
 
 export default function LoginPage() {
   const navigate = useNavigate();
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
 
-  // "student" mode = call-sign + PIN; "guardian" mode = email + password
-  const [mode, setMode] = useState<"student" | "guardian">("student");
+  // "student" mode = call-sign + PIN; "teacher" mode = email + password
+  const [mode, setMode] = useState<"student" | "teacher">("student");
 
   // Student fields
   const [callSign, setCallSign] = useState("");
   const [pin, setPin] = useState("");
 
-  // Guardian fields
+  // Teacher fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
@@ -101,13 +41,13 @@ export default function LoginPage() {
       setUser(me);
       navigate("/hub");
     } catch {
-      setError("Wrong call sign or PIN. Ask your teacher or parent for help.");
+      setError("Wrong call sign or PIN. Ask your teacher for help.");
     } finally {
       setLoading(false);
     }
   }
 
-  async function handleGuardianSubmit(e: React.FormEvent) {
+  async function handleTeacherSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setLoading(true);
@@ -119,7 +59,7 @@ export default function LoginPage() {
       setAccessToken(data.access);
       const { data: me } = await apiClient.get("/auth/me/");
       setUser(me);
-      navigate("/hub");
+      navigate(me.role === "TEACHER" ? "/teacher" : "/hub");
     } catch {
       setError("Invalid email or password.");
     } finally {
@@ -177,7 +117,7 @@ export default function LoginPage() {
               marginBottom: 28,
             }}
           >
-            {(["student", "guardian"] as const).map((m) => (
+            {(["student", "teacher"] as const).map((m) => (
               <button
                 key={m}
                 type="button"
@@ -198,12 +138,12 @@ export default function LoginPage() {
                   transition: "background 150ms, color 150ms",
                 }}
               >
-                {m === "student" ? "Student" : "Teacher / Parent"}
+                {m === "student" ? "Student" : "Teacher"}
               </button>
             ))}
           </div>
 
-          {mode === "student" ? (
+          {mode !== "teacher" ? (
             <form
               onSubmit={handleStudentSubmit}
               style={{ display: "flex", flexDirection: "column", gap: 20 }}
@@ -235,23 +175,7 @@ export default function LoginPage() {
                 />
               </div>
 
-              <div>
-                <label
-                  style={{
-                    display: "block",
-                    fontFamily: "var(--font-label)",
-                    fontSize: 11,
-                    letterSpacing: "0.12em",
-                    textTransform: "uppercase",
-                    color: "var(--fg-sand)",
-                    marginBottom: 8,
-                    textAlign: "center",
-                  }}
-                >
-                  PIN
-                </label>
-                <PinInput value={pin} onChange={setPin} />
-              </div>
+              <PinInput value={pin} onChange={setPin} label="PIN" />
 
               {error && (
                 <p style={{ color: "var(--err)", fontSize: "0.875rem", margin: 0, textAlign: "center" }}>
@@ -271,7 +195,7 @@ export default function LoginPage() {
             </form>
           ) : (
             <form
-              onSubmit={handleGuardianSubmit}
+              onSubmit={handleTeacherSubmit}
               style={{ display: "flex", flexDirection: "column", gap: 16 }}
             >
               <input
@@ -306,6 +230,13 @@ export default function LoginPage() {
               >
                 {loading ? "SIGNING IN…" : "SIGN IN"}
               </BoltButton>
+
+              <p style={{ textAlign: "center", marginTop: 16, fontSize: "0.8rem", color: "var(--fg-sand)" }}>
+                New teacher?{" "}
+                <a href="/register/teacher" style={{ color: "var(--y-bolt)", textDecoration: "underline" }}>
+                  Create an account
+                </a>
+              </p>
             </form>
           )}
         </GlassCard>

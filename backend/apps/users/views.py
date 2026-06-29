@@ -393,3 +393,62 @@ class XpProgressView(APIView):
             "next_level_threshold": next_threshold,
             "xp_to_next_level": xp_to_next,
         })
+
+
+class DeleteAccountView(APIView):
+    """
+    POST /auth/delete-account/ — self-service account deletion (plan §4c, minor-privacy).
+
+    Anonymises PII (email, display_name, call_sign, avatar_url) and deactivates the user.
+    The user record and all relational data (attempts, progress) are retained for audit/safety;
+    PII is scrubbed. An AuditEvent is written before the wipe.
+    Students must supply their 4-digit PIN; teachers supply their password.
+    """
+
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request):
+        user = request.user
+        credential = request.data.get("credential", "")
+
+        # Validate credential before wiping anything
+        if not user.check_password(credential):
+            return Response(
+                {"detail": "Incorrect PIN or password."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        import uuid as _uuid
+
+        anon_id = _uuid.uuid4().hex[:12]
+
+        with transaction.atomic():
+            AuditEvent.objects.create(
+                user=user,
+                event_type="ACCOUNT_DELETED",
+                detail={"role": user.role},
+            )
+            # Scrub PII on Profile
+            try:
+                p = user.profile
+                p.display_name = f"Deleted User {anon_id}"
+                p.call_sign = None
+                p.avatar_url = ""
+                p.save(update_fields=["display_name", "call_sign", "avatar_url"])
+            except Profile.DoesNotExist:
+                pass
+
+            # Anonymise email and deactivate
+            user.email = f"deleted-{anon_id}@boltabacus.internal"
+            user.is_active = False
+            user.save(update_fields=["email", "is_active"])
+
+        # Invalidate the current refresh token so the session ends immediately
+        try:
+            raw_cookie = request.COOKIES.get(settings.SIMPLE_JWT.get("REFRESH_COOKIE_NAME", "refresh"))
+            if raw_cookie:
+                RefreshToken(raw_cookie).blacklist()
+        except Exception:
+            pass
+
+        return Response(status=status.HTTP_204_NO_CONTENT)

@@ -6,7 +6,7 @@ so the cache key and computation logic stay in one place.
 from datetime import timedelta
 
 from django.core.cache import cache
-from django.db.models import Sum
+from django.db.models import Max, Sum
 from django.utils import timezone
 
 
@@ -39,11 +39,14 @@ def get_user_stats(user) -> dict:
 
     levels_completed = LevelCompletion.objects.filter(user=user, kind="CLASSWORK").count()
 
+    best_acc = ProgressRecord.objects.filter(user=user).aggregate(best=Max("accuracy_pct"))["best"]
+
     stats = {
         "total_xp": total_xp,
         "streak_days": streak,
         "levels_completed": levels_completed,
         "current_level": min(levels_completed + 1, 10),
+        "best_accuracy_pct": round(float(best_acc), 1) if best_acc is not None else None,
     }
     cache.set(cache_key, stats, timeout=60)
     return stats

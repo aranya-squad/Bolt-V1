@@ -79,7 +79,9 @@ export default function MissionReportPage() {
               />
             </div>
 
-            <AttemptsTable attempts={report.attempts} questionVerdicts={report.question_verdicts} />
+            <div style={{ maxHeight: 360, overflowY: "auto", borderRadius: "var(--r-lg)" }}>
+              <AttemptsTable attempts={report.attempts} questionVerdicts={report.question_verdicts} />
+            </div>
           </>
         )}
 
