@@ -71,7 +71,7 @@ The plan must not assume prod holds real guardian data worth migrating (it may b
 | # | Category | Task | Priority | Acceptance (done when) |
 |---|---|---|---|---|
 | 2a | Frontend | Student signup screen — call-sign + PIN + confirm + DOB + **required join code** (Q1: join-at-signup). On submit, create student + enroll + attestation atomically; reuse `GlassCard`/`BoltButton`/`.field`; states: call-sign-taken, invalid/expired code, age-gate fail | High | All states render; happy path creates account, enrolls, lands on the batch hub |
-| 2b | Frontend | Teacher signup screen + **email-verification gate**: unverified teacher cannot create a batch or enroll | High | Unverified teacher sees a verify-email wall on batch creation |
+| 2b | Frontend | Teacher signup screen + **email-verification soft block**: dashboard accessible with a banner; batch creation gated until email verified. Gate lands once SMTP (Wave 0) is wired. | High | Unverified teacher sees dashboard + banner; "+ CREATE BATCH" is disabled/shows verify prompt |
 | 2c | Frontend | Rework `LoginPage`: remove guardian mode, add teacher (email+password), keep student call-sign+PIN. **Ship with 1e in one release.** [pass3 #9] Also fix stale copy — the "Teacher / Parent" toggle (`LoginPage.tsx:201`) and the "ask your teacher or parent" error (`:104`) | High | No guardian login UI or "parent" copy remains; teacher + student login both work |
 | 2d | Auth | Password-reset (request + confirm) via Django's built-in token machinery + the Wave 0 email provider (**buy, not build**) | High | Teacher resets password end-to-end in staging |
 | 2e | Frontend | First-run onboarding (3-step → Level 1). **Priority raised to High** (PRD: biggest conversion risk) | High | New student reaches Level 1 classwork from a guided flow |
@@ -91,15 +91,16 @@ The plan must not assume prod holds real guardian data worth migrating (it may b
 | 3e | Frontend | Create Batch modal | High | Validation + success + error states render |
 | 3f | Frontend | Batch Detail roster screen | High | Empty (zero-student) + populated + permission-denied states |
 | 3g | Frontend | Join Class (student) code-entry screen → enroll → batch hub | High | Invalid-code + success states; routes to the batch hub |
-| 3h | Product | **Resolve role attribution** of "Batch Hub" (reads as student post-join landing, not teacher) and owner of "Path of Conquest L12" (student vs teacher view) | Med | Each screen assigned to a role/shell with a recorded rationale |
+| 3h | Product | ~~Resolve role attribution of "Batch Hub" + "Path of Conquest L12"~~ **[CUT]** Both are design artifacts. "Batch Hub" is covered by HubPage (student) + BatchDetailPage (teacher). "Path of Conquest L12" is the existing PathOfConquestPage at level 12. No new screens. | Med | **CLOSED** |
 | 3i | Backend | `Class.live_session_link` set/get (Google Meet URL), owner-only | Med | Only the owning teacher can set it |
 | 3j | Frontend | Personal Best widget — wire to stored history, or stub if data deferred | Med | Shows real value or a clearly-stubbed placeholder |
 
 ### Wave 4 — Deferred-concept specs + QA/polish
 | # | Category | Task | Priority | Acceptance (done when) |
 |---|---|---|---|---|
-| 4a | Backend | Spec + implement "Test Mode" rules and "Fixed" verdict per-question state (per §9 Q3) | Med | Rules documented then implemented; report shows Fixed |
-| 4b | Backend | Rank-names data model (replace vs coexist with topic names) per §9 Q2 | Med | Level API returns the agreed shape |
+| 4a | Backend+FE | **Test Mode** (§9 Q3 resolved): hide hints, disable skip, lock answer on first submit. Backend: `is_test_mode` flag on session/submit; skip sentinel rejected; hint endpoint gated. Frontend: Test Mode chip activates the mode, UI suppresses hint button + skip. | Med | Test session records one attempt per question max; report shows no hints used |
+| 4b | Backend | ~~Rank-names data model~~ **[CLOSED]** Ranks are client-side only (§9 Q2). No backend change. | Med | **CLOSED — no work needed** |
+| 4h | Frontend | **The Lab** (§9 Q4 resolved): student-directed custom drill in Training Arena. Student picks operation (add/sub/mul/div) + difficulty range; generates a timed session. No teacher-assignment flow. | Med | Student can launch a custom drill from Training Arena 4th slot; session recorded normally |
 | 4c | Backend/FE | Account deletion / data export (minor-privacy) | Med | A student/teacher can export + delete their data |
 | 4d | QA | Test coverage: integration (signup serializers, permission classes, join-code enroll) + 1 E2E per signup + RBAC boundary tests | High | New auth/role paths covered; CI green |
 | 4e | QA | a11y audit (focus order, SR labels for verdict states) + consistent error/offline states | Med | Audit checklist passes on new/modified screens |
@@ -155,18 +156,17 @@ batch → dashboard.
 1. **[RESOLVED] Student join = at-signup.** Student creates the account and joins a batch via code in one
    flow; no standalone accounts. Consent anchor = teacher-attested `EnrollmentConsent` at signup. The
    design's separate "Join Class" screen is repurposed for joining *additional* batches later.
-2. **Rank names INITIATE→LEGEND — replace or coexist with topic names?** Ranks already render client-side (pass3 #7), so a backend change is needed only if topic names must *also* surface in the UI.
-3. **"Test Mode" — exact rules/states?** Undefined since the first Stitch iteration. (The "Fixed" verdict is **not** open — already implemented at `views.py:499`; only "Skipped" needs building — see 2i.)
-4. **"The Lab"/Custom Challenge — kept inline or cut** from Training Arena?
+2. **[RESOLVED] Rank names only.** Topic names are internal/admin only. Level Selection and Batch roster show INITIATE→LEGEND exclusively. No backend rank model change needed — ranks already render client-side.
+3. **[RESOLVED] Test Mode = hide hints + lock on first submit.** Hint button hidden, skip disabled, answer locks on first submit (one shot per question). No retry. Implement in 4a.
+4. **[RESOLVED] The Lab = build, student-directed.** Student sets operation + difficulty range themselves. No teacher-assignment flow needed. Implement in a new task (add to 4a scope or separate 4h).
 5. **[RESOLVED] Teacher gate = shared signup secret (env var)** for v1/v2 — not admin approval. The full approval/invite/email-verification-hardening system is deferred to v3 (`docs/backlog.md` BL-1). Residual risk (junk signups, batch-lure of minors) is bounded by object-level roster perms (3a/3b).
-6. **Fate of existing guardian accounts + guardian-created students** on deprecation (reseed vs preserve).
+6. **[RESOLVED] Guardian deprecation = reseed.** Prod holds only QA seed data. Wipe and reseed clean; no migration needed. Confirm with Wave 0 prod count before executing.
 7. **[RESOLVED] Rename allowed, but call_sign stays unique among students.** Login is call_sign-only (`CallSignBackend`) and student emails are already unique by construction, so the (call_sign, email) pair is unique iff call_sign is — enforce call_sign uniqueness on rename in `ProfileUpdateView` (1a-iii), returning 409 on collision. [pass3 #8]
 
 ## 10. Assumptions
 No-backend premise of the June-3 plan is void; consent goes additive/teacher-attested (R1); teacher signup
 is gated (never open); guardian/QA data is handled by the Wave 0 count decision (reseed if ≈0 real users);
-Test Mode remains unspecified and stubbed pending §9 Q3; the Fixed verdict is already implemented (§13 #6)
-and rank names already render client-side (§13 #7).
+Test Mode rules are now resolved (§9 Q3): hide hints + one-shot lock; the Fixed verdict is already implemented (§13 #6). Rank names are rank-only (§9 Q2); topic names are internal. The Lab is student-directed (§9 Q4). Guardian data is QA-only → reseed (§9 Q6). "Batch Hub" and "Path of Conquest L12" design screens are cut (design artifacts; existing pages cover them). Teacher email verification = soft block (dashboard visible, batch creation gated until verified — implemented once SMTP is wired, 2b).
 
 ## 11. Deferred (real, but out of scope at current scale)
 - Per-attempt answer round-trip P0 (`architecture-review-2026-06.md`) — pre-existing, not a design concern.
