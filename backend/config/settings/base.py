@@ -183,6 +183,16 @@ CORS_ALLOWED_ORIGINS = env.list(
 )
 CORS_ALLOW_CREDENTIALS = True
 
+# ─── Email ────────────────────────────────────────────────────────────────────
+# Defaults to console (dev). Production sets EMAIL_BACKEND/SMTP via env.
+EMAIL_BACKEND = env("EMAIL_BACKEND", default="django.core.mail.backends.console.EmailBackend")
+DEFAULT_FROM_EMAIL = env("DEFAULT_FROM_EMAIL", default="Bolt Abacus <no-reply@boltabacus.dev>")
+
+# ─── Teacher signup gate (plan §1c) ───────────────────────────────────────────
+# Shared secret required to self-register a TEACHER. Empty ⇒ teacher signup disabled
+# (fail closed). Full approval/invite system is deferred — docs/backlog.md BL-1.
+TEACHER_SIGNUP_SECRET = env("TEACHER_SIGNUP_SECRET", default="")
+
 # ─── Logging ──────────────────────────────────────────────────────────────────
 LOGGING = {
     "version": 1,

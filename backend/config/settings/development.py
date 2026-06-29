@@ -19,3 +19,9 @@ LOGGING["formatters"]["console"] = {  # noqa: F405
     "format": "%(asctime)s [%(levelname)s] %(name)s: %(message)s",
 }
 LOGGING["handlers"]["console"]["formatter"] = "console"  # noqa: F405
+
+# Wave 0: dev email renders to the console; real provider is configured at deploy.
+EMAIL_BACKEND = "django.core.mail.backends.console.EmailBackend"
+
+# Dev-only teacher signup secret (prod sets a real value via env). See docs/backlog.md BL-1.
+TEACHER_SIGNUP_SECRET = "dev-teacher-secret"

@@ -9,3 +9,6 @@ CELERY_TASK_EAGER_PROPAGATES = True
 
 # Disable throttling in tests
 REST_FRAMEWORK["DEFAULT_THROTTLE_CLASSES"] = []  # noqa: F405
+
+# Known teacher signup secret for tests (plan §1c).
+TEACHER_SIGNUP_SECRET = "test-teacher-secret"
