@@ -1,5 +1,6 @@
 import logging
 import secrets
+from datetime import date
 
 from django.conf import settings
 from django.db import IntegrityError, transaction
@@ -16,10 +17,11 @@ from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.views import TokenObtainPairView
 
+from apps.classroom.models import Class, Enrollment, EnrollmentConsent
+
 from .backends import CallSignBackend
 from .constants import PRESET_AVATAR_URLS
-from .models import AuditEvent, ConsentRecord, Guardianship, Profile, User
-from .permissions import IsGuardian
+from .models import AuditEvent, Profile, User
 from .serializers import (
     GuardianRegisterSerializer,
     ProfileSerializer,
@@ -57,6 +59,11 @@ def _client_ip(request) -> str:
     if fwd:
         return fwd.split(",")[0].strip()
     return request.META.get("REMOTE_ADDR", "0.0.0.0")
+
+
+def _age_on(dob, today=None) -> int:
+    today = today or date.today()
+    return today.year - dob.year - ((today.month, today.day) < (dob.month, dob.day))
 
 
 class HealthView(View):
@@ -227,42 +234,68 @@ class TeacherRegisterView(APIView):
 
 
 class StudentRegisterView(APIView):
-    """Guardian creates a child sub-account. ConsentRecord + Guardianship + AuditEvent are wired atomically."""
+    """
+    Self-service student signup with join-at-signup (plan §1d / Q1).
+    A valid batch join code is required; the student account, batch Enrollment, and a
+    teacher/school-attested EnrollmentConsent are created atomically (R1). No guardian needed.
+    Returns an access token so the student lands in their batch already logged in.
+    """
 
-    permission_classes = [IsGuardian]
+    permission_classes = [AllowAny]
     throttle_scope = "register"
 
     @transaction.atomic
     def post(self, request):
+        join_code = (request.data.get("join_code") or "").strip()
+        if not join_code:
+            return Response(
+                {"detail": "A class join code is required."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            klass = Class.objects.select_related("teacher").get(
+                join_code__iexact=join_code, is_active=True
+            )
+        except Class.DoesNotExist:
+            # Same generic message whether the code is wrong or inactive (no enumeration).
+            return Response(
+                {"detail": "Invalid or inactive join code."},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
         serializer = StudentRegisterSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         student = serializer.save()
 
-        consent = ConsentRecord.objects.create(
-            guardian_email=request.user.email,
-            student_dob=student.date_of_birth,
-            consent_given_at=timezone.now(),
-            consent_method="implicit_form_submission",  # TODO(debt): replace with real verification flow before US/EU launch
+        dob = serializer.validated_data["date_of_birth"]
+        under_13 = _age_on(dob) < 13
+
+        enrollment = Enrollment.objects.create(class_room=klass, student=student)
+        EnrollmentConsent.objects.create(
+            enrollment=enrollment,
+            attested_by=klass.teacher,
+            method="teacher_attested",
+            student_dob=dob,
+            under_13=under_13,
+            attested_at=timezone.now(),
             ip_address=_client_ip(request),
             user_agent=(request.META.get("HTTP_USER_AGENT") or "")[:1024],
             jurisdiction=request.data.get("jurisdiction", "OTHER"),
         )
-        Guardianship.objects.create(
-            guardian=request.user,
-            student=student,
-            relationship=request.data.get("relationship", "parent"),
-            consent_record=consent,
-        )
         AuditEvent.objects.create(
-            actor=request.user,
+            actor=student,
             subject=student,
-            action="student_created",
-            metadata={"consent_record_id": str(consent.id)},
+            action="student_self_registered",
+            metadata={"class_id": str(klass.id), "under_13": under_13},
         )
-        return Response(
-            {"detail": "Student account created.", "student_id": str(student.id)},
+
+        refresh = RefreshToken.for_user(student)
+        response = Response(
+            {"student_id": str(student.id), "access": str(refresh.access_token)},
             status=status.HTTP_201_CREATED,
         )
+        _set_refresh_cookie(response, str(refresh))
+        return response
 
 
 class MeView(APIView):

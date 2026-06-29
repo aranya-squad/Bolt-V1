@@ -4,7 +4,7 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.users.models import AuditEvent, ConsentRecord, Guardianship, User
+from apps.users.models import User
 from apps.users.tests.factories import GuardianFactory
 
 
@@ -180,86 +180,8 @@ def test_me_returns_stats(client):
     assert "current_level" in data["stats"]
 
 
-# ---------------------------------------------------------------------------
-# Student registration (COPPA compliance)
-# ---------------------------------------------------------------------------
-
-
-@pytest.mark.django_db
-def test_student_create_persists_consent_record_with_correct_fields(client):
-    guardian = GuardianFactory()
-    client.force_authenticate(user=guardian)
-    payload = {
-        "call_sign": "Kid",
-        "pin": "1234",
-        "date_of_birth": "2018-01-15",
-        "jurisdiction": "IN",
-        "relationship": "parent",
-    }
-    response = client.post(reverse("auth-register-student"), payload, format="json")
-    assert response.status_code == status.HTTP_201_CREATED
-
-    consent = ConsentRecord.objects.get(guardian_email=guardian.email)
-    assert str(consent.student_dob) == "2018-01-15"
-    assert consent.jurisdiction == "IN"
-    assert consent.consent_method == "implicit_form_submission"
-
-
-@pytest.mark.django_db
-def test_student_create_persists_guardianship_with_consent_fk(client):
-    guardian = GuardianFactory()
-    client.force_authenticate(user=guardian)
-    payload = {
-        "call_sign": "Kid2",
-        "pin": "1234",
-        "date_of_birth": "2016-06-01",
-    }
-    client.post(reverse("auth-register-student"), payload, format="json")
-    student = User.objects.get(profile__display_name="Kid2")
-    guardianship = Guardianship.objects.get(guardian=guardian, student=student)
-    assert guardianship.consent_record_id is not None
-
-
-@pytest.mark.django_db
-def test_student_create_writes_audit_event(client):
-    guardian = GuardianFactory()
-    client.force_authenticate(user=guardian)
-    payload = {
-        "call_sign": "Kid3",
-        "pin": "1234",
-        "date_of_birth": "2017-03-20",
-    }
-    client.post(reverse("auth-register-student"), payload, format="json")
-    student = User.objects.get(profile__display_name="Kid3")
-    assert AuditEvent.objects.filter(actor=guardian, subject=student, action="student_created").exists()
-
-
-@pytest.mark.django_db
-def test_non_guardian_cannot_create_student(client):
-    from apps.users.tests.factories import UserFactory
-    student_user = UserFactory(role="STUDENT")
-    client.force_authenticate(user=student_user)
-    payload = {
-        "email": "child4@test.com",
-        "password": "pass1234",
-        "display_name": "Kid4",
-        "date_of_birth": "2018-01-01",
-    }
-    response = client.post(reverse("auth-register-student"), payload, format="json")
-    assert response.status_code == status.HTTP_403_FORBIDDEN
-
-
-@pytest.mark.django_db
-def test_student_register_rejects_future_dob(client):
-    guardian = GuardianFactory()
-    client.force_authenticate(user=guardian)
-    payload = {
-        "call_sign": "Kid5",
-        "pin": "1234",
-        "date_of_birth": "2099-01-01",
-    }
-    response = client.post(reverse("auth-register-student"), payload, format="json")
-    assert response.status_code == status.HTTP_400_BAD_REQUEST
+# Student registration tests moved to test_student_register.py
+# (self-serve join-at-signup replaced the guardian-creates-student flow — W1-T05).
 
 
 @pytest.mark.django_db

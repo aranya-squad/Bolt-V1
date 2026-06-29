@@ -50,7 +50,7 @@ class GuardianRegisterSerializer(serializers.ModelSerializer):
 
 class StudentRegisterSerializer(serializers.Serializer):
     """
-    Guardian-only: create a child sub-account.
+    Self-serve student signup (StudentRegisterView wires the batch enrollment + consent).
     Students log in with call_sign + PIN — no email ever required or shown.
     An internal email is auto-generated so the User model constraint is satisfied.
     PIN must be exactly 4 digits.
