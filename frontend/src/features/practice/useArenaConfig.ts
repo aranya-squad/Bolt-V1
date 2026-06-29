@@ -1,7 +1,7 @@
 import { useState } from "react";
 
-export type ArenaOperation = "MIXED" | "MUL" | "DIV";
-export type ArenaMode = "FLASH_CARDS" | "ZEN" | "TIME_ATTACK";
+export type ArenaOperation = "MIXED" | "ADD" | "SUB" | "MUL" | "DIV";
+export type ArenaMode = "FLASH_CARDS" | "ZEN" | "TIME_ATTACK" | "CUSTOM";
 
 interface ArenaConfig {
   operation: ArenaOperation;
@@ -59,7 +59,8 @@ export function useArenaConfig(): UseArenaConfigReturn {
     digits: config.digits,
     rows: config.rows,
     question_count: config.questions,
-    time_limit_sec: config.mode === "ZEN" ? 0 : config.timeLimitMin * 60,
+    // ZEN and CUSTOM: no timer (0 = unlimited). TIME_ATTACK: user-set limit.
+    time_limit_sec: config.mode === "ZEN" || config.mode === "CUSTOM" ? 0 : config.timeLimitMin * 60,
   });
 
   return {

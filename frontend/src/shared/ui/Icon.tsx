@@ -26,6 +26,8 @@ const LUCIDE: Record<string, React.ReactNode> = {
   minus:           <path d="M5 12h14"/>,
   x:               <><path d="M18 6 6 18"/><path d="m6 6 12 12"/></>,
   divide:          <><circle cx="12" cy="6" r="1"/><line x1="5" x2="19" y1="12" y2="12"/><circle cx="12" cy="18" r="1"/></>,
+  layers:          <><path d="m12.83 2.18a2 2 0 0 0-1.66 0L2.6 6.08a1 1 0 0 0 0 1.83l8.58 3.91a2 2 0 0 0 1.66 0l8.58-3.9a1 1 0 0 0 0-1.83Z"/><path d="m22 17.65-9.17 4.16a2 2 0 0 1-1.66 0L2 17.65"/><path d="m22 12.65-9.17 4.16a2 2 0 0 1-1.66 0L2 12.65"/></>,
+  "flask-conical": <><path d="M10 2v7.527a2 2 0 0 1-.211.896L4.72 20.55a1 1 0 0 0 .9 1.45h12.76a1 1 0 0 0 .9-1.45l-5.069-10.127A2 2 0 0 1 14 9.527V2"/><path d="M8.5 2h7"/><path d="M7 16h10"/></>,
   // Actions
   play:            <polygon points="6 3 20 12 6 21 6 3"/>,
   "arrow-right":   <><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></>,

@@ -7,6 +7,7 @@ export interface HudStats {
   streak_days: number;
   levels_completed: number;
   current_level: number;
+  best_accuracy_pct: number | null;
 }
 
 export interface User {
@@ -83,6 +84,7 @@ export interface SessionQuestion {
 export interface SessionMeta {
   session_id: string;
   kind: SessionKind;
+  is_test_mode: boolean;
   questions: SessionQuestion[];
   time_limit_sec: number;
 }
@@ -100,6 +102,7 @@ export interface QuestionAttempt {
   expected_answer: number;
   submitted_answer: number;
   is_correct: boolean;
+  is_skip: boolean;
   elapsed_ms: number;
 }
 
@@ -110,6 +113,24 @@ export interface SessionReport {
   attempts: QuestionAttempt[];
   lesson_id: string | null;
   question_verdicts: Record<number, QuestionVerdict>;
+}
+
+export interface Batch {
+  id: string;
+  name: string;
+  join_code: string;
+  live_session_link: string;
+  is_active: boolean;
+  created_at: string;
+  student_count: number;
+}
+
+export interface RosterStudent {
+  id: string;
+  call_sign: string;
+  current_level: number;
+  accuracy_pct: number | null;
+  enrolled_at: string;
 }
 
 export interface LessonWithCompletion {

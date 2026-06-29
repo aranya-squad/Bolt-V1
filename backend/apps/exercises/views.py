@@ -9,7 +9,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.courses.models import Level, Lesson
-from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_ATTEMPTS_PER_QUESTION, MAX_SESSION_SECONDS, MIN_ANSWER_MS
+from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_ATTEMPTS_PER_QUESTION, MAX_SESSION_SECONDS, MIN_ANSWER_MS, SKIP_ANSWER_SENTINEL
 from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
@@ -58,6 +58,7 @@ class StartClassworkView(APIView):
         seed = random.getrandbits(63)
         generator = CuratedGenerator(seed=seed, template_config=template.config_json)
         questions = generator.generate()
+        is_test_mode = bool(request.data.get("is_test_mode", False))
 
         session = ArenaSession.objects.create(
             user=request.user,
@@ -66,6 +67,7 @@ class StartClassworkView(APIView):
             config_json=template.config_json,
             seed=seed,
             questions_json=[q.to_dict() for q in questions],
+            is_test_mode=is_test_mode,
         )
         return Response(SessionMetaSerializer(session).data, status=status.HTTP_201_CREATED)
 
@@ -112,6 +114,7 @@ class StartLessonClassworkView(APIView):
         seed = random.getrandbits(63)
         generator = CuratedGenerator(seed=seed, template_config=template.config_json)
         questions = generator.generate()
+        is_test_mode = bool(request.data.get("is_test_mode", False))
 
         session = ArenaSession.objects.create(
             user=request.user,
@@ -120,6 +123,7 @@ class StartLessonClassworkView(APIView):
             config_json=template.config_json,
             seed=seed,
             questions_json=[q.to_dict() for q in questions],
+            is_test_mode=is_test_mode,
         )
         return Response(SessionMetaSerializer(session).data, status=status.HTTP_201_CREATED)
 
@@ -249,7 +253,9 @@ class SubmitAttemptView(APIView):
         if elapsed_ms < 0:
             elapsed_ms = 0
 
-        if elapsed_ms < MIN_ANSWER_MS:
+        is_skip = answer == SKIP_ANSWER_SENTINEL
+
+        if not is_skip and elapsed_ms < MIN_ANSWER_MS:
             _log.warning(
                 "min_answer_ms_violation",
                 extra={
@@ -275,6 +281,18 @@ class SubmitAttemptView(APIView):
             + 1
         )
 
+        if session.is_test_mode:
+            if is_skip:
+                return Response(
+                    {"detail": "Skipping is not allowed in Test Mode."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if attempt_number > 1:
+                return Response(
+                    {"detail": "Only one attempt per question in Test Mode."},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
         q = session.questions_json[question_index]
         attempt = record_attempt(
             session=session,
@@ -284,6 +302,7 @@ class SubmitAttemptView(APIView):
             expected_answer=q["answer"],
             submitted_answer=answer,
             elapsed_ms=elapsed_ms,
+            is_skip=is_skip,
         )
 
         return Response({
@@ -377,7 +396,9 @@ class BulkSubmitAttemptView(APIView):
                 elapsed_ms = 0
             elapsed_ms = max(0, elapsed_ms)
 
-            if elapsed_ms < MIN_ANSWER_MS:
+            is_skip = answer == SKIP_ANSWER_SENTINEL
+
+            if not is_skip and elapsed_ms < MIN_ANSWER_MS:
                 _log.warning(
                     "min_answer_ms_violation",
                     extra={
@@ -425,6 +446,7 @@ class BulkSubmitAttemptView(APIView):
                     expected_answer=q["answer"],
                     submitted_answer=answer,
                     elapsed_ms=elapsed_ms,
+                    is_skip=is_skip,
                 )
 
             verdicts.append({
@@ -495,7 +517,9 @@ class SessionReportView(APIView):
 
         question_verdicts: dict[int, str] = {}
         for q_idx, group in groups.items():
-            if group[-1].is_correct:
+            if group[0].is_skip:
+                question_verdicts[q_idx] = "skipped"
+            elif group[-1].is_correct:
                 question_verdicts[q_idx] = "fixed" if not group[0].is_correct else "correct"
             else:
                 question_verdicts[q_idx] = "wrong"

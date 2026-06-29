@@ -15,6 +15,7 @@ _PRACTICE_KINDS = frozenset([
 class SessionMetaSerializer(serializers.Serializer):
     session_id = serializers.CharField(source="id")
     kind = serializers.CharField()
+    is_test_mode = serializers.BooleanField()
     questions = serializers.SerializerMethodField()
     time_limit_sec = serializers.SerializerMethodField()
 
@@ -47,4 +48,4 @@ class ProgressRecordSerializer(serializers.ModelSerializer):
 class AttemptSerializer(serializers.ModelSerializer):
     class Meta:
         model = QuestionAttempt
-        fields = ["question_index", "attempt_number", "question_text", "expected_answer", "submitted_answer", "is_correct", "elapsed_ms"]
+        fields = ["question_index", "attempt_number", "question_text", "expected_answer", "submitted_answer", "is_correct", "is_skip", "elapsed_ms"]

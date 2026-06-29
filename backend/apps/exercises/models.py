@@ -57,6 +57,8 @@ class ArenaSession(models.Model):
     seed = models.BigIntegerField()
     # Full question set with answers. NEVER returned to the client.
     questions_json = models.JSONField()
+    # When True: skip submissions and retry attempts are rejected server-side (§9 Q3).
+    is_test_mode = models.BooleanField(default=False)
     started_at = models.DateTimeField(auto_now_add=True)
     submitted_at = models.DateTimeField(null=True, blank=True)
     abandoned_at = models.DateTimeField(null=True, blank=True)

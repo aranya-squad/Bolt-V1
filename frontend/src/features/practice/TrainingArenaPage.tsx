@@ -13,6 +13,15 @@ const OPERATIONS: { value: ArenaOperation; label: string; icon: string }[] = [
   { value: "DIV",    label: "Division",          icon: "divide" },
 ];
 
+// The Lab unlocks individual ADD and SUB on top of the standard three.
+const LAB_OPERATIONS: { value: ArenaOperation; label: string; icon: string }[] = [
+  { value: "ADD",    label: "Addition",          icon: "plus" },
+  { value: "SUB",    label: "Subtraction",        icon: "minus" },
+  { value: "MIXED",  label: "Add & Subtract",    icon: "layers" },
+  { value: "MUL",    label: "Multiplication",     icon: "x" },
+  { value: "DIV",    label: "Division",           icon: "divide" },
+];
+
 const MODES: { value: ArenaMode; label: string; description: string; icon: string; color: string }[] = [
   {
     value: "FLASH_CARDS",
@@ -34,6 +43,13 @@ const MODES: { value: ArenaMode; label: string; description: string; icon: strin
     description: "Race the clock and push your limits",
     icon: "timer",
     color: "var(--orange-streak)",
+  },
+  {
+    value: "CUSTOM",
+    label: "The Lab",
+    description: "Your rules. Pick any operation, digit range, and question count.",
+    icon: "flask-conical",
+    color: "var(--ok-50)",
   },
 ];
 
@@ -190,8 +206,8 @@ export default function TrainingArenaPage() {
         {/* Step 01 — Choose Operation */}
         <div style={{ marginBottom: "var(--s-xl)" }}>
           <div style={STEP_LABEL_STYLE}>Step 01 — Operation</div>
-          <div style={{ display: "flex", gap: "var(--s-sm)" }}>
-            {OPERATIONS.map((op) => (
+          <div style={{ display: "flex", gap: "var(--s-sm)", flexWrap: config.mode === "CUSTOM" ? "wrap" : "nowrap" }}>
+            {(config.mode === "CUSTOM" ? LAB_OPERATIONS : OPERATIONS).map((op) => (
               <OperationChip
                 key={op.value}
                 label={op.label}

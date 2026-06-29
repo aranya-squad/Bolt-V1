@@ -38,15 +38,16 @@ export default function ClassworkPage() {
     useSubmitAttempt(sessionMeta?.session_id ?? "");
   const { mutate: finalizeSession } = useFinalizeSession(sessionMeta?.session_id ?? "");
 
-  // Start session once on mount
-  useEffect(() => {
-    startSession(undefined, {
-      onSuccess: (meta) => {
-        setTimeLeft(meta.time_limit_sec > 0 ? meta.time_limit_sec : null);
-      },
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [levelId, lessonId]);
+  const handleBeginSession = () => {
+    startSession(
+      { is_test_mode: testMode },
+      {
+        onSuccess: (meta) => {
+          setTimeLeft(meta.time_limit_sec > 0 ? meta.time_limit_sec : null);
+        },
+      }
+    );
+  };
 
   // Countdown timer — setTimeout chain
   useEffect(() => {
@@ -162,6 +163,77 @@ export default function ClassworkPage() {
   const timerAccent = timerPct < 20 ? ("streak" as const) : ("yellow" as const);
   const question = sessionMeta?.questions[currentIndex];
 
+  // Pre-start: session not yet created — let student configure test mode before committing.
+  if (!sessionMeta && !starting && !startError) {
+    const preStartBreadcrumb = levelId && lessonId
+      ? ["LEARN", "LEVEL " + levelId, "CLASSWORK"]
+      : levelId
+      ? ["LEARN", "LEVEL " + levelId, "CLASSWORK"]
+      : ["LEARN", "CLASSWORK"];
+    return (
+      <main
+        className="page-wrap"
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center",
+          padding: "var(--s-xl)",
+          gap: "var(--s-xl)",
+        }}
+      >
+        <div style={{ width: "100%", maxWidth: 480, display: "flex", flexDirection: "column", gap: "var(--s-xl)" }}>
+          <BreadcrumbChip items={preStartBreadcrumb} />
+          <div>
+            <div
+              style={{
+                fontFamily: "var(--font-label)",
+                fontWeight: 600,
+                fontSize: 11,
+                letterSpacing: "0.1em",
+                textTransform: "uppercase",
+                color: "var(--fg-sand)",
+                marginBottom: 12,
+              }}
+            >
+              Session Options
+            </div>
+            <button
+              type="button"
+              onClick={() => setTestMode((v) => !v)}
+              style={{
+                padding: "10px 16px",
+                borderRadius: "var(--r-pill)",
+                background: testMode ? "var(--y-bolt)" : "transparent",
+                border: testMode
+                  ? "1px solid var(--y-bolt)"
+                  : "1px solid rgba(255,255,255,0.15)",
+                color: testMode ? "var(--y-bolt-ink)" : "var(--fg-sand)",
+                fontFamily: "var(--font-label)",
+                fontWeight: 600,
+                fontSize: 12,
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                cursor: "pointer",
+                transition: "background 180ms, color 180ms, border-color 180ms",
+              }}
+            >
+              TEST MODE — {testMode ? "ON" : "OFF"}
+            </button>
+            {testMode && (
+              <p className="t-body-sm" style={{ color: "var(--fg-sand)", marginTop: 8, opacity: 0.7 }}>
+                No hints. No retries. One shot per question.
+              </p>
+            )}
+          </div>
+          <BoltButton variant="primary" size="lg" onClick={handleBeginSession}>
+            BEGIN SESSION
+          </BoltButton>
+        </div>
+      </main>
+    );
+  }
+
   if (starting) {
     return <div className="page-loading">PREPARING SESSION…</div>;
   }
@@ -179,8 +251,10 @@ export default function ClassworkPage() {
 
   if (!sessionMeta || !question) return null;
 
-  const breadcrumb = levelId
-    ? ["LEVEL " + levelId, "CLASSWORK"]
+  const breadcrumb = levelId && lessonId
+    ? ["LEARN", "LEVEL " + levelId, "CLASSWORK"]
+    : levelId
+    ? ["LEARN", "LEVEL " + levelId, "CLASSWORK"]
     : ["LEARN", "CLASSWORK"];
 
   const isLast = currentIndex + 1 >= sessionMeta.questions.length;
@@ -220,11 +294,10 @@ export default function ClassworkPage() {
         >
           <BreadcrumbChip items={breadcrumb} />
           <div style={{ display: "flex", alignItems: "center", gap: "var(--s-sm)" }}>
-            {/* Test Mode toggle chip — hides the Skip button and retry path when active */}
+            {/* Test Mode chip — locked once the session starts; toggleable only on the pre-start screen */}
             <button
               type="button"
-              onClick={() => setTestMode((v) => !v)}
-              disabled={!!verdict}
+              disabled
               style={{
                 padding: "6px 12px",
                 borderRadius: "var(--r-pill)",
@@ -238,9 +311,9 @@ export default function ClassworkPage() {
                 fontSize: 11,
                 letterSpacing: "0.08em",
                 textTransform: "uppercase",
-                cursor: verdict ? "default" : "pointer",
-                transition: "background 180ms, color 180ms, border-color 180ms",
+                cursor: "default",
                 flexShrink: 0,
+                opacity: testMode ? 1 : 0.5,
               }}
             >
               TEST MODE
