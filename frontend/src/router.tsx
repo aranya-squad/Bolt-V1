@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { createBrowserRouter, Navigate } from "react-router-dom";
 import { PageSkeleton } from "@/features/shared/PageSkeleton";
 import { ProtectedRoute } from "@/features/shared/ProtectedRoute";
+import { RoleRoute } from "@/features/shared/RoleRoute";
 import { PublicRoute } from "@/features/shared/PublicRoute";
 import { NotFoundPage } from "@/features/shared/NotFoundPage";
 import { ShellLayout } from "@/features/shared/ShellLayout";
@@ -18,6 +19,7 @@ const TrainingArenaPage = lazy(() => import("@/features/practice/TrainingArenaPa
 const InArenaPage = lazy(() => import("@/features/practice/InArenaPage"));
 const VictoryPage = lazy(() => import("@/features/practice/VictoryPage"));
 const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
+const TeacherDashboardPage = lazy(() => import("@/features/teacher/TeacherDashboardPage"));
 
 const wrap = (element: React.ReactNode) => (
   <Suspense fallback={<PageSkeleton />}>{element}</Suspense>
@@ -35,32 +37,44 @@ export const router = createBrowserRouter([
   {
     element: <ProtectedRoute />,
     children: [
-      // NAV-SHELL group: Sidebar + BottomNav rendered on all these routes
+      // Student app — gated to STUDENT/ADMIN; a TEACHER hitting these is sent to /teacher.
       {
-        element: <ShellLayout />,
+        element: <RoleRoute allow={["STUDENT", "ADMIN"]} />,
         children: [
-          { path: "/", element: <Navigate to="/hub" replace /> },
-          { path: "/hub", element: wrap(<HubPage />) },
-          { path: "/learn", element: wrap(<LevelSelectionPage />) },
-          { path: "/learn/level/:levelId", element: wrap(<PathOfConquestPage />) },
-          // Legacy classwork route — kept during Wave 2–3 transition
-          { path: "/learn/level/:levelId/classwork", element: wrap(<ClassworkPage />) },
+          // NAV-SHELL group: Sidebar + BottomNav rendered on all these routes
           {
-            path: "/learn/level/:levelId/report/:sessionId",
-            element: wrap(<MissionReportPage />),
+            element: <ShellLayout />,
+            children: [
+              { path: "/", element: <Navigate to="/hub" replace /> },
+              { path: "/hub", element: wrap(<HubPage />) },
+              { path: "/learn", element: wrap(<LevelSelectionPage />) },
+              { path: "/learn/level/:levelId", element: wrap(<PathOfConquestPage />) },
+              // Legacy classwork route — kept during Wave 2–3 transition
+              { path: "/learn/level/:levelId/classwork", element: wrap(<ClassworkPage />) },
+              {
+                path: "/learn/level/:levelId/report/:sessionId",
+                element: wrap(<MissionReportPage />),
+              },
+              { path: "/practice", element: wrap(<TrainingArenaPage />) },
+              { path: "/practice/setup/:mode", element: <Navigate to="/practice" replace /> },
+              { path: "/practice/victory/:sessionId", element: wrap(<VictoryPage />) },
+              { path: "/profile", element: wrap(<ProfilePage />) },
+            ],
           },
-          { path: "/practice", element: wrap(<TrainingArenaPage />) },
-          { path: "/practice/setup/:mode", element: <Navigate to="/practice" replace /> },
-          { path: "/practice/victory/:sessionId", element: wrap(<VictoryPage />) },
-          { path: "/profile", element: wrap(<ProfilePage />) },
+          // FOCUS group: no nav (active session screens must be distraction-free)
+          {
+            path: "/learn/level/:levelId/lesson/:lessonId/classwork",
+            element: wrap(<ClassworkPage />),
+          },
+          { path: "/practice/session/:sessionId", element: wrap(<InArenaPage />) },
         ],
       },
-      // FOCUS group: no nav (active session screens must be distraction-free)
+      // Teacher portal — gated to TEACHER/ADMIN. Placeholder until the Wave 3 build-out.
       {
-        path: "/learn/level/:levelId/lesson/:lessonId/classwork",
-        element: wrap(<ClassworkPage />),
+        path: "/teacher",
+        element: <RoleRoute allow={["TEACHER", "ADMIN"]} />,
+        children: [{ index: true, element: wrap(<TeacherDashboardPage />) }],
       },
-      { path: "/practice/session/:sessionId", element: wrap(<InArenaPage />) },
     ],
   },
   { path: "*", element: <NotFoundPage /> },

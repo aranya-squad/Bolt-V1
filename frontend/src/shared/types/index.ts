@@ -19,6 +19,7 @@ export interface User {
 
 export interface Profile {
   display_name: string;
+  call_sign: string | null;
   avatar_url: string;
   locale: string;
   timezone: string;
