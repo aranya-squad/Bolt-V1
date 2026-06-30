@@ -63,15 +63,22 @@ class ProceduralGenerator(QuestionGenerator):
                 operands = [minuend] + subtractors
             text = " - ".join(map(str, operands))
         elif op == "MUL":
-            # Exactly 2 operands for multiplication to keep difficulty sane at v1.
-            a, b = self.rng.randint(lo, hi), self.rng.randint(lo, hi)
+            # Per-row digit config (D-6): row 1 = multiplicand, row 2 = multiplier.
+            # Falls back to `digits` for sessions created before D-6 (backward compat).
+            d1 = self.config.get("digits_row1", digits)
+            d2 = self.config.get("digits_row2", digits)
+            lo1, hi1 = 10 ** (d1 - 1), 10**d1 - 1
+            lo2, hi2 = 10 ** (d2 - 1), 10**d2 - 1
+            a, b = self.rng.randint(lo1, hi1), self.rng.randint(lo2, hi2)
             answer = a * b
             text = f"{a} × {b}"
         elif op == "DIV":
-            # Generate dividend from a clean multiple to avoid remainders.
-            # quotient_hi raised to avoid collapsed range on 1-digit operands.
-            divisor = self.rng.randint(lo, hi)
-            quotient_hi = max(hi // max(divisor, 1), 5)
+            # Per-row digit config (D-6): row 2 = divisor digits. Dividend derived.
+            # Falls back to `digits` for sessions created before D-6 (backward compat).
+            d2 = self.config.get("digits_row2", digits)
+            lo2, hi2 = 10 ** (d2 - 1), 10**d2 - 1
+            divisor = self.rng.randint(lo2, hi2)
+            quotient_hi = max(hi2 // max(divisor, 1), 5)
             quotient = self.rng.randint(1, quotient_hi)
             dividend = divisor * quotient
             answer = quotient

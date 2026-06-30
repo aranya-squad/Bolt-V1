@@ -1,6 +1,9 @@
+import datetime
 import logging
 import random
+import re
 
+import openpyxl
 from django.db.models import Count
 from django.shortcuts import get_object_or_404
 from rest_framework import status
@@ -14,8 +17,9 @@ from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
 from apps.progress.services import finalize_session, record_attempt
+from apps.users.permissions import IsAdmin
 
-from .models import ArenaSession, ExerciseTemplate, SessionKind
+from .models import ArenaSession, CuratedQuestion, ExerciseTemplate, SessionKind
 from .serializers import AttemptSerializer, ProgressRecordSerializer, SessionMetaSerializer
 
 _log = logging.getLogger("apps.exercises.anticheat")
@@ -149,6 +153,18 @@ class StartPracticeView(APIView):
             errors["operation"] = "Required."
         elif operation not in self.VALID_OPERATIONS:
             errors["operation"] = f"Must be one of {sorted(self.VALID_OPERATIONS)}."
+        elif mode == "FLASH_CARDS" and operation in {"MUL", "DIV"}:
+            # D-5 constraint: flash cards are add/sub drills only; MUL/DIV is unsupported.
+            errors["operation"] = "Flash Cards mode only supports ADD, SUB, or MIXED."
+
+        flash_speed_ms = None
+        if mode == "FLASH_CARDS":
+            try:
+                flash_speed_ms = int(request.data.get("flash_speed_ms", 2000))
+                if not 500 <= flash_speed_ms <= 10000:
+                    errors["flash_speed_ms"] = "Must be between 500 and 10000."
+            except (TypeError, ValueError):
+                errors["flash_speed_ms"] = "Must be an integer."
 
         try:
             digits = int(request.data.get("digits", ""))
@@ -156,6 +172,24 @@ class StartPracticeView(APIView):
                 errors["digits"] = "Must be between 1 and 4."
         except (TypeError, ValueError):
             errors["digits"] = "Must be an integer."
+
+        # Per-row digit config for MUL/DIV (D-6). Only validated + stored when present.
+        digits_row1 = None
+        digits_row2 = None
+        if request.data.get("digits_row1") is not None:
+            try:
+                digits_row1 = int(request.data["digits_row1"])
+                if not 1 <= digits_row1 <= 4:
+                    errors["digits_row1"] = "Must be between 1 and 4."
+            except (TypeError, ValueError):
+                errors["digits_row1"] = "Must be an integer."
+        if request.data.get("digits_row2") is not None:
+            try:
+                digits_row2 = int(request.data["digits_row2"])
+                if not 1 <= digits_row2 <= 2:
+                    errors["digits_row2"] = "Must be between 1 and 2."
+            except (TypeError, ValueError):
+                errors["digits_row2"] = "Must be an integer."
 
         try:
             rows = int(request.data.get("rows", ""))
@@ -188,6 +222,13 @@ class StartPracticeView(APIView):
             "question_count": question_count,
             "time_limit_sec": time_limit_sec,
         }
+        if flash_speed_ms is not None:
+            config["flash_speed_ms"] = flash_speed_ms
+        if operation in {"MUL", "DIV"}:
+            if digits_row1 is not None:
+                config["digits_row1"] = digits_row1
+            if digits_row2 is not None:
+                config["digits_row2"] = digits_row2
 
         seed = random.getrandbits(63)
         questions = ProceduralGenerator(seed=seed, config=config).generate()
@@ -530,3 +571,102 @@ class SessionReportView(APIView):
             "lesson_id": lesson_id,
             "question_verdicts": question_verdicts,
         })
+
+
+_SHEET_NAME_RE = re.compile(r"^L(\d+)\s+C(\d+)$", re.IGNORECASE)
+_import_log = logging.getLogger("apps.exercises.import")
+
+
+class ImportQuestionsView(APIView):
+    """
+    ADMIN-only: import questions from BOLT ALL LEVELS DATASET (.xlsx).
+
+    Sheet naming: "L{n} C{m}" → Level n, Class m.
+    Row schema: row_index | topic_name | question | operator | answer
+    Corrupted rows (Excel date serials in question column) are skipped with a warning.
+    Each import replaces all existing CuratedQuestion records for the affected lessons (idempotent).
+    """
+
+    permission_classes = [IsAuthenticated, IsAdmin]
+
+    def post(self, request):
+        xlsx_file = request.FILES.get("file")
+        if not xlsx_file:
+            return Response({"detail": "No file provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            wb = openpyxl.load_workbook(xlsx_file, data_only=True)
+        except Exception as exc:
+            return Response(
+                {"detail": f"Could not open file: {exc}"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        results = []
+        for sheet_name in wb.sheetnames:
+            m = _SHEET_NAME_RE.match(sheet_name.strip())
+            if not m:
+                continue  # Skip "Curriculum" and other non-matching sheets
+
+            level_order = int(m.group(1))
+            lesson_order = int(m.group(2))
+            ws = wb[sheet_name]
+
+            level, _ = Level.objects.get_or_create(
+                order=level_order,
+                defaults={"name": f"Level {level_order}"},
+            )
+            lesson, _ = Lesson.objects.get_or_create(
+                level=level,
+                order=lesson_order,
+                defaults={"name": f"Class {lesson_order}"},
+            )
+
+            # Replace existing: delete all current curated questions for this lesson.
+            deleted_count, _ = CuratedQuestion.objects.filter(lesson=lesson).delete()
+
+            questions_to_create = []
+            skipped = []
+            for row in ws.iter_rows(min_row=2, values_only=True):
+                if all(v is None for v in row):
+                    continue
+                row_index, topic_name, question, operator, answer = (list(row) + [None] * 5)[:5]
+
+                # Detect Excel date serials: openpyxl returns datetime objects for date-formatted cells.
+                if isinstance(question, (datetime.date, datetime.datetime)):
+                    msg = f"{sheet_name} row {row_index}: question column is a date serial — skipped"
+                    skipped.append(msg)
+                    _import_log.warning(msg)
+                    continue
+
+                if question is None:
+                    continue
+
+                try:
+                    answer_int = int(float(answer)) if answer is not None else 0
+                except (TypeError, ValueError):
+                    msg = f"{sheet_name} row {row_index}: unparseable answer '{answer}' — skipped"
+                    skipped.append(msg)
+                    _import_log.warning(msg)
+                    continue
+
+                questions_to_create.append(CuratedQuestion(
+                    lesson=lesson,
+                    row_index=int(row_index) if row_index is not None else 0,
+                    topic_name=str(topic_name or "")[:256],
+                    question_text=str(question)[:512],
+                    operator=str(operator or "")[:16],
+                    answer=answer_int,
+                ))
+
+            CuratedQuestion.objects.bulk_create(questions_to_create, ignore_conflicts=True)
+            results.append({
+                "sheet": sheet_name,
+                "level": level_order,
+                "class": lesson_order,
+                "imported": len(questions_to_create),
+                "replaced": deleted_count,
+                "skipped": skipped,
+            })
+
+        return Response({"sheets": results, "total_sheets": len(results)})

@@ -3,6 +3,7 @@ from django.urls import path
 from .views import (
     BulkSubmitAttemptView,
     FinalizeSessionView,
+    ImportQuestionsView,
     SessionDetailView,
     SessionReportView,
     StartClassworkView,
@@ -20,4 +21,5 @@ urlpatterns = [
     path("sessions/<uuid:session_id>/attempts/bulk/", BulkSubmitAttemptView.as_view(), name="session-attempts-bulk"),
     path("sessions/<uuid:session_id>/submit/", FinalizeSessionView.as_view(), name="session-submit"),
     path("sessions/<uuid:session_id>/report/", SessionReportView.as_view(), name="session-report"),
+    path("admin/import-questions/", ImportQuestionsView.as_view(), name="import-questions"),
 ]

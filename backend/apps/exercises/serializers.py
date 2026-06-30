@@ -18,6 +18,7 @@ class SessionMetaSerializer(serializers.Serializer):
     is_test_mode = serializers.BooleanField()
     questions = serializers.SerializerMethodField()
     time_limit_sec = serializers.SerializerMethodField()
+    flash_speed_ms = serializers.SerializerMethodField()
 
     def get_questions(self, session):
         include_answer = session.kind in _PRACTICE_KINDS
@@ -35,6 +36,11 @@ class SessionMetaSerializer(serializers.Serializer):
         if session.template is not None:
             return session.template.time_limit_sec
         return session.config_json.get("time_limit_sec", 600)
+
+    def get_flash_speed_ms(self, session):
+        if session.kind != SessionKind.FLASH_CARDS:
+            return None
+        return session.config_json.get("flash_speed_ms", 2000)
 
 
 class ProgressRecordSerializer(serializers.ModelSerializer):

@@ -38,6 +38,36 @@ class ExerciseTemplate(models.Model):
         return f"{self.lesson} / {self.kind}"
 
 
+class CuratedQuestion(models.Model):
+    """
+    Question imported from the BOLT ALL LEVELS DATASET (D-7).
+    Stored per-lesson; imported via the admin XLSX import endpoint (E4).
+    Replaces all questions for the lesson on each re-import.
+    """
+
+    lesson = models.ForeignKey(
+        "courses.Lesson", related_name="curated_questions", on_delete=models.CASCADE
+    )
+    row_index = models.PositiveIntegerField()
+    topic_name = models.CharField(max_length=256, blank=True)
+    question_text = models.CharField(max_length=512)
+    operator = models.CharField(max_length=16, blank=True)
+    answer = models.IntegerField()
+
+    class Meta:
+        db_table = "exercises_curated_question"
+        ordering = ["row_index"]
+        constraints = [
+            models.UniqueConstraint(
+                fields=["lesson", "row_index"],
+                name="exercises_curatedquestion_lesson_row_unique",
+            )
+        ]
+
+    def __str__(self) -> str:
+        return f"L{self.lesson.level.order} C{self.lesson.order} row {self.row_index}"
+
+
 class ArenaSession(models.Model):
     """
     An active or completed gameplay session.
