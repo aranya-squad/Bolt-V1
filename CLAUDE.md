@@ -50,6 +50,7 @@ Before writing any code, stop at the first rung that holds:
 - No "flexibility" or "configurability" that wasn't requested.
 - No error handling for impossible scenarios.
 - Deletion over addition. Boring over clever. Fewest files possible.
+- Pick the edge-case-correct option when two stdlib approaches are the same size — lazy means less code, not the flimsier algorithm.
 - If you write 200 lines and it could be 50, rewrite it.
 
 Ask yourself: "Would a senior engineer say this is overcomplicated?" If yes, simplify.

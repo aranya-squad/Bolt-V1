@@ -10,7 +10,9 @@ ACCOUNT_ID="504132672502"
 APP="bolt-abacus"
 KEY_NAME="${APP}-key"
 ECR_URI="${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com/${APP}-api"
-read -s -p "DB password (same one used during initial deploy): " DB_PASSWORD; echo
+if [[ -z "${DB_PASSWORD:-}" ]]; then
+  read -s -p "DB password (same one used during initial deploy): " DB_PASSWORD; echo
+fi
 [[ ${#DB_PASSWORD} -ge 8 ]] || { echo "[ERROR] Password too short"; exit 1; }
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
@@ -143,17 +145,18 @@ docker compose --env-file /home/ec2-user/.env.production \
 REMOTE
 
 # ─── Health check + summary ──────────────────────────────────────────────────
+# Port 8000 is closed externally (G4). Health check goes through Caddy on 443.
 log "Health check..."
 sleep 5
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "http://${EC2_PUBLIC_IP}:8000/api/v1/health/" || echo "000")
+HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://api.boltabacus.com/api/v1/health/" || echo "000")
 
 echo ""
 echo "================================================"
 echo "  Bolt Abacus - Deploy Summary"
 echo "================================================"
 echo "  EC2 public IP  : ${EC2_PUBLIC_IP}"
-echo "  API base URL   : http://${EC2_PUBLIC_IP}:8000"
-echo "  Health check   : http://${EC2_PUBLIC_IP}:8000/api/v1/health/ -> HTTP ${HTTP_STATUS}"
+echo "  API base URL   : https://api.boltabacus.com"
+echo "  Health check   : https://api.boltabacus.com/api/v1/health/ -> HTTP ${HTTP_STATUS}"
 echo "  RDS endpoint   : ${RDS_ENDPOINT}:5432"
 echo "  Redis endpoint : ${REDIS_ENDPOINT}:6379"
 echo "  ECR repo       : ${ECR_URI}"
