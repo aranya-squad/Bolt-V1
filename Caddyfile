@@ -1,0 +1,18 @@
+# Bolt Abacus reverse proxy + automatic TLS.
+# Domain, ACME contact, and ACME CA are injected from .env.production via Caddy's
+# {$ENV} substitution — there is no hardcoded hostname here, so the value lives in
+# exactly one place (the deploy script heredoc). Caddy v2 reverse_proxy preserves
+# the inbound Host header and sets X-Forwarded-Proto, which Django already trusts
+# via SECURE_PROXY_SSL_HEADER.
+{
+	email {$ACME_EMAIL}
+	# Defaults to the Let's Encrypt PRODUCTION CA. During first bring-up, set
+	# ACME_CA=https://acme-staging-v02.api.letsencrypt.org/directory in
+	# .env.production to avoid burning the prod rate limit (5 certs/domain/week),
+	# then unset it. A forgotten override is safe: the default is prod, not staging.
+	acme_ca {$ACME_CA:https://acme-v02.api.letsencrypt.org/directory}
+}
+
+{$API_DOMAIN} {
+	reverse_proxy web:8000
+}

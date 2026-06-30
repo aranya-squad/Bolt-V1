@@ -33,3 +33,32 @@ services:
     environment:
       DJANGO_SETTINGS_MODULE: config.settings.production
     restart: unless-stopped
+
+  # TLS termination + reverse proxy. Only Caddy-specific vars passed — DB/Redis
+  # secrets never enter this container.
+  caddy:
+    image: caddy:2
+    depends_on:
+      - web
+    environment:
+      API_DOMAIN: ${API_DOMAIN}
+      ACME_EMAIL: ${ACME_EMAIL}
+      ACME_CA: ${ACME_CA:-}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:2019/config/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+volumes:
+  caddy_data:
+  caddy_config:

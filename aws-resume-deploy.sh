@@ -63,13 +63,13 @@ log "Writing backend/.env.production..."
 cat > "$HERE/backend/.env.production" <<EOF
 DJANGO_SECRET_KEY=${SECRET_KEY}
 DJANGO_SETTINGS_MODULE=config.settings.production
-DJANGO_ALLOWED_HOSTS=${EC2_PUBLIC_IP},localhost,127.0.0.1
+DJANGO_ALLOWED_HOSTS=${EC2_PUBLIC_IP},localhost,127.0.0.1,api.boltabacus.com
 
-# HTTP-only bring-up (no TLS in front yet). Re-enable all four once a domain + TLS exists.
-SECURE_SSL_REDIRECT=False
-SESSION_COOKIE_SECURE=False
-CSRF_COOKIE_SECURE=False
-SECURE_HSTS_SECONDS=0
+SECURE_SSL_REDIRECT=True
+SESSION_COOKIE_SECURE=True
+CSRF_COOKIE_SECURE=True
+# TODO(debt): ramp to 31536000 (1yr) after confirming no HTTP-only subdomains (≥ 2026-07-05)
+SECURE_HSTS_SECONDS=300
 
 DATABASE_URL=postgres://bolt:${DB_PASSWORD}@${RDS_ENDPOINT}:5432/bolt_prod
 REPLICA_DATABASE_URL=
@@ -77,9 +77,12 @@ REPLICA_DATABASE_URL=
 REDIS_URL=redis://${REDIS_ENDPOINT}:6379/0
 REDIS_MAX_CONNECTIONS=50
 
-CORS_ALLOWED_ORIGINS=http://${EC2_PUBLIC_IP}:8000
+CORS_ALLOWED_ORIGINS=https://boltabacus.com,https://www.boltabacus.com,https://bolt-v1-5flv.vercel.app
 REFRESH_COOKIE_DOMAIN=
 REFRESH_COOKIE_NAME=refresh_token
+
+API_DOMAIN=api.boltabacus.com
+ACME_EMAIL=aranya.squad@gmail.com
 
 JWT_ACCESS_TOKEN_LIFETIME_MINUTES=15
 JWT_REFRESH_TOKEN_LIFETIME_DAYS=7
@@ -104,14 +107,27 @@ IMAGE_TAG=latest
 EOF
 
 # ─── Deploy to EC2 ───────────────────────────────────────────────────────────
-log "Copying env + compose file to EC2..."
+log "Copying env + compose file + Caddyfile to EC2..."
 scp -i ~/.ssh/${KEY_NAME}.pem -o StrictHostKeyChecking=no \
-  backend/.env.production docker-compose.prod.yml \
+  backend/.env.production docker-compose.prod.yml Caddyfile \
   ec2-user@${EC2_PUBLIC_IP}:/home/ec2-user/
 
-log "Running remote deploy (pull, migrate, collectstatic, compose up)..."
+log "Running remote deploy (swap check, pull, migrate, collectstatic, compose up)..."
 ssh -i ~/.ssh/${KEY_NAME}.pem -o StrictHostKeyChecking=no ec2-user@${EC2_PUBLIC_IP} bash <<REMOTE
 set -e
+
+# Ensure swap exists — ephemeral containers during deploy exhaust 910 MB RAM on t-class.
+# ponytail: 1 GB swapfile; upgrade path is moving to a larger instance type.
+if ! swapon --show | grep -q swap; then
+  if [ ! -f /swapfile ]; then
+    fallocate -l 1G /swapfile
+    chmod 600 /swapfile
+    mkswap /swapfile
+  fi
+  swapon /swapfile
+  echo '/swapfile none swap sw 0 0' | tee -a /etc/fstab > /dev/null
+fi
+
 aws ecr get-login-password --region ${REGION} | \
   docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 docker pull ${ECR_URI}:latest
