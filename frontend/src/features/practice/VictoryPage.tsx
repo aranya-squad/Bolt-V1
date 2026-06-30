@@ -1,12 +1,11 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useSession } from "@/shared/api/queries/useSession";
 import { useSessionReport } from "@/shared/api/queries/useSessionReport";
-import { useXpProgress } from "@/shared/api/queries/useXpProgress";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { Page } from "@/shared/ui/Page";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { StatBentoCard } from "@/shared/ui/StatBentoCard";
-import { XpProgressBar } from "@/shared/ui/XpProgressBar";
+import { AttemptsTable } from "@/shared/ui/AttemptsTable";
 
 const PRACTICE_MODES = new Set(["TIME_ATTACK", "ZEN", "CUSTOM", "FLASH_CARDS"]);
 
@@ -21,7 +20,6 @@ export default function VictoryPage() {
   const navigate = useNavigate();
   const { data: session } = useSession(sessionId!);
   const { data: report, isLoading, isError, refetch } = useSessionReport(sessionId);
-  const { data: xp } = useXpProgress();
 
   const p = report?.progress;
   const canReplay = session && PRACTICE_MODES.has(session.kind);
@@ -75,11 +73,11 @@ export default function VictoryPage() {
               />
             </div>
 
-            <div style={{ marginBottom: "var(--s-xl)" }}>
-              <XpProgressBar
-                currentXp={xp?.total_xp ?? 0}
-                currentLevelThreshold={xp?.current_level_threshold ?? 0}
-                nextLevelThreshold={xp?.next_level_threshold ?? 0}
+            {/* Report card — zero attempts renders nothing (AttemptsTable returns null) */}
+            <div style={{ maxHeight: "60vh", overflowY: "auto", marginBottom: "var(--s-xl)" }}>
+              <AttemptsTable
+                attempts={report!.attempts}
+                questionVerdicts={report!.question_verdicts}
               />
             </div>
           </>

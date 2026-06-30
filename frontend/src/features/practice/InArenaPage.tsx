@@ -7,7 +7,7 @@ import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
 import type { AttemptVerdict } from "@/shared/types";
 import type { BulkAttemptItem } from "@/shared/api/queries/useSession";
 import { BoltButton } from "@/shared/ui/BoltButton";
-import { ProblemCanvas } from "@/shared/ui/ProblemCanvas";
+import { RowProblemCanvas } from "@/shared/ui/RowProblemCanvas";
 import { FeedbackToast } from "@/shared/ui/FeedbackToast";
 
 const FLUSH_RETRIES = 3;
@@ -27,6 +27,10 @@ export default function InArenaPage() {
   const isFinalizingRef = useRef(false);
   // Buffer of all attempts, flushed to bulk endpoint on session finish.
   const pendingAttemptsRef = useRef<BulkAttemptItem[]>([]);
+  // Tracks attempt number for the current question (increments on each wrong, resets on question advance).
+  const attemptNumberRef = useRef(0);
+  // Flash-card per-card auto-advance timer (cleared on submit to prevent double-advance).
+  const flashTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const { data: sessionMeta, isLoading, isError } = useSession(sessionId!);
   const { mutateAsync: bulkSubmitAsync } = useBulkSubmit(sessionId!);
@@ -57,11 +61,46 @@ export default function InArenaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [timeLeft]);
 
-  // Focus input on question change
+  // Reset timing and attempt count on question advance, and focus the input.
   useEffect(() => {
     questionStartMs.current = Date.now();
+    attemptNumberRef.current = 0;
     inputRef.current?.focus();
   }, [currentIndex]);
+
+  // Flash-card per-card auto-advance: after flashSpeedMs, skip if not answered.
+  const flashSpeedMs = sessionMeta?.flash_speed_ms ?? 2000;
+  useEffect(() => {
+    if (!sessionMeta || sessionMeta.kind !== "FLASH_CARDS") return;
+    flashTimerRef.current = setTimeout(() => {
+      // verdict is always null here (cleared on question advance); skip = no answer.
+      const elapsed = Date.now() - questionStartMs.current;
+      pendingAttemptsRef.current = [
+        ...pendingAttemptsRef.current,
+        {
+          question_index: currentIndex,
+          answer: 0,
+          elapsed_ms: elapsed,
+          attempt_number: 0,
+          is_skip: true,
+        },
+      ];
+      if (sessionMeta && currentIndex + 1 >= sessionMeta.questions.length) {
+        handleFinalize();
+      } else {
+        setCurrentIndex((i) => i + 1);
+      }
+    }, flashSpeedMs);
+    return () => {
+      if (flashTimerRef.current !== null) {
+        clearTimeout(flashTimerRef.current);
+        flashTimerRef.current = null;
+      }
+    };
+    // currentIndex and sessionMeta.session_id are the only meaningful deps here;
+    // flashSpeedMs and questions.length are stable for the session lifetime.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentIndex, sessionMeta?.session_id]);
 
   // Flush buffered attempts to bulk endpoint with retry on failure.
   // Errors after all retries are swallowed — finalizeSession is the safety net.
@@ -95,9 +134,9 @@ export default function InArenaPage() {
     });
   };
 
-  const handleVerdictDismiss = () => {
-    setVerdict(null);
-    setInput("");
+  const isFlash = sessionMeta?.kind === "FLASH_CARDS";
+
+  const advanceQuestion = () => {
     if (sessionMeta && currentIndex + 1 >= sessionMeta.questions.length) {
       handleFinalize();
     } else {
@@ -105,10 +144,45 @@ export default function InArenaPage() {
     }
   };
 
+  const handleVerdictDismiss = () => {
+    const wasCorrect = verdict?.is_correct ?? false;
+    setVerdict(null);
+    setInput("");
+    if (isFlash || wasCorrect) {
+      // Correct answer (any mode) or flash card (advance regardless of outcome)
+      advanceQuestion();
+    } else {
+      // Wrong in non-flash: stay on same question for retry; reset timing for this attempt
+      questionStartMs.current = Date.now();
+      inputRef.current?.focus();
+    }
+  };
+
+  const handleSkip = () => {
+    const elapsed = Date.now() - questionStartMs.current;
+    pendingAttemptsRef.current = [
+      ...pendingAttemptsRef.current,
+      {
+        question_index: currentIndex,
+        answer: 0,
+        elapsed_ms: elapsed,
+        attempt_number: attemptNumberRef.current,
+        is_skip: true,
+      },
+    ];
+    setInput("");
+    advanceQuestion();
+  };
+
   const handleSubmit = () => {
     if (!sessionMeta || verdict) return;
     const parsed = parseInt(input, 10);
     if (isNaN(parsed)) return;
+    // Cancel flash auto-advance: user submitted before the timer fired.
+    if (flashTimerRef.current !== null) {
+      clearTimeout(flashTimerRef.current);
+      flashTimerRef.current = null;
+    }
     const elapsed = Date.now() - questionStartMs.current;
     const question = sessionMeta.questions[currentIndex];
 
@@ -118,8 +192,18 @@ export default function InArenaPage() {
 
     pendingAttemptsRef.current = [
       ...pendingAttemptsRef.current,
-      { question_index: currentIndex, answer: parsed, elapsed_ms: elapsed },
+      {
+        question_index: currentIndex,
+        answer: parsed,
+        elapsed_ms: elapsed,
+        attempt_number: attemptNumberRef.current,
+      },
     ];
+
+    // In non-flash mode, a wrong answer increments attempt_number for the retry.
+    if (!isCorrect && !isFlash) {
+      attemptNumberRef.current += 1;
+    }
   };
 
   if (isLoading) {
@@ -163,7 +247,7 @@ export default function InArenaPage() {
 
   return (
     <main className="page-wrap" style={{ display: "flex", flexDirection: "column" }}>
-      {/* Timer bar */}
+      {/* Session countdown bar (Time Attack) */}
       {hasTimer && (
         <div style={{ width: "100%", height: 4, background: "var(--bg-ash)" }}>
           <div
@@ -175,6 +259,23 @@ export default function InArenaPage() {
             }}
           />
         </div>
+      )}
+
+      {/* Per-card flash countdown bar — resets on each question via key */}
+      {isFlash && (
+        <>
+          <style>{`@keyframes flashCountdown{from{width:100%}to{width:0%}}`}</style>
+          <div style={{ width: "100%", height: 4, background: "var(--bg-ash)" }}>
+            <div
+              key={`flash-bar-${currentIndex}`}
+              style={{
+                height: "100%",
+                background: "var(--y-bolt)",
+                animation: `flashCountdown ${flashSpeedMs}ms linear forwards`,
+              }}
+            />
+          </div>
+        </>
       )}
 
       <div
@@ -208,13 +309,12 @@ export default function InArenaPage() {
 
         {/* Question */}
         <div style={{ width: "100%", maxWidth: 480 }}>
-          <ProblemCanvas question={question.text} verdict={verdictKey} />
+          <RowProblemCanvas question={question.text} verdict={verdictKey} />
         </div>
 
         {/* Verdict feedback */}
         <FeedbackToast
           verdict={verdictKey}
-          xpDelta={verdict?.xp_delta ?? 0}
           onDismiss={handleVerdictDismiss}
         />
 
@@ -242,6 +342,11 @@ export default function InArenaPage() {
             >
               SUBMIT
             </BoltButton>
+            {!isFlash && (
+              <BoltButton type="button" variant="ghost" size="md" onClick={handleSkip}>
+                SKIP
+              </BoltButton>
+            )}
           </div>
         )}
       </div>

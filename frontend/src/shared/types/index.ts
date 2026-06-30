@@ -1,5 +1,8 @@
 // Core domain types. Extended as features are built. See ARCHITECTURE.md §6.
 
+// GUARDIAN is deprecated (plan §1e, §F1): backend returns 410 on login/register.
+// Kept in the union so ProtectedRoute can detect and clear stale guardian sessions.
+// Active roles: STUDENT | TEACHER | ADMIN.
 export type Role = "STUDENT" | "GUARDIAN" | "TEACHER" | "ADMIN";
 
 export interface HudStats {
@@ -87,6 +90,7 @@ export interface SessionMeta {
   is_test_mode: boolean;
   questions: SessionQuestion[];
   time_limit_sec: number;
+  flash_speed_ms: number | null;
 }
 
 export interface AttemptVerdict {

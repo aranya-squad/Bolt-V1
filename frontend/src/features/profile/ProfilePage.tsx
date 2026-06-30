@@ -2,19 +2,16 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useMe } from "@/shared/api/queries/useMe";
 import { useAvatarPresets, usePatchProfile } from "@/shared/api/queries/useProfile";
-import { useXpProgress } from "@/shared/api/queries/useXpProgress";
 import { useAuthStore } from "@/shared/store/authStore";
 import { apiClient } from "@/shared/api/client";
 import { Page } from "@/shared/ui/Page";
 import { BoltButton } from "@/shared/ui/BoltButton";
-import { XpProgressBar } from "@/shared/ui/XpProgressBar";
 import { Skeleton } from "@/shared/ui/Skeleton";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
   const { data: me, isLoading } = useMe();
   const { data: presetsData } = useAvatarPresets();
-  const { data: xpData } = useXpProgress();
   const { mutate: patchProfile } = usePatchProfile();
 
   const [displayName, setDisplayName] = useState<string>("");
@@ -174,15 +171,6 @@ export default function ProfilePage() {
             </div>
           </div>
         )}
-
-        {/* XP progress */}
-        <div style={{ marginBottom: "var(--s-xl)" }}>
-          <XpProgressBar
-            currentXp={xpData?.total_xp ?? 0}
-            currentLevelThreshold={xpData?.current_level_threshold ?? 0}
-            nextLevelThreshold={xpData?.next_level_threshold ?? 0}
-          />
-        </div>
 
         {/* Logout */}
         <BoltButton

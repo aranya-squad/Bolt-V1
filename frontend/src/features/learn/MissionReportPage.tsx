@@ -1,12 +1,10 @@
 import { useNavigate, useParams } from "react-router-dom";
 import { useSessionReport } from "@/shared/api/queries/useSessionReport";
-import { useXpProgress } from "@/shared/api/queries/useXpProgress";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { AttemptsTable } from "@/shared/ui/AttemptsTable";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { Page } from "@/shared/ui/Page";
 import { StatBentoCard } from "@/shared/ui/StatBentoCard";
-import { XpProgressBar } from "@/shared/ui/XpProgressBar";
 
 function formatTime(sec: number): string {
   const m = Math.floor(sec / 60);
@@ -19,7 +17,6 @@ export default function MissionReportPage() {
   const navigate = useNavigate();
   const { data: report, isLoading, isError, refetch } = useSessionReport(sessionId);
   const demoSkeleton = window.__BOLT_DEMO__?.skeleton ?? false;
-  const { data: xp } = useXpProgress();
 
   const p = report?.progress;
 
@@ -62,21 +59,7 @@ export default function MissionReportPage() {
                 variant="prominent"
                 color="var(--bolt-blue)"
               />
-              <StatBentoCard
-                value={`+${p.xp_earned} XP`}
-                label="XP Earned"
-                color="var(--orange-streak)"
-              />
               <StatBentoCard value={formatTime(p.time_taken_sec)} label="Time" />
-            </div>
-
-            <div style={{ marginBottom: "var(--s-xl)" }}>
-              <XpProgressBar
-                currentXp={xp?.total_xp ?? 0}
-                currentLevelThreshold={xp?.current_level_threshold ?? 0}
-                nextLevelThreshold={xp?.next_level_threshold ?? 0}
-                label="XP PROGRESS"
-              />
             </div>
 
             <div style={{ maxHeight: 360, overflowY: "auto", borderRadius: "var(--r-lg)" }}>

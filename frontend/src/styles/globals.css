@@ -585,6 +585,23 @@ input[type=range]::-moz-range-thumb {
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
+   Training Arena — side-by-side config layout
+   ══════════════════════════════════════════════════════════════════════════ */
+
+.arena-config-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--s-2xl);
+  align-items: start;
+}
+
+@media (max-width: 640px) {
+  .arena-config-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ══════════════════════════════════════════════════════════════════════════
    Level selection grid — responsive columns
    ══════════════════════════════════════════════════════════════════════════ */
 

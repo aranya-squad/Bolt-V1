@@ -1,3 +1,4 @@
+// ponytail: XP surface removed (D-1b, 2026-06-30). Backend ledger still accrues. Un-hide to restore.
 import { ProgressBar } from "./ProgressBar";
 
 interface XpProgressBarProps {

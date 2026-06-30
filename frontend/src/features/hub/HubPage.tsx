@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { useMe } from "@/shared/api/queries/useMe";
-import { useXpProgress } from "@/shared/api/queries/useXpProgress";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { Page } from "@/shared/ui/Page";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { HudStatTile } from "@/shared/ui/HudStatTile";
-import { XpProgressBar } from "@/shared/ui/XpProgressBar";
 
 function PortalCard({
   bgSrc,
@@ -56,11 +54,8 @@ function PortalCard({
 export default function HubPage() {
   const navigate = useNavigate();
   const { data: user } = useMe();
-  const { data: xp } = useXpProgress();
 
   const displayName = user?.profile?.display_name ?? "…";
-  const totalXp: number = user?.stats?.total_xp ?? 0;
-  const streak: number = user?.stats?.streak_days ?? 0;
   const levels: number = user?.stats?.levels_completed ?? 0;
   const currentLevel: number = user?.stats?.current_level ?? 1;
   const bestAcc = user?.stats?.best_accuracy_pct;
@@ -83,9 +78,7 @@ export default function HubPage() {
         </header>
 
         {/* ── HUD stats strip ──────────────────────────────────── */}
-        <div style={{ display: "flex", gap: "var(--s-md)", marginBottom: "var(--s-lg)" }}>
-          <HudStatTile icon="zap"    value={String(totalXp)}     label="Total XP"    color="var(--y-bolt)"        />
-          <HudStatTile icon="flame"  value={String(streak)}      label="Day Streak"  color="var(--orange-streak)" />
+        <div style={{ display: "flex", gap: "var(--s-md)", marginBottom: "var(--s-xl)" }}>
           <HudStatTile icon="trophy" value={String(levels)}      label="Levels Done" color="var(--bolt-blue)"     />
           <HudStatTile icon="target" value={`LVL ${currentLevel}`} label="Current Level" color="var(--p-cyber)" />
           <HudStatTile
@@ -93,14 +86,6 @@ export default function HubPage() {
             value={bestAcc !== null && bestAcc !== undefined ? `${bestAcc}%` : "—"}
             label="Personal Best"
             color="var(--ok-50)"
-          />
-        </div>
-
-        <div style={{ marginBottom: "var(--s-xl)" }}>
-          <XpProgressBar
-            currentXp={xp?.total_xp ?? totalXp}
-            currentLevelThreshold={xp?.current_level_threshold ?? 0}
-            nextLevelThreshold={xp?.next_level_threshold ?? 0}
           />
         </div>
 

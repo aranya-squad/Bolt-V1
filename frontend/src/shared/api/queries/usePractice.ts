@@ -9,6 +9,9 @@ export interface PracticeConfig {
   rows: number;
   question_count: number;
   time_limit_sec: number;
+  flash_speed_ms?: number;
+  digits_row1?: number;
+  digits_row2?: number;
 }
 
 export function useStartPractice() {

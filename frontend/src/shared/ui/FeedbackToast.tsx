@@ -3,11 +3,10 @@ import { Chip } from "./Chip";
 
 interface FeedbackToastProps {
   verdict: "correct" | "wrong" | null;
-  xpDelta: number;
   onDismiss?: () => void;
 }
 
-export function FeedbackToast({ verdict, xpDelta, onDismiss }: FeedbackToastProps) {
+export function FeedbackToast({ verdict, onDismiss }: FeedbackToastProps) {
   useEffect(() => {
     if (!verdict) return;
     const id = setTimeout(() => onDismiss?.(), 600);
@@ -21,7 +20,7 @@ export function FeedbackToast({ verdict, xpDelta, onDismiss }: FeedbackToastProp
       tone={verdict === "correct" ? "ok" : "err"}
       icon={verdict === "correct" ? "check-circle-2" : "x-circle"}
     >
-      {verdict === "correct" ? `+${xpDelta} XP` : "RECALCULATE"}
+      {verdict === "correct" ? "CORRECT!" : "RECALCULATE"}
     </Chip>
   );
 }

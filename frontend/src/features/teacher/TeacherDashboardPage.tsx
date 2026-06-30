@@ -1,7 +1,8 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/shared/store/authStore";
 import { useBatches, usePatchBatch, useRotateJoinCode } from "@/shared/api/queries/useBatches";
+import { useLevels } from "@/shared/api/queries/useLevels";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { GlassCard } from "@/shared/ui/GlassCard";
@@ -127,6 +128,7 @@ function BatchCard({ batch }: { batch: Batch }) {
 export default function TeacherDashboardPage() {
   const navigate = useNavigate();
   const { data: batches, isLoading, isError } = useBatches();
+  const { data: levels } = useLevels();
   const [showCreate, setShowCreate] = useState(false);
 
   function handleLogout() {
@@ -190,6 +192,23 @@ export default function TeacherDashboardPage() {
             {batches.map((b) => (
               <BatchCard key={b.id} batch={b} />
             ))}
+          </div>
+        )}
+
+        {levels && levels.length > 0 && (
+          <div style={{ marginTop: "var(--s-2xl)" }}>
+            <h2 className="t-h2" style={{ color: "var(--fg-bone)", marginBottom: "var(--s-md)" }}>
+              LEVEL DASHBOARDS
+            </h2>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: "var(--s-sm)" }}>
+              {levels.map((lvl) => (
+                <Link key={lvl.id} to={`/teacher/level/${lvl.id}`} style={{ textDecoration: "none" }}>
+                  <BoltButton variant="ghost" size="sm">
+                    LEVEL {lvl.order}
+                  </BoltButton>
+                </Link>
+              ))}
+            </div>
           </div>
         )}
       </Page>

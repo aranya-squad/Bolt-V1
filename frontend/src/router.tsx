@@ -8,6 +8,8 @@ import { NotFoundPage } from "@/features/shared/NotFoundPage";
 import { ShellLayout } from "@/features/shared/ShellLayout";
 
 // Lazy-load all feature pages (see ARCHITECTURE.md §6.4)
+const AdminImportPage = lazy(() => import("@/features/admin/AdminImportPage"));
+const LandingPage = lazy(() => import("@/features/landing/LandingPage"));
 const LoginPage = lazy(() => import("@/features/auth/LoginPage"));
 const StudentSignupPage = lazy(() => import("@/features/auth/StudentSignupPage"));
 const TeacherSignupPage = lazy(() => import("@/features/auth/TeacherSignupPage"));
@@ -23,6 +25,7 @@ const VictoryPage = lazy(() => import("@/features/practice/VictoryPage"));
 const ProfilePage = lazy(() => import("@/features/profile/ProfilePage"));
 const TeacherDashboardPage = lazy(() => import("@/features/teacher/TeacherDashboardPage"));
 const BatchDetailPage = lazy(() => import("@/features/teacher/BatchDetailPage"));
+const TeacherLevelDashboardPage = lazy(() => import("@/features/teacher/TeacherLevelDashboardPage"));
 const JoinClassPage = lazy(() => import("@/features/student/JoinClassPage"));
 
 const wrap = (element: React.ReactNode) => (
@@ -30,6 +33,11 @@ const wrap = (element: React.ReactNode) => (
 );
 
 export const router = createBrowserRouter([
+  // Public landing — handles its own auth redirect via roleHome()
+  {
+    path: "/",
+    element: wrap(<LandingPage />),
+  },
   {
     path: "/login",
     element: <PublicRoute>{wrap(<LoginPage />)}</PublicRoute>,
@@ -63,7 +71,6 @@ export const router = createBrowserRouter([
           {
             element: <ShellLayout />,
             children: [
-              { path: "/", element: <Navigate to="/hub" replace /> },
               { path: "/hub", element: wrap(<HubPage />) },
               { path: "/learn", element: wrap(<LevelSelectionPage />) },
               { path: "/learn/level/:levelId", element: wrap(<PathOfConquestPage />) },
@@ -94,7 +101,14 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: wrap(<TeacherDashboardPage />) },
           { path: "batch/:batchId", element: wrap(<BatchDetailPage />) },
+          { path: "level/:levelId", element: wrap(<TeacherLevelDashboardPage />) },
         ],
+      },
+      // Admin tools — gated to ADMIN only.
+      {
+        path: "/admin/import-questions",
+        element: <RoleRoute allow={["ADMIN"]} />,
+        children: [{ index: true, element: wrap(<AdminImportPage />) }],
       },
       // Join class — student joins an additional batch post-signup.
       {

@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { Page } from "@/shared/ui/Page";
 import { BoltButton } from "@/shared/ui/BoltButton";
-import { ConfigSlider } from "@/shared/ui/ConfigSlider";
+import { ConfigStepper } from "@/shared/ui/ConfigStepper";
 import { Icon } from "@/shared/ui/Icon";
 import { useStartPractice } from "@/shared/api/queries/usePractice";
 import { useArenaConfig, type ArenaOperation, type ArenaMode } from "./useArenaConfig";
@@ -171,7 +171,7 @@ function ModeCard({
 
 export default function TrainingArenaPage() {
   const navigate = useNavigate();
-  const { config, setOperation, setMode, setQuestions, setDigits, setRows, setTimeLimitMin, setFlashSpeedMs, toPracticePayload } =
+  const { config, setOperation, setMode, setQuestions, setDigits, setDigitsRow1, setDigitsRow2, setRows, setTimeLimitMin, setFlashSpeedMs, toPracticePayload } =
     useArenaConfig();
   const { mutate: startPractice, isPending, isError } = useStartPractice();
 
@@ -195,7 +195,6 @@ export default function TrainingArenaPage() {
       {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
       <AmbientScene accents={["orange", "blue", "purple"] as any} />
       <Page>
-        <div style={{ maxWidth: 600 }}>
         <h1
           className="t-h1"
           style={{ color: "var(--y-bolt)", marginBottom: "var(--s-2xl)" }}
@@ -203,125 +202,151 @@ export default function TrainingArenaPage() {
           TRAINING ARENA
         </h1>
 
-        {/* Step 01 — Choose Operation */}
-        <div style={{ marginBottom: "var(--s-xl)" }}>
-          <div style={STEP_LABEL_STYLE}>Step 01 — Operation</div>
-          <div style={{ display: "flex", gap: "var(--s-sm)", flexWrap: config.mode === "CUSTOM" ? "wrap" : "nowrap" }}>
-            {(config.mode === "CUSTOM" ? LAB_OPERATIONS : OPERATIONS).map((op) => (
-              <OperationChip
-                key={op.value}
-                label={op.label}
-                icon={op.icon}
-                selected={config.operation === op.value}
-                onClick={() => setOperation(op.value)}
-              />
-            ))}
+        <div className="arena-config-layout">
+          {/* Left column — what to play */}
+          <div>
+            {/* Step 01 — Choose Operation */}
+            <div style={{ marginBottom: "var(--s-xl)" }}>
+              <div style={STEP_LABEL_STYLE}>Step 01 — Operation</div>
+              <div style={{ display: "flex", gap: "var(--s-sm)", flexWrap: config.mode === "CUSTOM" ? "wrap" : "nowrap" }}>
+                {(config.mode === "CUSTOM" ? LAB_OPERATIONS : OPERATIONS).map((op) => (
+                  <OperationChip
+                    key={op.value}
+                    label={op.label}
+                    icon={op.icon}
+                    selected={config.operation === op.value}
+                    onClick={() => setOperation(op.value)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Step 02 — Combat Style */}
+            <div>
+              <div style={STEP_LABEL_STYLE}>Step 02 — Combat Style</div>
+              <div
+                style={{
+                  display: "flex",
+                  gap: "var(--s-sm)",
+                  flexWrap: "wrap",
+                }}
+              >
+                {MODES.map((m) => (
+                  <ModeCard
+                    key={m.value}
+                    label={m.label}
+                    description={m.description}
+                    icon={m.icon}
+                    color={m.color}
+                    selected={config.mode === m.value}
+                    onClick={() => setMode(m.value)}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
 
-        {/* Step 02 — Combat Style */}
-        <div style={{ marginBottom: "var(--s-xl)" }}>
-          <div style={STEP_LABEL_STYLE}>Step 02 — Combat Style</div>
-          <div
-            style={{
-              display: "flex",
-              gap: "var(--s-sm)",
-              flexWrap: "wrap",
-            }}
-          >
-            {MODES.map((m) => (
-              <ModeCard
-                key={m.value}
-                label={m.label}
-                description={m.description}
-                icon={m.icon}
-                color={m.color}
-                selected={config.mode === m.value}
-                onClick={() => setMode(m.value)}
+          {/* Right column — how to configure */}
+          <div>
+            <div style={STEP_LABEL_STYLE}>Step 03 — Configuration</div>
+
+            <ConfigStepper
+              label="QUESTIONS"
+              icon="list-ordered"
+              min={5}
+              max={50}
+              step={5}
+              value={config.questions}
+              onChange={setQuestions}
+            />
+
+            {config.mode !== "FLASH_CARDS" && !isMulDiv && (
+              <ConfigStepper
+                label="DIGITS"
+                icon="hash"
+                min={1}
+                max={4}
+                value={config.digits}
+                onChange={setDigits}
               />
-            ))}
+            )}
+
+            {isMulDiv && (
+              <>
+                <ConfigStepper
+                  label="ROW 1 DIGITS"
+                  icon="hash"
+                  min={1}
+                  max={4}
+                  value={config.digitsRow1}
+                  onChange={setDigitsRow1}
+                  description="Multiplicand / dividend digits (D-6)"
+                />
+                <ConfigStepper
+                  label="ROW 2 DIGITS"
+                  icon="hash"
+                  min={1}
+                  max={2}
+                  value={config.digitsRow2}
+                  onChange={setDigitsRow2}
+                  description="Multiplier / divisor digits (D-6)"
+                />
+              </>
+            )}
+
+            <ConfigStepper
+              label="ROWS"
+              icon="rows-3"
+              min={2}
+              max={5}
+              value={effectiveRows}
+              onChange={setRows}
+              disabled={isMulDiv}
+              description={isMulDiv ? "Fixed at 2 rows for multiplication and division" : undefined}
+            />
+
+            {config.mode === "FLASH_CARDS" && (
+              <ConfigStepper
+                label="FLASH SPEED"
+                icon="zap"
+                min={500}
+                max={5000}
+                step={500}
+                value={config.flashSpeedMs}
+                onChange={setFlashSpeedMs}
+                suffix="ms"
+              />
+            )}
+
+            {config.mode === "TIME_ATTACK" && (
+              <ConfigStepper
+                label="TIME LIMIT"
+                icon="timer"
+                min={1}
+                max={10}
+                value={config.timeLimitMin}
+                onChange={setTimeLimitMin}
+                suffix="min"
+              />
+            )}
+
+            {isError && (
+              <p style={{ color: "var(--err)", marginBottom: "var(--s-md)", fontSize: "0.9rem" }}>
+                Failed to start session. Please try again.
+              </p>
+            )}
+
+            <BoltButton
+              variant="primary"
+              size="lg"
+              icon="rocket"
+              onClick={handleStart}
+              disabled={isPending}
+              style={{ width: "100%", marginTop: "var(--s-md)" }}
+            >
+              {isPending ? "STARTING…" : "ENTER ARENA"}
+            </BoltButton>
           </div>
-        </div>
-
-        {/* Step 03 — Configuration */}
-        <div style={{ marginBottom: "var(--s-xl)" }}>
-          <div style={STEP_LABEL_STYLE}>Step 03 — Configuration</div>
-
-          <ConfigSlider
-            label="QUESTIONS"
-            icon="list-ordered"
-            min={5}
-            max={50}
-            step={5}
-            value={config.questions}
-            onChange={setQuestions}
-          />
-
-          {config.mode !== "FLASH_CARDS" && (
-            <ConfigSlider
-              label="DIGITS"
-              icon="hash"
-              min={1}
-              max={4}
-              value={config.digits}
-              onChange={setDigits}
-            />
-          )}
-
-          <ConfigSlider
-            label="ROWS"
-            icon="rows-3"
-            min={2}
-            max={5}
-            value={effectiveRows}
-            onChange={setRows}
-            disabled={isMulDiv}
-            description={isMulDiv ? "Fixed at 2 rows for multiplication and division" : undefined}
-          />
-
-          {config.mode === "FLASH_CARDS" && (
-            <ConfigSlider
-              label="FLASH SPEED"
-              icon="zap"
-              min={500}
-              max={5000}
-              step={500}
-              value={config.flashSpeedMs}
-              onChange={setFlashSpeedMs}
-              suffix="ms"
-            />
-          )}
-
-          {config.mode === "TIME_ATTACK" && (
-            <ConfigSlider
-              label="TIME LIMIT"
-              icon="timer"
-              min={1}
-              max={10}
-              value={config.timeLimitMin}
-              onChange={setTimeLimitMin}
-              suffix="min"
-            />
-          )}
-
-        </div>
-
-        {isError && (
-          <p style={{ color: "var(--err)", marginBottom: "var(--s-md)", fontSize: "0.9rem" }}>
-            Failed to start session. Please try again.
-          </p>
-        )}
-
-        <BoltButton
-          variant="primary"
-          size="lg"
-          icon="rocket"
-          onClick={handleStart}
-          disabled={isPending}
-          style={{ width: "100%" }}
-        >
-          {isPending ? "STARTING…" : "ENTER ARENA"}
-        </BoltButton>
         </div>
       </Page>
     </>

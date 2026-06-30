@@ -6,6 +6,8 @@ export interface BulkAttemptItem {
   question_index: number;
   answer: number;
   elapsed_ms: number;
+  attempt_number?: number;
+  is_skip?: boolean;
 }
 
 export interface BulkVerdict {

@@ -19,7 +19,9 @@ export function Sidebar() {
 
   return (
     <nav className="sidebar-nav" role="navigation" aria-label="Main navigation">
-      <div className="sidebar-logo">BOLT</div>
+      <div className="sidebar-logo">
+        <img src="/images/Logo_Gold.svg" alt="Bolt Abacus" style={{ width: 120, height: "auto", display: "block" }} />
+      </div>
 
       <div className="sidebar-items">
         {NAV_ITEMS.map((item) => {

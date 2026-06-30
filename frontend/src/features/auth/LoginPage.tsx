@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { apiClient } from "@/shared/api/client";
 import { useAuthStore } from "@/shared/store/authStore";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
@@ -9,11 +9,14 @@ import { PinInput } from "@/shared/ui/PinInput";
 
 export default function LoginPage() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
 
-  // "student" mode = call-sign + PIN; "teacher" mode = email + password
-  const [mode, setMode] = useState<"student" | "teacher">("student");
+  // "student" mode = call-sign + PIN; "teacher" mode = email + password.
+  // ?role= from portal chooser pre-selects the tab.
+  const initialMode = searchParams.get("role") === "teacher" ? "teacher" : "student";
+  const [mode, setMode] = useState<"student" | "teacher">(initialMode);
 
   // Student fields
   const [callSign, setCallSign] = useState("");
@@ -88,23 +91,7 @@ export default function LoginPage() {
         >
           {/* Logo */}
           <div style={{ textAlign: "center", marginBottom: 32 }}>
-            <h1
-              className="t-h1"
-              style={{ color: "var(--y-bolt)", letterSpacing: "0.06em", marginBottom: 4 }}
-            >
-              BOLT
-            </h1>
-            <div
-              style={{
-                fontFamily: "var(--font-label)",
-                fontSize: 11,
-                letterSpacing: "0.25em",
-                color: "var(--fg-sand)",
-                textTransform: "uppercase",
-              }}
-            >
-              Abacus
-            </div>
+            <img src="/images/Logo_Gold.svg" alt="Bolt Abacus" style={{ width: 180, height: "auto", display: "inline-block" }} />
           </div>
 
           {/* Mode toggle */}
