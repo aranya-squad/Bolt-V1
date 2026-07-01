@@ -43,7 +43,9 @@ services:
     environment:
       API_DOMAIN: ${API_DOMAIN}
       ACME_EMAIL: ${ACME_EMAIL}
-      ACME_CA: ${ACME_CA:-}
+      # Must be a non-empty URL: Caddyfile's {$ACME_CA:default} only applies when
+      # the var is UNSET, but compose always sets it — an empty value breaks acme_ca.
+      ACME_CA: ${ACME_CA:-https://acme-v02.api.letsencrypt.org/directory}
     ports:
       - "80:80"
       - "443:443"
