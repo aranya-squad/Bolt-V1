@@ -1,6 +1,7 @@
 import { http, HttpResponse } from "msw";
 import type { AcceptedReceipt, SessionKind, SessionMeta } from "@/shared/types";
 import { identityKey, isPending, matchesReceipt } from "@/shared/store/answerRecovery";
+import { classroomHandlers } from "./classroomHandlers";
 import {
   MOCK_USER,
   MOCK_XP_PROGRESS,
@@ -46,6 +47,7 @@ function mockWrite(sessionId: string, value: unknown, bulk: boolean) {
 }
 
 export const handlers = [
+  ...classroomHandlers,
   // ── Auth ────────────────────────────────────────────────────────────────
 
   http.post(`${BASE}/auth/login/`, async () => {

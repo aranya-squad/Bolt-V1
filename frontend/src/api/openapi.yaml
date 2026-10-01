@@ -81,6 +81,68 @@ components:
         homework_completed:    { type: boolean }
         is_locked:             { type: boolean }
 
+    Batch:
+      type: object
+      required: [id, name, join_code, live_session_link, is_active, created_at, student_count]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 128 }
+        join_code: { type: string }
+        live_session_link: { type: string }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        student_count: { type: integer, minimum: 0, description: Active Enrollment count; archived owned batches remain listed. }
+
+    RosterStudent:
+      type: object
+      required: [id, call_sign, current_level, accuracy_pct, enrolled_at]
+      properties:
+        id: { type: string, format: uuid }
+        call_sign: { type: string }
+        current_level: { type: integer, minimum: 1, maximum: 10, description: "CLASSWORK LevelCompletion count + 1, capped at 10." }
+        accuracy_pct: { type: number, nullable: true, description: Arithmetic mean of all persisted student ProgressRecord accuracy values rounded to one decimal; null without history. }
+        enrolled_at: { type: string, format: date-time }
+
+    TeacherLevelDashboard:
+      type: object
+      required: [level, lessons, classes]
+      properties:
+        level:
+          type: object
+          required: [id, order, name]
+          properties:
+            id: { type: string, format: uuid }
+            order: { type: integer }
+            name: { type: string }
+        lessons:
+          type: array
+          items:
+            type: object
+            required: [id, name, order]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              order: { type: integer }
+        classes:
+          type: array
+          description: Owned active classes with this level assigned; only active enrollments contribute. Shared students count separately in each class.
+          items:
+            type: object
+            required: [id, name, total_students, lessons]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              total_students: { type: integer, minimum: 0 }
+              lessons:
+                type: array
+                items:
+                  type: object
+                  required: [lesson_id, classwork_completed, homework_completed]
+                  properties:
+                    lesson_id: { type: string, format: uuid }
+                    classwork_completed: { type: integer, minimum: 0 }
+                    homework_completed: { type: integer, minimum: 0 }
+
     SessionQuestion:
       type: object
       required: [index, text, operation]
@@ -252,6 +314,115 @@ security:
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 paths:
+  /classes/:
+    get:
+      summary: List the authenticated teacher's own active and archived batches
+      description: Reporting reads use primary. Separate list/roster/matrix requests are not one shared transactional snapshot.
+      responses:
+        200:
+          description: Owned batches with active enrollment counts
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Batch" } }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+    post:
+      summary: Create a name-only owned batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        201:
+          description: Owned batch created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Batch" }
+        400: { description: Invalid batch name }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+
+  /classes/{id}/:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      summary: Update an owned batch, including archived batches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+                live_session_link: { type: string, format: uri }
+                is_active: { type: boolean }
+      responses:
+        200:
+          description: Updated batch
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Batch" }
+        400: { description: Invalid fields }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Missing or foreign batch }
+
+  /classes/{id}/rotate-code/:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Replace an owned batch's join code
+      responses:
+        200:
+          description: New join code
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [join_code]
+                properties:
+                  join_code: { type: string }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Missing or foreign batch }
+
+  /classes/{id}/roster/:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Read the active roster and persisted student metrics from primary
+      responses:
+        200:
+          description: Active enrollments, with null accuracy for students without history
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RosterStudent" } }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Missing or foreign batch }
+
+  /classes/levels/{levelId}/dashboard/:
+    parameters:
+      - { name: levelId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Read owned active assigned classes' lesson completion matrix from primary
+      description: Each cell is identified by lesson_id; unique student lesson/kind completion presence counts once, including retakes.
+      responses:
+        200:
+          description: Level, ordered lessons and per-class active-student completion counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherLevelDashboard" }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Level missing }
+
   /auth/login/:
     post:
       summary: Authenticate a user

@@ -173,3 +173,10 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - HUMAN: owner says "Mark G as done" and requests 2–3 new features with mandatory PM/CTO/Head QA scope signoff in this Project/account Work environment. G is DONE by human acceptance; preserved prior evidence limitation, without asserting an independent fresh-session PASS.
 - Context setup is READY FOR HUMAN REVIEW; no setup implementation remains. Human dependency-order integration, hosted PR CI and actual live release evidence remain separate. No merge/deploy/live mutation.
 - Durable conditional planning rule added to AGENTS/bootstrap/agent-workflow, categorized template and ADR 0004. Distinct named agents define and verify two existing teacher workstreams before any coding. Routine implementation needs no extra generic human approval after unanimous scope signoff.
+
+## 2026-10-01 — Two teacher feature scopes signed; F1 integrated for verification
+
+- PM, CTO and Head QA approved identical scope1.2 SHA25619697b1a3061d588b8b0ed2ebd78b3c9d375830e68469ef5951f183974d51ff8 before feature coding. Categorized needs/wants/exclusions and exact criteria persisted with role records.
+- Native PostgreSQL16.15/Redis7.4.11 baseline run36861089263 at82fd045 completed24fixtures/144requests before runtime edits. Rejected prior truncated capture; corrected per-request reset/completeness assertion. Detailed count/timing/plan/limits in verification report.
+- F1 grouped primary reporting, active enrollment agreement, isolated teacher request/cache lifecycle and existing-screen Refresh/lesson-ID behavior integrated. Backend source reviewed by CTO/QA; frontend agent's Node20 lint/types/93Vitest/build pass. Native candidate DB/stale-alias/browser checks pending.
+- Setup remains closed under owner G acceptance at ec74cf3; no merge, deploy or live infrastructure action. F2 assignment scope already approved but coding awaits integrated F1 checkpoint.

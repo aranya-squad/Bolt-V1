@@ -8,6 +8,7 @@ import { GlassCard } from "@/shared/ui/GlassCard";
 import { Page } from "@/shared/ui/Page";
 import type { RosterStudent } from "@/shared/types";
 import { RANK_NAMES } from "@/shared/lib/rankNames";
+import { useTeacherIdentity } from "@/shared/api/queries/teacherIdentity";
 
 const TH: React.CSSProperties = {
   textAlign: "left",
@@ -63,8 +64,13 @@ function RosterTable({ students }: { students: RosterStudent[] }) {
 export default function BatchDetailPage() {
   const { batchId } = useParams<{ batchId: string }>();
   const navigate = useNavigate();
-  const { data: batches } = useBatches();
-  const { data: roster, isLoading, isError } = useRoster(batchId);
+  const batchesQuery = useBatches();
+  const rosterQuery = useRoster(batchId);
+  const { data: batches } = batchesQuery;
+  const { data: roster, isLoading } = rosterQuery;
+  const identity = useTeacherIdentity();
+  const isFetching = batchesQuery.isFetching || rosterQuery.isFetching;
+  const isError = batchesQuery.isError || rosterQuery.isError;
 
   const batch = batches?.find((b) => b.id === batchId);
 
@@ -73,6 +79,13 @@ export default function BatchDetailPage() {
       <AmbientScene accents={["blue", "purple"]} />
       <Page>
         <BreadcrumbChip items={["Instructor Command", "Class Detail"]} />
+        <div style={{ marginTop: "var(--s-md)" }}>
+          <BoltButton variant="ghost" size="sm" disabled={!identity || isFetching} onClick={() => {
+            void Promise.all([batchesQuery.refetch(), rosterQuery.refetch()]);
+          }}>
+            {isFetching ? "REFRESHING…" : "REFRESH"}
+          </BoltButton>
+        </div>
 
         <h1
           className="t-h1"
@@ -85,10 +98,11 @@ export default function BatchDetailPage() {
         </p>
 
         {isLoading && <p className="t-body" style={{ color: "var(--fg-muted)" }}>Loading roster…</p>}
+        {!isLoading && isFetching && <p role="status" style={{ color: "var(--fg-muted)" }}>Refreshing roster and batch details…</p>}
 
         {isError && (
-          <p className="t-body" style={{ color: "var(--err)" }}>
-            Failed to load roster.
+          <p role="alert" className="t-body" style={{ color: "var(--err)" }}>
+            {roster ? "Failed to refresh roster or batch details. Showing previously loaded data; try Refresh again." : "Failed to load roster or batch details. Try Refresh again."}
           </p>
         )}
 

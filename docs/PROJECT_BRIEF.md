@@ -80,8 +80,10 @@ Owning status/continuation: `docs/features/ai-context-system-v2.md`.
 
 ## IN PROGRESS
 
-Two teacher workstreams are being scoped before coding: dashboard/roster
-correctness and existing batch level assignment. In this owner's Cloud dev -
+Two teacher workstreams have the same frozen v1.2 PM/CTO/QA approval:
+dashboard/roster correctness on `feat/teacher-dashboard`, then existing batch
+level assignment on stacked `feat/batch-level-assignment`. F1 code is integrated
+for native database and built-SPA/API verification; F2 coding waits that checkpoint. In this owner's Cloud dev -
 Bolt v1 Project/account Work sessions, PM, Senior Tech Manager/CTO and Head QA
 agents must sign the same finalized scope first (AGENTS / ADR 0004). User direction
 plus those signoffs authorizes routine implementation; real product ambiguity,
@@ -94,7 +96,7 @@ human integration and live-production boundaries remain.
 3. Verify normal GitHub CI through the appropriate PR/integration path.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
 5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
-6. Finalize/sign teacher dashboard and batch-level-assignment scopes through the three-agent planning gate, then develop them on task branches. Historical assessment: `docs/teacher-dashboard-assessment-2026-10-01.md`; current finalized scope will live with each feature handoff. Tournament rounds still require rules.
+6. Verify F1 teacher reporting, then implement stacked F2 assignment under frozen `docs/scopes/teacher-workflows-v1.2.md` and its three role approvals. Active state is owned by each feature tracker. Historical assessment: `docs/teacher-dashboard-assessment-2026-10-01.md`. Tournament rounds still require rules.
 
 ## BLOCKED / HUMAN OR LIVE EVIDENCE NEEDED
 

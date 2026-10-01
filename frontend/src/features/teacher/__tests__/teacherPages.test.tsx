@@ -9,6 +9,9 @@ import BatchDetailPage from "../BatchDetailPage";
 import TeacherLevelDashboardPage from "../TeacherLevelDashboardPage";
 import { batch, matrix, roster, teacherA } from "./fixtures";
 
+// Decorative browser animation is outside these observable reporting tests.
+vi.mock("@/shared/ui/AmbientScene", () => ({ AmbientScene: () => null }));
+
 const clients: QueryClient[] = [];
 function page(path: string) {
   const client = new QueryClient({ defaultOptions: { queries: { retry: false }, mutations: { retry: false } } });

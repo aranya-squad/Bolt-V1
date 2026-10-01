@@ -21,7 +21,7 @@ function wrapper() {
   clients.push(client);
   return { client, wrapper: ({ children }: { children: ReactNode }) => <QueryClientProvider client={client}>{children}</QueryClientProvider> };
 }
-function reads() {
+function useTeacherReads() {
   return { batches: useBatches(), roster: useRoster(batch.id), matrix: useTeacherLevelDashboard(matrix.level.id) };
 }
 beforeEach(() => { useAuthStore.setState({ user: teacherA, accessToken: "synthetic-a", isHydrating: false }); });
@@ -34,7 +34,7 @@ describe("teacher queries (mocked HTTP, not real API integration)", () => {
     if (state === "logged-out") useAuthStore.setState({ user: null });
     if (state === "student") useAuthStore.setState({ user: { ...teacherA, role: "STUDENT" } });
     const get = vi.spyOn(apiClient, "get").mockResolvedValue({ data: [] });
-    const view = renderHook(reads, wrapper());
+    const view = renderHook(useTeacherReads, wrapper());
     await act(async () => { await Promise.resolve(); });
     expect(get).not.toHaveBeenCalled();
     expect(view.result.current.batches.data).toBeUndefined();
@@ -46,7 +46,7 @@ describe("teacher queries (mocked HTTP, not real API integration)", () => {
     const pending = deferred<{ data: unknown }>();
     const get = vi.spyOn(apiClient, "get").mockImplementation(() => pending.promise);
     const { client, wrapper: provider } = wrapper();
-    const view = renderHook(reads, { wrapper: provider });
+    const view = renderHook(useTeacherReads, { wrapper: provider });
     await waitFor(() => expect(get).toHaveBeenCalledTimes(3));
     const aSignals = get.mock.calls.map(([, options]) => options?.signal);
     act(() => useAuthStore.setState({ user: null, accessToken: null }));
