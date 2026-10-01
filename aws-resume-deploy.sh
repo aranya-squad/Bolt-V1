@@ -77,6 +77,12 @@ docker build -f "$BUILD_CONTEXT/docker/Dockerfile.prod" -t "${APP}-api:${IMAGE_T
 docker tag "${APP}-api:${IMAGE_TAG}" "${ECR_URI}:${IMAGE_TAG}"
 log "Pushing release-tagged image to ECR..."
 docker push "${ECR_URI}:${IMAGE_TAG}"
+IMAGE_DIGEST=$(aws ecr describe-images --region "$REGION" \
+  --repository-name "${APP}-api" --image-ids imageTag="$IMAGE_TAG" \
+  --query 'imageDetails[0].imageDigest' --output text)
+[[ "$IMAGE_DIGEST" == sha256:* ]] || { echo "[ERROR] Could not resolve pushed ECR digest"; exit 1; }
+IMAGE_REF="${ECR_URI}@${IMAGE_DIGEST}"
+log "Immutable release image: $IMAGE_REF"
 cleanup_build_context
 trap - EXIT
 
@@ -126,6 +132,7 @@ EMAIL_PORT=587
 EMAIL_HOST_USER=apikey
 EMAIL_HOST_PASSWORD=
 
+IMAGE_REF=${IMAGE_REF}
 IMAGE_NAME=${ECR_URI}
 IMAGE_TAG=${IMAGE_TAG}
 EOF
@@ -157,14 +164,14 @@ fi
 
 aws ecr get-login-password --region ${REGION} | \
   docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-docker pull ${ECR_URI}:${IMAGE_TAG}
+docker pull ${IMAGE_REF}
 docker run --rm --env-file /home/ec2-user/.env.production \
   -e DJANGO_SETTINGS_MODULE=config.settings.production \
-  ${ECR_URI}:${IMAGE_TAG} python manage.py migrate --settings config.settings.production
+  ${IMAGE_REF} python manage.py migrate --settings config.settings.production
 docker run --rm --env-file /home/ec2-user/.env.production \
   -e DJANGO_SETTINGS_MODULE=config.settings.production \
-  ${ECR_URI}:${IMAGE_TAG} python manage.py collectstatic --noinput --settings config.settings.production
-# --env-file makes Compose resolve \${IMAGE_NAME}/\${IMAGE_TAG} for image interpolation
+  ${IMAGE_REF} python manage.py collectstatic --noinput --settings config.settings.production
+# --env-file makes Compose resolve the same immutable IMAGE_REF for web/worker/beat
 docker compose --env-file /home/ec2-user/.env.production \
   -f /home/ec2-user/docker-compose.prod.yml up -d --wait
 REMOTE
@@ -191,4 +198,5 @@ echo "  Health check   : https://api.boltabacus.com/api/v1/health/ -> HTTP ${HTT
 echo "  RDS endpoint   : ${RDS_ENDPOINT}:5432"
 echo "  Redis endpoint : ${REDIS_ENDPOINT}:6379"
 echo "  ECR repo       : ${ECR_URI}"
+echo "  Image digest   : ${IMAGE_DIGEST}"
 echo "================================================"
