@@ -173,3 +173,25 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - HUMAN: owner says "Mark G as done" and requests 2–3 new features with mandatory PM/CTO/Head QA scope signoff in this Project/account Work environment. G is DONE by human acceptance; preserved prior evidence limitation, without asserting an independent fresh-session PASS.
 - Context setup is READY FOR HUMAN REVIEW; no setup implementation remains. Human dependency-order integration, hosted PR CI and actual live release evidence remain separate. No merge/deploy/live mutation.
 - Durable conditional planning rule added to AGENTS/bootstrap/agent-workflow, categorized template and ADR 0004. Distinct named agents define and verify two existing teacher workstreams before any coding. Routine implementation needs no extra generic human approval after unanimous scope signoff.
+
+## 2026-10-01 — Bolt AI-SDLC V1 prospective workflow
+
+- Branch / implementation commit: `chore/ai-context-system-v2@8028d0c9f61c632a09fb5af384de6ae351c734b2`.
+- Goal: add a non-breaking AI-assisted SDLC and repo-backed `/feature-scoper`
+  intake for the next new feature onward, preserving current work.
+- Completed: ADR 0005; G0–G5 workflow; PM/CTO/Head QA gate retained as G1;
+  conditional Frontend/Security/Data/DevOps routing; frozen scope + JSON
+  Wave→Category→Story→Task plan; deterministic gate checker; Project Instructions
+  routing addendum; bounded worker/review/QA/stop-at-push rules.
+- Grandfathered: teacher dashboard/roster correctness, current batch level
+  assignment, and any other completed/in-progress/already-scoped work unless the
+  owner explicitly opts it in.
+- Verification: remote head/diff verified; only governance/docs/checker/test files
+  changed; committed checker regressions pass 8/8 and Python compilation passes.
+  Existing CI YAML, backend/frontend runtime source, schema/dependencies and live
+  infrastructure were not changed. Hosted CI/LIVE remain unverified.
+- Boundary: GitHub cannot register native ChatGPT slash autocomplete or edit the
+  Project Instructions UI; add `docs/PROJECT_INSTRUCTIONS_AI_SDLC_ADDENDUM.md`.
+- Next: human-review this branch and add the compact Project Instructions routing
+  rule; use `/feature-scoper <idea>` for the next new feature. No merge/deploy.
+
