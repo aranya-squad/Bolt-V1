@@ -263,3 +263,10 @@ on separate authorized task branches and preserve integration/release boundaries
 A commit cannot contain its own SHA. The commit containing this file is the
 durable checkpoint; inspect `git log -1 -- docs/features/ai-context-system-v2.md`
 or GitHub file history for its exact SHA. Recheck the remote branch before writing.
+
+
+## Prospective AI-SDLC V1 follow-on — 2026-10-01
+
+This follow-on is isolated on `chore/bolt-ai-sdlc-v1`, stacked from the closed context branch, so `chore/ai-context-system-v2` remains unchanged. HUMAN requested a prospective agentic SDLC for future feature ideas without breaking current work.
+
+Added documentation/tooling only: `docs/AI_SDLC.md`, ADR 0005, `skills/feature-scoper/SKILL.md`, plan/specialist templates, and a stdlib gate checker with focused tests. Existing teacher workstreams already in progress are grandfathered onto ADR 0004 unless explicitly opted in. No application/runtime/schema/deployment code or CI trigger was changed. Repository skill source and a Project Instructions addition are durable, but workspace skill installation/Project Settings require user/UI action.
