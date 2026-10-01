@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import axios from "axios";
 import { apiClient } from "@/shared/api/client";
-import { finalize, submitBulk } from "@/shared/api/queries/useSession";
+import { finalize, SESSION_REQUEST_TIMEOUT_MS, submitBulk } from "@/shared/api/queries/useSession";
 import type { ProgressRecord, SessionMeta } from "@/shared/types";
 import { acknowledge, createRecovery, identityKey, isIdentity, isReceipt, loadRecovery, MAX_BYTES, MAX_PENDING, reconcile, saveRecovery, SKIP_ANSWER, storageKey } from "./answerRecovery";
 import type { PendingAttempt, RecoveryState, StorageStatus } from "./answerRecovery";
@@ -133,7 +133,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
       set({ status: "saving", message: "", retryAt: null });
       try {
         // Revalidate mutable capability and reconcile committed receipts before every replay.
-        const { data: meta } = await apiClient.get<SessionMeta>(`/sessions/${r.sessionId}/`);
+        const { data: meta } = await apiClient.get<SessionMeta>(`/sessions/${r.sessionId}/`, { timeout: SESSION_REQUEST_TIMEOUT_MS });
         if (token !== generation) return false;
         get().initialize(r.userId, meta, r.context);
         if (get().status === "unsupported" || get().status === "error") return false;
