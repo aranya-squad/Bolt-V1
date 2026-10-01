@@ -106,7 +106,33 @@ export interface QuestionState {
   latest_receipt: AcceptedReceipt | null;
 }
 
+export interface DailyQuestMission {
+  id: string;
+  date: string;
+  timezone: string;
+  level_name: string;
+  level_order: number;
+  lesson_name: string;
+  lesson_order: number;
+  target: 5;
+  progress: number;
+  state: "available" | "in_progress" | "completed";
+  session_id: string | null;
+  xp_earned: number | null;
+  completed_at: string | null;
+}
+
+export interface DailyQuestToday {
+  server_now: string;
+  timezone: string;
+  reset_at: string;
+  mission: DailyQuestMission | null;
+  previous_unfinished: DailyQuestMission | null;
+  reason: string | null;
+}
+
 export interface SessionMeta {
+  daily_quest?: DailyQuestMission | null;
   attempt_contract_version?: number;
   state?: "active" | "submitted" | "abandoned";
   started_at?: string;

@@ -28,7 +28,7 @@ from apps.users.permissions import IsAdmin
 
 from .attempt_contract import ContractError, accept_batch, is_v2, validate_manifest
 from .attempt_contract import question_verdicts as reduce_question_verdicts
-from .models import ArenaSession, CuratedQuestion, ExerciseTemplate, SessionKind
+from .models import ArenaSession, CuratedQuestion, DailyQuest, ExerciseTemplate, SessionKind
 from .serializers import AttemptSerializer, ProgressRecordSerializer, SessionMetaSerializer
 
 _log = logging.getLogger("apps.exercises.anticheat")
@@ -253,7 +253,25 @@ class StartPracticeView(APIView):
         return Response(SessionMetaSerializer(session).data, status=status.HTTP_201_CREATED)
 
 
-class SessionDetailView(APIView):
+class MissionSessionPrivacyMixin:
+    """Keep personal mission payloads and errors out of browser/shared HTTP caches."""
+
+    def initial(self, request, *args, **kwargs):
+        super().initial(request, *args, **kwargs)
+        # Resolve privacy before a handled API error can mark ATOMIC_REQUESTS
+        # rollback-only. finalize_response must never query a broken transaction.
+        self._mission_response = DailyQuest.objects.using(DEFAULT_DB_ALIAS).filter(
+            session_id=self.kwargs.get("session_id"), user_id=request.user.pk
+        ).exists()
+
+    def finalize_response(self, request, response, *args, **kwargs):
+        response = super().finalize_response(request, response, *args, **kwargs)
+        if getattr(self, "_mission_response", False):
+            response["Cache-Control"] = "no-store"
+        return response
+
+
+class SessionDetailView(MissionSessionPrivacyMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, session_id):
@@ -261,7 +279,7 @@ class SessionDetailView(APIView):
         return Response(SessionMetaSerializer(session).data)
 
 
-class SubmitAttemptView(APIView):
+class SubmitAttemptView(MissionSessionPrivacyMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic
@@ -375,7 +393,7 @@ class SubmitAttemptView(APIView):
         })
 
 
-class BulkSubmitAttemptView(APIView):
+class BulkSubmitAttemptView(MissionSessionPrivacyMixin, APIView):
     """
     POST /sessions/{id}/attempts/bulk/
     Submit multiple attempts in one call.  Intended for:
@@ -535,7 +553,7 @@ class BulkSubmitAttemptView(APIView):
         return Response({"verdicts": verdicts})
 
 
-class FinalizeSessionView(APIView):
+class FinalizeSessionView(MissionSessionPrivacyMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     @transaction.atomic
@@ -559,7 +577,7 @@ class FinalizeSessionView(APIView):
         return Response(data)
 
 
-class SessionReportView(APIView):
+class SessionReportView(MissionSessionPrivacyMixin, APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request, session_id):

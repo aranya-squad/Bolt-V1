@@ -1,4 +1,6 @@
 from celery import shared_task
+from django.db import DEFAULT_DB_ALIAS
+from django.db.models import Exists, OuterRef
 from django.utils import timezone
 
 from apps.exercises.constants import MAX_SESSION_SECONDS
@@ -14,12 +16,13 @@ def abandon_stale_sessions():
     """
     from datetime import timedelta
 
-    from apps.exercises.models import ArenaSession
+    from apps.exercises.models import ArenaSession, DailyQuest
 
     now = timezone.now()
+    mission_bound = Exists(DailyQuest.objects.using(DEFAULT_DB_ALIAS).filter(session_id=OuterRef("pk")))
     active_qs = (
-        ArenaSession.objects
-        .filter(submitted_at__isnull=True, abandoned_at__isnull=True)
+        ArenaSession.objects.using(DEFAULT_DB_ALIAS)
+        .filter(~mission_bound, submitted_at__isnull=True, abandoned_at__isnull=True)
         .only("id", "started_at", "config_json")
     )
 
@@ -34,8 +37,10 @@ def abandon_stale_sessions():
     abandoned = 0
     if to_abandon:
         # Recheck after the scan: finalization may have committed in the meantime.
-        abandoned = ArenaSession.objects.filter(
-            id__in=to_abandon, submitted_at__isnull=True, abandoned_at__isnull=True
+        # NOT EXISTS avoids a reverse-relation join, which Django would turn into
+        # an UPDATE subquery and lose target-row predicate rechecks after a lock wait.
+        abandoned = ArenaSession.objects.using(DEFAULT_DB_ALIAS).filter(
+            ~mission_bound, id__in=to_abandon, submitted_at__isnull=True, abandoned_at__isnull=True
         ).update(abandoned_at=now)
 
     return {"abandoned": abandoned}

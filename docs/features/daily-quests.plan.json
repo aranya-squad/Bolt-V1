@@ -297,9 +297,11 @@
                     "AC-07",
                     "AC-10"
                   ],
-                  "status": "PENDING",
-                  "commit": null,
-                  "evidence": []
+                  "status": "DONE",
+                  "commit": "9ff158436e7ec5faba233e4eb68006e3d0d384ef",
+                  "evidence": [
+                    "226 exercises/progress cases including40daily quest cases PASS; Ruff and migration forward/reverse/drift PASS"
+                  ]
                 }
               ]
             }
@@ -335,7 +337,9 @@
                     "frontend/src/features/practice/VictoryPage.tsx",
                     "frontend/src/shared/types/index.ts",
                     "frontend/src/mocks/handlers.ts",
-                    "frontend/src/mocks/data.ts"
+                    "frontend/src/mocks/data.ts",
+                    "frontend/src/shared/api/queries/useSession.ts",
+                    "frontend/src/shared/api/queries/useSessionReport.ts"
                   ],
                   "checks": [
                     "frontend lint/type/Vitest/build"
@@ -347,9 +351,12 @@
                     "AC-09",
                     "AC-10"
                   ],
-                  "status": "PENDING",
-                  "commit": null,
-                  "evidence": []
+                  "status": "DONE",
+                  "commit": "fad15f66ed8eb59ba04e197ccdf8c30b199cccb4",
+                  "evidence": [
+                    "89 Vitest cases including16new PASS; lint/type/build PASS"
+                  ],
+                  "ownership_extension_reason": "Signed AC10 account cache isolation; inherited session/report keys lacked learner identity. No API/product rule changes."
                 }
               ]
             }
@@ -395,7 +402,10 @@
                     "frontend/e2e/recovery/fixtures.py",
                     "docs/features/daily-quests.md",
                     "docs/features/daily-quests.plan.json",
-                    "docs/AI_DEV_LOG.md"
+                    "docs/AI_DEV_LOG.md",
+                    "frontend/playwright.integration.config.ts",
+                    "backend/apps/exercises/views.py",
+                    "backend/apps/exercises/tests/test_daily_quests.py"
                   ],
                   "checks": [
                     "full backend/frontend checks",
@@ -415,9 +425,10 @@
                     "AC-09",
                     "AC-10"
                   ],
-                  "status": "PENDING",
+                  "status": "IN_PROGRESS",
                   "commit": null,
-                  "evidence": []
+                  "evidence": [],
+                  "ownership_extension_reason": "Sequential coordinator repair after T-BE complete: conditional private mission headers incl API errors; no overlap with active worker ownership."
                 }
               ]
             }
@@ -439,7 +450,8 @@
     "feature_branch_pushed": false,
     "final_commit": null,
     "merged": false,
-    "deployed": false
+    "deployed": false,
+    "scope_checkpoint": "e40e0acad8cc82ab743e9dbf5abe9c3cdb02f710"
   },
   "final_status": "IN PROGRESS",
   "timing": {
@@ -459,6 +471,63 @@
       "start_at": "2026-10-01T13:08:02Z",
       "end_at": "2026-10-01T13:09:03.974308+00:00"
     },
-    "events": []
+    "events": [],
+    "G3": {
+      "start_at": "2026-10-01T13:09:16Z",
+      "end_at": "2026-10-01T13:20:53Z",
+      "duration_seconds": 697
+    },
+    "environment": {
+      "start_at": "2026-10-01T13:04:00Z",
+      "start_precision": "approximate minute; first installation call was not clock-sampled",
+      "end_at": "2026-10-01T13:13:39Z",
+      "attempts": [
+        "apt default root mapping/setgroups failed",
+        "PostgreSQL package configuration could not create OS users; binaries installed",
+        "nested user/proot unavailable",
+        "real PG16 under identity-only shim successful",
+        "Playwright CDN newest/runtime archives corrupt HTML",
+        "Sparticuz Chromium153 downloaded via npm; manual Brotli/tar extraction with ownership ignored; in-process SwiftShader successful"
+      ]
+    },
+    "workers": {
+      "backend": {
+        "start_at": "2026-10-01T13:10:00Z",
+        "end_at": "2026-10-01T13:17:01Z",
+        "duration_seconds": 421
+      },
+      "frontend": {
+        "start_at": "2026-10-01T13:09:55Z",
+        "end_at": "2026-10-01T13:20:53Z",
+        "duration_seconds": 658
+      }
+    },
+    "G4": {
+      "start_at": "2026-10-01T13:17:38Z",
+      "end_at": null
+    }
+  },
+  "verification_runtime": {
+    "python": "3.12.14",
+    "node": "24.19.0 (CI uses20)",
+    "postgres": "stock16.15",
+    "redis": "7.0.15",
+    "chromium": "153.0.8010.0 headless from scratch @sparticuz/chromium153.0.0",
+    "postgres_identity_shim": {
+      "functions": [
+        "getuid",
+        "geteuid",
+        "getpwuid",
+        "stat"
+      ],
+      "source_sha256": "a955ac06e1f7f629c348cf87a9bb4f2badc1f8dc96619fd50e08f8b6fb2519e5",
+      "binary_sha256": "80060798f8f46b8c4687f41cd1769c9927d50123d285904ebd58348985a57218",
+      "qa_review": "/root/head_qa accepted2026-10-01T13:12:33Z; no DB semantics interposed"
+    },
+    "deviations": [
+      "Every tool exec has separate network namespace; services/tests launch together",
+      "Fresh synthetic loopback PostgreSQL trust auth, TCP-only; ephemeral nonpersistent Redis",
+      "Chromium153 no-zygote/in-process SwiftShader, normal multi-process browser; standard CORS/security remains enabled. Initial single-process reuse crashed and was removed."
+    ]
   }
 }

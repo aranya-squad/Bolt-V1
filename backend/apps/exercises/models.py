@@ -111,3 +111,31 @@ class ArenaSession(models.Model):
             {k: v for k, v in q.items() if k != "answer"}
             for q in self.questions_json
         ]
+
+
+class DailyQuest(models.Model):
+    """A frozen daily practice assignment; source snapshots survive curriculum edits."""
+
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    user = models.ForeignKey("users.User", related_name="daily_quests", on_delete=models.CASCADE)
+    mission_date = models.DateField()
+    timezone = models.CharField(max_length=64)
+    source_level_id = models.UUIDField()
+    source_lesson_id = models.PositiveIntegerField()
+    source_template_id = models.PositiveIntegerField()
+    level_name = models.CharField(max_length=64)
+    level_order = models.PositiveSmallIntegerField()
+    lesson_name = models.CharField(max_length=64)
+    lesson_order = models.PositiveSmallIntegerField()
+    config_json = models.JSONField()
+    session = models.OneToOneField(
+        ArenaSession, related_name="daily_quest", null=True, blank=True, on_delete=models.RESTRICT
+    )
+    completed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "exercises_daily_quest"
+        constraints = [
+            models.UniqueConstraint(fields=["user", "mission_date"], name="dailyquest_user_date_unique")
+        ]

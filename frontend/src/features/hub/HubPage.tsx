@@ -1,3 +1,5 @@
+import { DailyMissionCard } from "./DailyMissionCard";
+import "./dailyMission.css";
 import { useNavigate } from "react-router-dom";
 import { useMe } from "@/shared/api/queries/useMe";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
@@ -15,7 +17,7 @@ function PortalCard({
   children: React.ReactNode;
 }) {
   return (
-    <GlassCard variant="default" style={{ flex: 1, minHeight: 280, cursor: "pointer" }} onClick={onClick}>
+    <GlassCard variant="default" style={{ flex: 1, minHeight: 280, cursor: "pointer" }}>
       {/* Background image — hidden if asset is missing */}
       <img
         src={bgSrc}
@@ -34,19 +36,9 @@ function PortalCard({
           borderRadius: "inherit",
         }}
       />
-      <div
-        style={{
-          position: "relative",
-          display: "flex",
-          flexDirection: "column",
-          justifyContent: "flex-end",
-          height: "100%",
-          minHeight: 280,
-          padding: "var(--s-xl)",
-        }}
-      >
+      <button type="button" className="mission-portal" onClick={onClick}>
         {children}
-      </div>
+      </button>
     </GlassCard>
   );
 }
@@ -61,9 +53,10 @@ export default function HubPage() {
   const bestAcc = user?.stats?.best_accuracy_pct;
 
   return (
-    <>
+    <div className="mission-hub-screen">
       <AmbientScene accents={["yellow", "purple", "blue"]} />
-      <Page>
+      <Page padded={false}>
+        <div className="mission-hub-content">
         {/* ── Hero ─────────────────────────────────────────────── */}
         <header style={{ marginBottom: 40 }}>
           <h1 className="t-hero" style={{ color: "var(--y-bolt)", marginBottom: 12 }}>
@@ -78,7 +71,7 @@ export default function HubPage() {
         </header>
 
         {/* ── HUD stats strip ──────────────────────────────────── */}
-        <div style={{ display: "flex", gap: "var(--s-md)", marginBottom: "var(--s-xl)" }}>
+        <div className="mission-hub-stats">
           <HudStatTile icon="trophy" value={String(levels)}      label="Levels Done" color="var(--bolt-blue)"     />
           <HudStatTile icon="target" value={`LVL ${currentLevel}`} label="Current Level" color="var(--p-cyber)" />
           <HudStatTile
@@ -90,7 +83,8 @@ export default function HubPage() {
         </div>
 
         {/* ── Portal cards ─────────────────────────────────────── */}
-        <div style={{ display: "flex", gap: 20 }}>
+        <DailyMissionCard key={user?.id} />
+        <div className="mission-hub-portals">
           <PortalCard
             bgSrc="/images/hub-learn.jpg"
             onClick={() => navigate("/learn")}
@@ -115,7 +109,8 @@ export default function HubPage() {
             </p>
           </PortalCard>
         </div>
+      </div>
       </Page>
-    </>
+    </div>
   );
 }

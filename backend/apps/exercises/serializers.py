@@ -7,7 +7,7 @@ from apps.courses.models import Lesson
 from apps.progress.models import ProgressRecord, QuestionAttempt
 
 from .attempt_contract import receipt, terminal
-from .models import SessionKind
+from .models import DailyQuest, SessionKind
 
 _PRACTICE_KINDS = frozenset([
     SessionKind.FLASH_CARDS,
@@ -31,6 +31,11 @@ class SessionMetaSerializer(serializers.Serializer):
     lesson_id = serializers.SerializerMethodField()
     level_id = serializers.SerializerMethodField()
     question_states = serializers.SerializerMethodField()
+    daily_quest = serializers.SerializerMethodField()
+
+    def get_daily_quest(self, session):
+        quest = DailyQuest.objects.using(DEFAULT_DB_ALIAS).filter(session_id=session.pk).first()
+        return DailyQuestSerializer(quest).data if quest else None
 
     def get_attempt_contract_version(self, session):
         attempts = session.attempts.db_manager(session._state.db or DEFAULT_DB_ALIAS)
@@ -98,6 +103,40 @@ class SessionMetaSerializer(serializers.Serializer):
         if session.kind != SessionKind.FLASH_CARDS:
             return None
         return session.config_json.get("flash_speed_ms", 2000)
+
+
+class DailyQuestSerializer(serializers.ModelSerializer):
+    date = serializers.DateField(source="mission_date")
+    target = serializers.SerializerMethodField()
+    progress = serializers.SerializerMethodField()
+    state = serializers.SerializerMethodField()
+    session_id = serializers.UUIDField(allow_null=True)
+    xp_earned = serializers.SerializerMethodField()
+
+    class Meta:
+        model = DailyQuest
+        fields = ["id", "date", "timezone", "level_name", "level_order", "lesson_name", "lesson_order",
+                  "target", "progress", "state", "session_id", "xp_earned", "completed_at"]
+
+    def get_target(self, quest):
+        return 5
+
+    def get_progress(self, quest):
+        if quest.session_id is None:
+            return 0
+        return QuestionAttempt.objects.using(DEFAULT_DB_ALIAS).filter(
+            session_id=quest.session_id, is_skip=False, question_index__lt=5
+        ).values("question_index").distinct().count()
+
+    def get_state(self, quest):
+        if quest.completed_at and self.get_xp_earned(quest) is not None:
+            return "completed"
+        return "in_progress" if quest.session_id else "available"
+
+    def get_xp_earned(self, quest):
+        return ProgressRecord.objects.using(DEFAULT_DB_ALIAS).filter(
+            session_id=quest.session_id
+        ).values_list("xp_earned", flat=True).first() if quest.session_id else None
 
 
 class ProgressRecordSerializer(serializers.ModelSerializer):

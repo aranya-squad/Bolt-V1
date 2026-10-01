@@ -19,6 +19,39 @@ components:
       scheme: bearer
       bearerFormat: JWT
   schemas:
+    DailyQuest:
+      type: object
+      required: [id, date, timezone, level_name, level_order, lesson_name, lesson_order, target, progress, state, session_id, xp_earned, completed_at]
+      properties:
+        id: { type: string, format: uuid }
+        date: { type: string, format: date, description: "Pinned local assignment date; late completion keeps this date." }
+        timezone: { type: string, description: "IANA zone pinned at first successful assignment, UTC fallback." }
+        level_name: { type: string }
+        level_order: { type: integer }
+        lesson_name: { type: string }
+        lesson_order: { type: integer }
+        target: { type: integer, enum: [5] }
+        progress: { type: integer, minimum: 0, maximum: 5, description: "Distinct server-accepted non-skip answers, including mistakes." }
+        state: { type: string, enum: [available, in_progress, completed] }
+        session_id: { type: string, format: uuid, nullable: true }
+        xp_earned: { type: integer, nullable: true, minimum: 0, description: "Existing session XP; no added daily bonus." }
+        completed_at: { type: string, format: date-time, nullable: true }
+
+    TodayDailyQuest:
+      type: object
+      required: [server_now, timezone, reset_at, mission, previous_unfinished, reason]
+      properties:
+        server_now: { type: string, format: date-time }
+        timezone: { type: string }
+        reset_at: { type: string, format: date-time, description: "Next local midnight, including DST." }
+        mission:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/DailyQuest" }]
+        previous_unfinished:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/DailyQuest" }]
+        reason: { type: string, nullable: true }
+
     User:
       type: object
       required: [id, email, role]
@@ -93,6 +126,9 @@ components:
       type: object
       required: [session_id, kind, questions, time_limit_sec]
       properties:
+        daily_quest:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/DailyQuest" }]
         session_id:     { type: string }
         kind:           { type: string, enum: [CLASSWORK, HOMEWORK, FLASH_CARDS, ZEN, TIME_ATTACK, CUSTOM] }
         questions:      { type: array, items: { $ref: "#/components/schemas/SessionQuestion" } }
@@ -252,6 +288,50 @@ security:
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 paths:
+  /daily-quests/today/:
+    get:
+      summary: Resolve today's student mission
+      description: >
+        Authenticated active students only. Lazily freezes one mission per server-derived
+        pinned local date, without starting a session or awarding XP. No request overrides.
+        Missing eligible content yields a successful null mission with reason.
+      responses:
+        "200":
+          description: Private mission state; Cache-Control no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TodayDailyQuest" }
+        "401": { description: Authentication required }
+        "403": { description: Active student role required }
+
+  /daily-quests/{mission_id}/start/:
+    post:
+      summary: Start or resume the owned mission's single session
+      description: >
+        Creates one untimed five-question ZEN session using existing frozen template config.
+        Every retry returns that same session, including a completed session. No client
+        configuration/date/owner/reward overrides. One accepted non-skip try per question.
+      parameters:
+        - name: mission_id
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      responses:
+        "201":
+          description: New owned mission session; Cache-Control no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionMeta" }
+        "200":
+          description: Existing mission session; Cache-Control no-store
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SessionMeta" }
+        "400": { description: Frozen mission content unavailable }
+        "401": { description: Authentication required }
+        "403": { description: Active student role required }
+        "404": { description: Mission absent or owned by another student }
+
   /auth/login/:
     post:
       summary: Authenticate a user
@@ -585,7 +665,7 @@ paths:
             application/json:
               schema: { $ref: "#/components/schemas/ProgressRecord" }
         409:
-          description: Declared required identities missing or session abandoned; no new result or XP
+          description: Declared required identities missing, session abandoned, or mission_incomplete (five distinct accepted non-skip answers required); no new result or XP
 
   /sessions/{sessionId}/report/:
     get:

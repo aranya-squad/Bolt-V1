@@ -7,8 +7,8 @@ from django.core.cache import cache
 from django.db import DEFAULT_DB_ALIAS, transaction
 from django.utils import timezone
 
-from apps.exercises.attempt_contract import question_verdicts
-from apps.exercises.models import ArenaSession
+from apps.exercises.attempt_contract import ContractError, question_verdicts
+from apps.exercises.models import ArenaSession, DailyQuest
 
 from .models import (
     LessonCompletion,
@@ -76,6 +76,11 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
         raise ValueError(f"Session {session.id} is abandoned")
 
     attempts = list(session.attempts.db_manager(database).all())
+    mission = DailyQuest.objects.using(database).select_for_update().filter(session=session).first()
+    if mission is not None:
+        accepted = {a.question_index for a in attempts if not a.is_skip and 0 <= a.question_index < 5}
+        if len(session.questions_json) != 5 or accepted != set(range(5)):
+            raise ContractError("mission_incomplete", "Practice all five questions before completing the mission.", 409)
     verdicts = question_verdicts(attempts, len(session.questions_json))
     score_correct = sum(v in {"correct", "fixed"} for v in verdicts.values())
     # Use total questions in session, not submitted attempts — partial sessions
@@ -174,5 +179,8 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     session.submitted_at = timezone.now()
     session.config_json = {**session.config_json, "scoring_version": 2}
     session.save(using=database, update_fields=["submitted_at", "config_json"])
+    if mission is not None:
+        mission.completed_at = session.submitted_at
+        mission.save(using=database, update_fields=["completed_at"])
 
     return record

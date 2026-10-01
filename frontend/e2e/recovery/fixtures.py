@@ -13,9 +13,10 @@ django.setup()
 
 from django.contrib.auth.hashers import identify_hasher  # noqa: E402
 from django.core.management import call_command  # noqa: E402
+from django.utils import timezone  # noqa: E402
 
 from apps.courses.models import Level  # noqa: E402
-from apps.exercises.models import ArenaSession, ExerciseTemplate  # noqa: E402
+from apps.exercises.models import ArenaSession, DailyQuest, ExerciseTemplate  # noqa: E402
 from apps.progress.models import ProgressRecord, XPEvent  # noqa: E402
 from apps.users.models import Profile, User  # noqa: E402
 
@@ -37,6 +38,10 @@ if args.inspect_session:
         "score_correct": record.score_correct if record else None,
         "score_total": record.score_total if record else None,
         "xp_earned": record.xp_earned if record else None,
+        "quest_count": DailyQuest.objects.filter(session=session).count(),
+        "quest_completed": DailyQuest.objects.filter(session=session, completed_at__isnull=False).exists(),
+        "lesson_completion_count": session.user.lesson_completions.count(),
+        "level_completion_count": session.user.level_completions.count(),
     }))
 else:
     call_command("migrate", interactive=False, verbosity=0)
@@ -49,13 +54,23 @@ else:
     template.save()
     run_id = uuid.uuid4().hex[:8]
     call_signs = []
-    for i in range(1, 5):
+    for i in range(1, 11):
         user = User.objects.create(email=f"recovery-e2e-{run_id}-{i}@example.invalid", role="STUDENT")
         user.set_password("2468")  # Synthetic fixture PIN only; real configured hashing.
         user.save(update_fields=["password"])
         call_sign = f"RecoveryE2E{run_id}{i}"
         call_signs.append(call_sign)
         Profile.objects.create(user=user, call_sign=call_sign, display_name=f"Recovery test {i}")
+        if i >= 8:
+            # Synthetic frozen approved-template configurations exercise mobile
+            # extremes without changing shared content or other smoke scenarios.
+            config = {"operation": ("ADD", "SUB", "MUL")[i - 8], "digits": 4,
+                      "rows": 8, "digits_row1": 4, "digits_row2": 2,
+                      "question_count": 5, "time_limit_sec": 0}
+            DailyQuest.objects.create(user=user, mission_date=timezone.now().date(), timezone="UTC",
+                source_level_id=level.pk, source_lesson_id=template.lesson_id,
+                source_template_id=template.pk, level_name=level.name, level_order=level.order,
+                lesson_name=template.lesson.name, lesson_order=template.lesson.order, config_json=config)
         if identify_hasher(user.password).algorithm == "md5":
             raise ValueError("Real-API smoke tests must use the actual password hasher.")
     print(json.dumps({"level_id": str(level.id), "lesson_id": str(template.lesson_id), "hasher": identify_hasher(user.password).algorithm, "call_signs": call_signs}))

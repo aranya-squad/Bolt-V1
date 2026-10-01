@@ -12,6 +12,10 @@ function loopbackOrigin(value: string): string {
 const apiOrigin = loopbackOrigin(process.env.RECOVERY_API_ORIGIN || "http://127.0.0.1:8011");
 const previewOrigin = loopbackOrigin(process.env.RECOVERY_PREVIEW_ORIGIN || "http://127.0.0.1:4181");
 const preview = new URL(previewOrigin);
+const chromiumArgs: unknown = JSON.parse(process.env.RECOVERY_CHROMIUM_ARGS || "[]");
+if (!Array.isArray(chromiumArgs) || !chromiumArgs.every(arg => typeof arg === "string")) {
+  throw new Error("RECOVERY_CHROMIUM_ARGS must be a JSON array of strings.");
+}
 
 export default defineConfig({
   testDir: "./e2e/recovery",
@@ -26,8 +30,10 @@ export default defineConfig({
   use: {
     baseURL: previewOrigin,
     trace: "retain-on-failure",
-    launchOptions: process.env.RECOVERY_CHROMIUM_PATH
-      ? { executablePath: process.env.RECOVERY_CHROMIUM_PATH } : {},
+    launchOptions: {
+      args: chromiumArgs,
+      ...(process.env.RECOVERY_CHROMIUM_PATH ? { executablePath: process.env.RECOVERY_CHROMIUM_PATH } : {}),
+    },
   },
   projects: [{ name: "chromium", use: { ...devices["Desktop Chrome"] } }],
   webServer: {

@@ -1,4 +1,5 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
+import { useAuthStore } from "@/shared/store/authStore";
 import { apiClient } from "@/shared/api/client";
 import { matchesReceipt, validateBulk } from "@/shared/store/answerRecovery";
 import type { PendingAttempt } from "@/shared/store/answerRecovery";
@@ -10,13 +11,18 @@ export type BulkAttemptItem = PendingAttempt;
 export type BulkVerdict = AcceptedReceipt;
 
 export function useSession(sessionId: string) {
-  return useQuery<SessionMeta>({
-    queryKey: ["sessions", sessionId],
-    queryFn: async () => (await apiClient.get<SessionMeta>(`/sessions/${sessionId}/`, { timeout: SESSION_REQUEST_TIMEOUT_MS })).data,
-    enabled: !!sessionId,
+  const userId = useAuthStore(s => s.user?.id);
+  const token = useAuthStore(s => s.accessToken);
+  const hydrating = useAuthStore(s => s.isHydrating);
+  const enabled = !!sessionId && !!userId && !!token && !hydrating;
+  const query = useQuery<SessionMeta>({
+    queryKey: ["sessions", userId, sessionId],
+    queryFn: async ({ signal }) => (await apiClient.get<SessionMeta>(`/sessions/${sessionId}/`, { signal, timeout: SESSION_REQUEST_TIMEOUT_MS })).data,
+    enabled,
     staleTime: 0,
     refetchOnReconnect: true,
   });
+  return { ...query, data: enabled ? query.data : undefined };
 }
 
 export async function submitBulk(sessionId: string, attempts: PendingAttempt[]) {

@@ -1,5 +1,6 @@
 from django.urls import path
 
+from .daily_quests import StartDailyQuestView, TodayDailyQuestView
 from .views import (
     BulkSubmitAttemptView,
     FinalizeSessionView,
@@ -13,6 +14,8 @@ from .views import (
 )
 
 urlpatterns = [
+    path("daily-quests/today/", TodayDailyQuestView.as_view(), name="daily-quests-today"),
+    path("daily-quests/<uuid:mission_id>/start/", StartDailyQuestView.as_view(), name="daily-quests-start"),
     path("levels/<uuid:level_id>/classwork/start/", StartClassworkView.as_view(), name="classwork-start"),
     path("levels/<uuid:level_id>/lessons/<int:lesson_id>/classwork/start/", StartLessonClassworkView.as_view(), name="lesson-classwork-start"),
     path("practice/start/", StartPracticeView.as_view(), name="practice-start"),

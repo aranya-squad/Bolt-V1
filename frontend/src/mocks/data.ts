@@ -186,3 +186,12 @@ export const MOCK_AVATAR_PRESETS = {
     "/avatars/avatar4.png",
   ],
 };
+
+// Synthetic daily mission; server fixtures use UTC and preserve frozen display labels.
+export function makeMockDailyMission(date: string): import("@/shared/types").DailyQuestMission {
+  return {
+    id: `mission_${date}`, date, timezone: "UTC", level_name: "MIXED OPERATIONS", level_order: 4,
+    lesson_name: "Mixed Add", lesson_order: 1, target: 5, progress: 0, state: "available",
+    session_id: null, xp_earned: null, completed_at: null,
+  };
+}

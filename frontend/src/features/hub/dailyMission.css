@@ -1,0 +1,55 @@
+.daily-mission {
+  padding: clamp(16px, 4vw, 28px);
+  margin-bottom: 24px;
+  border: 1px solid var(--y-bolt-border);
+  border-radius: 20px;
+  background: var(--bg-ash);
+  overflow-wrap: anywhere;
+}
+.daily-mission h2 { color: var(--y-bolt); margin: 0; }
+.daily-mission progress { display: block; width: 100%; margin-bottom: 20px; accent-color: var(--y-bolt); }
+.daily-mission-reset { color: var(--fg-sand); font-size: .9rem; }
+.daily-mission-previous { margin-top: 24px; border-top: 1px solid var(--md-outline); padding-top: 8px; }
+.mission-hub-content, .mission-report-content { padding: 64px 64px 80px; min-width: 0; }
+.mission-hub-stats, .mission-hub-portals, .mission-report-stats, .mission-report-actions { display: flex; gap: 20px; }
+.mission-hub-stats { margin-bottom: 24px; }
+.mission-hub-stats > *, .mission-hub-portals > *, .mission-report-stats > * { min-width: 0; }
+.mission-portal { width: 100%; min-height: 280px; padding: var(--s-xl); border: 0; background: transparent; color: inherit; cursor: pointer; text-align: left; position: relative; display: flex; flex-direction: column; justify-content: flex-end; }
+.mission-arena { min-width: 0; }
+.mission-arena-content { min-width: 0; }
+.mission-answer-controls { flex-wrap: wrap; }
+.mission-answer-label { flex-basis: 100%; font-weight: 600; }
+.mission-answer-controls input { min-width: 0; }
+.daily-mission button, .mission-hub-content button, .mission-arena button, .mission-report-content button, .mission-answer-controls input { min-height: 44px; }
+.daily-mission button { max-width: 100%; white-space: normal; }
+.daily-mission button:focus-visible, .mission-portal:focus-visible, .mission-arena button:focus-visible, .mission-arena input:focus-visible, .mission-report-content button:focus-visible { outline: 3px solid var(--bolt-blue); outline-offset: 4px; }
+.mission-context { text-align: center; overflow-wrap: anywhere; }
+/* Keep wide report tables from setting the enclosing shell flex item's
+   intrinsic minimum width; the answer region retains horizontal scrolling. */
+.mission-report-screen { width: 100%; min-width: 0; contain: inline-size; }
+.mission-report-attempts { width: 100%; max-width: 100%; min-width: 0; overflow-x: auto; }
+.mission-report-attempts:focus-visible { outline: 3px solid var(--bolt-blue); outline-offset: 2px; }
+.mission-report-content table { min-width: 640px; }
+.mission-report-attempts > div { overflow-x: visible !important; }
+.mission-report-content th, .mission-report-content td { white-space: nowrap; }
+.mission-celebration { color: var(--y-bolt); margin-bottom: 24px; padding: 24px; border: 1px solid var(--y-bolt-border); border-radius: 20px; background: var(--bg-ash); text-align: center; animation: mission-complete-reveal 450ms ease-out 1; }
+.mission-success-ring { width: 88px; height: 88px; margin: 0 auto 16px; border: 3px solid var(--y-bolt); border-radius: 50%; display: grid; place-items: center; box-shadow: 0 0 24px rgba(250,204,21,.18); }
+@keyframes mission-complete-reveal { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (max-width: 600px) {
+  .mission-hub-content, .mission-report-content { padding: 24px 16px 64px; }
+  .mission-hub-content .t-hero { font-size: clamp(2rem, 9vw, 3rem); overflow-wrap: anywhere; }
+  .mission-hub-stats, .mission-hub-portals, .mission-report-stats, .mission-report-actions { flex-direction: column; }
+  .mission-arena .mission-arena-content { padding: 16px !important; gap: 16px !important; justify-content: flex-start !important; }
+  .mission-answer-controls { flex-wrap: wrap; }
+  .mission-answer-controls input { flex-basis: 100% !important; width: 100%; }
+  .mission-answer-controls button { flex: 1; padding-left: 16px !important; padding-right: 16px !important; }
+  .mission-report-content { overflow-wrap: anywhere; }
+  .mission-report-content .t-h1 { font-size: clamp(1.65rem, 6vw, 2.5rem); overflow-wrap: normal; word-break: normal; }
+  .mission-problem > [data-glass] { padding: 16px !important; }
+  .mission-problem pre { font-size: clamp(24px, 7vw, 32px) !important; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .mission-hub-screen .screen-enter, .mission-report-screen .screen-enter { animation: none; }
+  .daily-mission button, .mission-arena button, .mission-report-content button { transition: none !important; }
+  .mission-celebration { animation: none; }
+}
