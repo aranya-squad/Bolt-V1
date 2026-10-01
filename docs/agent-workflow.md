@@ -36,6 +36,12 @@ Signoff means a sound, bounded plan. Executed QA/CI, independent code review,
 human integration and release remain separate gates. Agent review cannot decide
 unresolved human product rules, consent/security policy or production mutation.
 
+### Bolt AI-SDLC V1 for future feature ideas
+
+For feature ideas initiated after the 2026-10-01 adoption checkpoint, use `AI_SDLC.md` in addition to this delivery guidance. The teacher workstreams already in progress at adoption remain on the existing three-role ADR 0004 gate unless the owner explicitly migrates them. The AI-SDLC adds a frozen scope file, machine-readable plan, risk-routed specialists, deterministic G0/G1/G2/G4/G5 validation, bounded worker model routing and final human-handoff stop. It does not change branch safety, current merge order, CI triggers or deployment boundaries.
+
+The reusable source is `../skills/feature-scoper/SKILL.md`; `/feature-scoper` is the Project-level trigger for the same workflow. Repository source does not by itself install a ChatGPT workspace skill.
+
 ## Branches and worktrees
 
 One integration branch per reviewable feature, e.g. `feat/answer-recovery`. Use helper branches such as `task/answer-recovery-api` and `task/answer-recovery-ui` only for delegated writes. These are not independent product features; the coordinator brings their commits into the feature branch.
