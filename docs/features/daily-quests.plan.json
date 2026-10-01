@@ -181,71 +181,121 @@
       "id": "AC-01",
       "description": "Primary eligibility and valid existing content",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-02",
       "description": "Pinned server date/frozen configuration/DST",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-03",
       "description": "Hub mission states/one tap",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-04",
       "description": "Accepted effort, wrong advancement, ordinary regression",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-05",
       "description": "Complete-only finalize and correct existing XP",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-06",
       "description": "History, midnight resume, stale cleanup",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-07",
       "description": "Real DB concurrency and owner auth",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-08",
       "description": "Lost response/reload/pending recovery",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-09",
       "description": "Mobile/keyboard/status/reduced motion",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     },
     {
       "id": "AC-10",
       "description": "Migration/contracts/full checks/real API",
       "required": true,
-      "status": "PENDING",
-      "evidence": []
+      "status": "PASS",
+      "evidence": [
+        "backend/apps/exercises/tests/test_daily_quests.py:44 mission cases, full backend295 PASS",
+        "frontend/src/features/hub/DailyMissionCard.test.tsx:21 missionUI cases, full Vitest94 PASS",
+        "frontend/e2e/recovery/daily-quests.spec.ts:6 realAPI mission cases incl supported max operands320/390 and keyboard scroll; total browser10 PASS",
+        "Frozen scope AC mapping and QA trace in docs/features/daily-quests.md"
+      ]
     }
   ],
   "waves": [
@@ -425,10 +475,72 @@
                     "AC-09",
                     "AC-10"
                   ],
-                  "status": "IN_PROGRESS",
-                  "commit": null,
-                  "evidence": [],
+                  "status": "DONE",
+                  "commit": "79d4ff4c9bb4d43ce844d70854bb819f182d24cc",
+                  "evidence": [
+                    "Full295backend/94frontend/10realAPIbrowser PASS; migration/OpenAPI PASS; all findings RESOLVED and exactcommit reviewsPASS"
+                  ],
                   "ownership_extension_reason": "Sequential coordinator repair after T-BE complete: conditional private mission headers incl API errors; no overlap with active worker ownership."
+                },
+                {
+                  "id": "T-REPAIR-BE",
+                  "title": "Repair real FK race and user lifecycle",
+                  "owner_class": "backend_worker",
+                  "model_class": "strong_reasoning",
+                  "depends_on": [
+                    "T-BE",
+                    "T-FE"
+                  ],
+                  "writable_paths": [
+                    "backend/apps/exercises/daily_quests.py",
+                    "backend/apps/exercises/models.py",
+                    "backend/apps/exercises/migrations/0005_dailyquest.py",
+                    "backend/apps/exercises/tests/test_daily_quests.py"
+                  ],
+                  "checks": [
+                    "focused regressions",
+                    "full relevant stack checks",
+                    "independent re-review"
+                  ],
+                  "traceability": [
+                    "AC-07",
+                    "AC-10"
+                  ],
+                  "status": "DONE",
+                  "commit": "678187ed3aaafd324b0eccd92d949de4a492e020",
+                  "evidence": [
+                    "Bounded repair contracts issued before implementation; exact timings above; no product/scope change"
+                  ]
+                },
+                {
+                  "id": "T-REPAIR-FE",
+                  "title": "Repair maximum operands, error target and report containment",
+                  "owner_class": "frontend_worker",
+                  "model_class": "strong_reasoning",
+                  "depends_on": [
+                    "T-BE",
+                    "T-FE"
+                  ],
+                  "writable_paths": [
+                    "frontend/src/features/practice/InArenaPage.tsx",
+                    "frontend/src/features/practice/VictoryPage.tsx",
+                    "frontend/src/features/hub/dailyMission.css",
+                    "frontend/src/features/hub/DailyMissionCard.test.tsx"
+                  ],
+                  "checks": [
+                    "focused regressions",
+                    "full relevant stack checks",
+                    "independent re-review"
+                  ],
+                  "traceability": [
+                    "AC-09",
+                    "AC-10"
+                  ],
+                  "status": "DONE",
+                  "commit": "bb80f10de2e7214318a706057c2b23bb3ab71a0b",
+                  "evidence": [
+                    "Bounded repair contracts issued before implementation; exact timings above; no product/scope change"
+                  ]
                 }
               ]
             }
@@ -438,22 +550,243 @@
     }
   ],
   "quality_reviews": {
-    "integrated_commit": null,
-    "code_review": "PENDING",
-    "qa_review": "PENDING",
+    "integrated_commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
+    "code_review": "PASS",
+    "qa_review": "PASS",
     "security_required": true,
-    "security_review": "PENDING",
-    "findings": []
+    "security_review": "PASS",
+    "findings": [
+      {
+        "id": "F-01",
+        "finding": "Privacy finalizer query inside rollback-only ATOMIC_REQUESTS caused error-response failures",
+        "resolution": "Association queried during initial; no query after exception; no-store success/error regression",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-02",
+        "finding": "Stale cleanup join changed concurrent submitted predicate semantics",
+        "resolution": "Correlated Exists exclusion; existing forced cleanup/finalize race passes",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-03",
+        "finding": "Deferred User FK can deadlock finalizer-first vs User FOR UPDATE start",
+        "resolution": "User FOR NO KEY UPDATE plus deterministic actual deferred-FK regression",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-04",
+        "finding": "Mission session PROTECT obstructs existing ORM/admin User cascade",
+        "resolution": "RESTRICT permits same collector cascade, protects standalone session; self-service endpoint anonymizes and was never affected",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-05",
+        "finding": "Supported 4D8row questions clipped inside mobile canvas",
+        "resolution": "Mission-only stacked intact operands and scoped sizing; three real-API extremes both320/390 pass",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-06",
+        "finding": "Report table min-content expanded enclosing shell flex item at320",
+        "resolution": "Scoped inline-size containment and bounded scroll region; actual320report noOverflow passed",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-07",
+        "finding": "Nested inner scroll container prevented focused outer keyboard scroll",
+        "resolution": "Mission-only inner overflow visible; browser ArrowRight must move labelled outer scrollLeft",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-08",
+        "finding": "Synchronous database inspection polling starved async Playwright interception",
+        "resolution": "Wait actual route.fetch200 flag asynchronously, then assert identical persisted state",
+        "status": "RESOLVED"
+      },
+      {
+        "id": "F-09",
+        "finding": "Coordinator simultaneous build replaced lazy assets while preview suite ran",
+        "resolution": "Final immutable-dist suite10PASS163.526s, no builds during run",
+        "status": "RESOLVED"
+      }
+    ],
+    "history": [
+      {
+        "role": "cto",
+        "agent_id": "/root/cto",
+        "commit": "19c0045157321488bb1eef4d60c5e27df1ffd3fc",
+        "decision": "BLOCKED",
+        "start_at": "2026-10-01T13:23:12Z",
+        "end_at": "2026-10-01T13:24:03Z",
+        "finding": "Deferred User FK finalizer-first deadlock; repaired"
+      },
+      {
+        "role": "data_integrity",
+        "agent_id": "/root/data_integrity",
+        "commit": "19c0045157321488bb1eef4d60c5e27df1ffd3fc",
+        "decision": "BLOCKED",
+        "start_at": "2026-10-01T13:23:32Z",
+        "end_at": "2026-10-01T13:25:03Z",
+        "finding": "Independently reproduced40P01; repaired"
+      },
+      {
+        "role": "frontend_ux",
+        "agent_id": "/root/frontend_ux",
+        "commit": "19c0045157321488bb1eef4d60c5e27df1ffd3fc",
+        "decision": "BLOCKED",
+        "start_at": "2026-10-01T13:23:43Z",
+        "end_at": "2026-10-01T13:25:40Z",
+        "finding": "Supported long operands clipped; repaired"
+      },
+      {
+        "role": "security",
+        "agent_id": "/root/security",
+        "commit": "19c0045157321488bb1eef4d60c5e27df1ffd3fc",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:23:18Z",
+        "end_at": "2026-10-01T13:23:45Z",
+        "finding": "No privacy/auth blocker"
+      },
+      {
+        "role": "cto",
+        "agent_id": "/root/cto",
+        "commit": "db6ff06326cd507358fc46da6e0a5d3efd4f6e07",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:28:51Z",
+        "end_at": "2026-10-01T13:29:09Z",
+        "finding": "Code PASS; subsequent report repair requires renewal"
+      },
+      {
+        "role": "data_integrity",
+        "agent_id": "/root/data_integrity",
+        "commit": "db6ff06326cd507358fc46da6e0a5d3efd4f6e07",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:28:50Z",
+        "end_at": "2026-10-01T13:29:07Z",
+        "finding": "Independently reran4PGrepair tests"
+      },
+      {
+        "role": "security",
+        "agent_id": "/root/security",
+        "commit": "db6ff06326cd507358fc46da6e0a5d3efd4f6e07",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:29:06Z",
+        "end_at": "2026-10-01T13:29:11Z",
+        "finding": "Delta security PASS"
+      },
+      {
+        "role": "frontend_ux",
+        "agent_id": "/root/frontend_ux",
+        "commit": "db6ff06326cd507358fc46da6e0a5d3efd4f6e07",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:29:19Z",
+        "end_at": "2026-10-01T13:30:11Z",
+        "finding": "Max-content screenshots PASS; later report overflow found by browser"
+      },
+      {
+        "role": "cto",
+        "agent_id": "/root/cto",
+        "commit": "79d4ff4c9bb4d43ce844d70854bb819f182d24cc",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:35:20Z",
+        "end_at": "2026-10-01T13:35:25Z",
+        "duration_seconds": 5
+      },
+      {
+        "role": "frontend_ux",
+        "agent_id": "/root/frontend_ux",
+        "commit": "e9b2a4d6a4e973556899682e22f94fbf044cb9ac",
+        "decision": "BLOCKED",
+        "start_at": "2026-10-01T13:33:12Z",
+        "end_at": "2026-10-01T13:33:57Z",
+        "duration_seconds": 45,
+        "finding": "Nested scroll container means focused labelled region cannot scroll; repaired"
+      },
+      {
+        "role": "frontend_ux",
+        "agent_id": "/root/frontend_ux",
+        "commit": "79d4ff4c9bb4d43ce844d70854bb819f182d24cc",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:35:15Z",
+        "end_at": "2026-10-01T13:35:26Z",
+        "duration_seconds": 11,
+        "evidence": "Independent Chromium focusedouter640/288 ArrowRight40px; actual browser assertion also added"
+      }
+    ],
+    "local_tested_commit": "79d4ff4c9bb4d43ce844d70854bb819f182d24cc",
+    "verified_tree": "3af70bd6ff026ab9f78191d4e29abe6ed8842a25",
+    "final_votes": [
+      {
+        "role": "cto",
+        "agent_id": "/root/cto",
+        "commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:41:12Z",
+        "end_at": "2026-10-01T13:41:24Z",
+        "duration_seconds": 12,
+        "evidence": "Independently verified GitHub commit tree equals reviewed/tested local tree"
+      },
+      {
+        "role": "security",
+        "agent_id": "/root/security",
+        "commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:40:59Z",
+        "end_at": "2026-10-01T13:41:09Z",
+        "duration_seconds": 10,
+        "evidence": "Independently verified GitHub commit tree equals reviewed/tested local tree"
+      },
+      {
+        "role": "data_integrity",
+        "agent_id": "/root/data_integrity",
+        "commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:41:12Z",
+        "end_at": "2026-10-01T13:41:25Z",
+        "duration_seconds": 13,
+        "evidence": "Independently verified GitHub commit tree equals reviewed/tested local tree"
+      },
+      {
+        "role": "frontend_ux",
+        "agent_id": "/root/frontend_ux",
+        "commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
+        "decision": "PASS",
+        "start_at": "2026-10-01T13:41:18Z",
+        "end_at": "2026-10-01T13:41:33Z",
+        "duration_seconds": 15,
+        "evidence": "Independently verified GitHub commit tree equals reviewed/tested local tree"
+      },
+      {
+        "role": "head_qa",
+        "agent_id": "/root/head_qa",
+        "commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
+        "decision": "PASS",
+        "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+        "start_at": "2026-10-01T13:23:54Z",
+        "end_at": "2026-10-01T13:41:55Z",
+        "duration_seconds": 1081,
+        "evidence": "Independent44mission PostgreSQL cases; reviewed coordinator295backend94frontend10realAPIbrowser; allAC01\u201310PASS; independentlyverified remote tree equality",
+        "limitations": "Viewport/keyboard-space simulation, not physical device IME; Node24 vsCI20; identity-onlyPGshim; hostedCI/liveunknown"
+      }
+    ]
   },
   "publication": {
     "feature_branch": "feat/daily-quests",
-    "feature_branch_pushed": false,
-    "final_commit": null,
+    "feature_branch_pushed": true,
+    "final_commit": "b5658520623c45b427927bd26a2e21ea7cd6f7d2",
     "merged": false,
     "deployed": false,
-    "scope_checkpoint": "e40e0acad8cc82ab743e9dbf5abe9c3cdb02f710"
+    "scope_checkpoint": "e40e0acad8cc82ab743e9dbf5abe9c3cdb02f710",
+    "final_commit_kind": "Independently reviewed and verified pushed application checkpoint; handoff-only closure follows",
+    "verified_tree": "3af70bd6ff026ab9f78191d4e29abe6ed8842a25",
+    "local_tested_commit": "79d4ff4c9bb4d43ce844d70854bb819f182d24cc",
+    "branch_ref": "https://github.com/aranya-squad/Bolt-V1/tree/feat/daily-quests",
+    "push_start_at": "2026-10-01T13:42:40.791Z",
+    "push_end_at": "2026-10-01T13:42:41.724Z",
+    "push_duration_seconds": 0.933
   },
-  "final_status": "IN PROGRESS",
+  "final_status": "READY FOR HUMAN REVIEW",
   "timing": {
     "request_submitted_at": "2026-10-01T13:02:34Z",
     "clock": "UTC ISO8601 wall-clock; concurrent phase durations overlap",
@@ -469,9 +802,324 @@
     },
     "G2": {
       "start_at": "2026-10-01T13:08:02Z",
-      "end_at": "2026-10-01T13:09:03.974308+00:00"
+      "end_at": "2026-10-01T13:09:03.974308+00:00",
+      "duration_seconds": 61.974308
     },
-    "events": [],
+    "events": [
+      {
+        "step": "migration-drift",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          ".venv/bin/python",
+          "backend/manage.py",
+          "makemigrations",
+          "--check",
+          "--dry-run"
+        ],
+        "start_at": "2026-10-01T13:18:14.132315+00:00",
+        "end_at": "2026-10-01T13:18:19.372687+00:00",
+        "duration_seconds": 5.24,
+        "exit_code": 0
+      },
+      {
+        "step": "backend-privacy-regressions",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "bash",
+          "-c",
+          "cd backend && ../.venv/bin/ruff check . && ../.venv/bin/pytest apps/exercises/tests/test_daily_quests.py apps/exercises/tests/test_answer_recovery.py --tb=short"
+        ],
+        "start_at": "2026-10-01T13:19:58.053881+00:00",
+        "end_at": "2026-10-01T13:20:45.626525+00:00",
+        "duration_seconds": 47.573,
+        "exit_code": 1
+      },
+      {
+        "step": "privacy-failure-diagnosis",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "bash",
+          "-c",
+          "cd backend && ../.venv/bin/pytest apps/exercises/tests/test_daily_quests.py -x --tb=short"
+        ],
+        "start_at": "2026-10-01T13:20:46.998309+00:00",
+        "end_at": "2026-10-01T13:20:55.497405+00:00",
+        "duration_seconds": 8.499,
+        "exit_code": 1
+      },
+      {
+        "step": "backend-final-checks",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "bash",
+          "-c",
+          "cd backend && ../.venv/bin/ruff check . && ../.venv/bin/pytest --tb=short -q"
+        ],
+        "start_at": "2026-10-01T13:21:04.698751+00:00",
+        "end_at": "2026-10-01T13:21:28.078502+00:00",
+        "duration_seconds": 23.38,
+        "exit_code": 0
+      },
+      {
+        "step": "real-api-browser-integration",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "/tmp/bolt-local-bin/e2e-run.sh"
+        ],
+        "start_at": "2026-10-01T13:20:04.608094+00:00",
+        "end_at": "2026-10-01T13:22:07.591446+00:00",
+        "duration_seconds": 122.983,
+        "exit_code": 1,
+        "diagnosis": "Initial Chromium single-process context reuse crashed; normal multiprocess rerun passed7/7"
+      },
+      {
+        "step": "real-api-browser-final",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "/tmp/bolt-local-bin/e2e-run.sh"
+        ],
+        "start_at": "2026-10-01T13:22:31.553331+00:00",
+        "end_at": "2026-10-01T13:24:51.415887+00:00",
+        "duration_seconds": 139.863,
+        "exit_code": 0
+      },
+      {
+        "step": "real-api-browser-repaired",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "/tmp/bolt-local-bin/e2e-run.sh"
+        ],
+        "start_at": "2026-10-01T13:28:26.442445+00:00",
+        "end_at": "2026-10-01T13:30:57.481308+00:00",
+        "duration_seconds": 151.039,
+        "exit_code": 1,
+        "diagnosis": "9/10; real report document overflow320 after table width polish; scoped containment repair"
+      },
+      {
+        "step": "backend-deadlock-red-reproduction",
+        "start_at": "2026-10-01T13:25:54.299138Z",
+        "end_at": "2026-10-01T13:26:01.257007Z",
+        "duration_seconds": 6.958,
+        "result": "EXPECTED FAIL: SQLSTATE40P01 and old protection"
+      },
+      {
+        "step": "backend-cascade-red-reproduction",
+        "start_at": "2026-10-01T13:26:16.673511Z",
+        "end_at": "2026-10-01T13:26:22.570829Z",
+        "duration_seconds": 5.897,
+        "result": "EXPECTED FAIL: ProtectedError"
+      },
+      {
+        "step": "backend-repaired-focused",
+        "start_at": "2026-10-01T13:26:58.821706Z",
+        "end_at": "2026-10-01T13:27:08.298582Z",
+        "duration_seconds": 9.477,
+        "result": "44 PASS"
+      },
+      {
+        "step": "backend-repaired-ruff",
+        "start_at": "2026-10-01T13:27:08.298665Z",
+        "end_at": "2026-10-01T13:27:08.365789Z",
+        "duration_seconds": 0.067,
+        "result": "PASS"
+      },
+      {
+        "step": "backend-repaired-full",
+        "start_at": "2026-10-01T13:27:08.365849Z",
+        "end_at": "2026-10-01T13:27:24.574672Z",
+        "duration_seconds": 16.209,
+        "result": "295 PASS"
+      },
+      {
+        "step": "migration-repaired-rehearsal",
+        "start_at": "2026-10-01T13:27:26.170365Z",
+        "end_at": "2026-10-01T13:27:30.577230Z",
+        "duration_seconds": 4.407,
+        "result": "PASS: forward/constraints/deferredFK/reverse/reapply/drift"
+      },
+      {
+        "step": "frontend-mobile-repair-lint",
+        "start_at": "2026-10-01T13:26:05Z",
+        "end_at": "2026-10-01T13:26:14Z",
+        "duration_seconds": 9.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-mobile-repair-type",
+        "start_at": "2026-10-01T13:26:05Z",
+        "end_at": "2026-10-01T13:26:17Z",
+        "duration_seconds": 12.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-mobile-repair-vitest",
+        "start_at": "2026-10-01T13:26:05Z",
+        "end_at": "2026-10-01T13:26:13Z",
+        "duration_seconds": 8.0,
+        "result": "94 PASS"
+      },
+      {
+        "step": "frontend-mobile-repair-build",
+        "start_at": "2026-10-01T13:26:05Z",
+        "end_at": "2026-10-01T13:26:21Z",
+        "duration_seconds": 16.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-error-repair-lint",
+        "start_at": "2026-10-01T13:27:41Z",
+        "end_at": "2026-10-01T13:27:50Z",
+        "duration_seconds": 9.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-error-repair-type",
+        "start_at": "2026-10-01T13:27:41Z",
+        "end_at": "2026-10-01T13:27:53Z",
+        "duration_seconds": 12.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-error-repair-vitest",
+        "start_at": "2026-10-01T13:27:41Z",
+        "end_at": "2026-10-01T13:27:51Z",
+        "duration_seconds": 10.0,
+        "result": "94 PASS"
+      },
+      {
+        "step": "frontend-error-repair-build",
+        "start_at": "2026-10-01T13:27:41Z",
+        "end_at": "2026-10-01T13:27:55Z",
+        "duration_seconds": 14.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-report-repair-lint",
+        "start_at": "2026-10-01T13:31:31Z",
+        "end_at": "2026-10-01T13:31:42Z",
+        "duration_seconds": 11.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-report-repair-type",
+        "start_at": "2026-10-01T13:31:31Z",
+        "end_at": "2026-10-01T13:31:48Z",
+        "duration_seconds": 17.0,
+        "result": "PASS"
+      },
+      {
+        "step": "frontend-report-repair-vitest",
+        "start_at": "2026-10-01T13:31:31Z",
+        "end_at": "2026-10-01T13:31:42Z",
+        "duration_seconds": 11.0,
+        "result": "94 PASS"
+      },
+      {
+        "step": "frontend-report-repair-build",
+        "start_at": "2026-10-01T13:31:31Z",
+        "end_at": "2026-10-01T13:31:53Z",
+        "duration_seconds": 22.0,
+        "result": "PASS"
+      },
+      {
+        "step": "real-api-browser-final-repair",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "/tmp/bolt-local-bin/e2e-run.sh"
+        ],
+        "start_at": "2026-10-01T13:32:07.185093+00:00",
+        "end_at": "2026-10-01T13:34:43.033261+00:00",
+        "duration_seconds": 155.848,
+        "exit_code": 1,
+        "diagnosis": "9/10; report overflow repaired; synchronous DB child polling starved lost-answer route callback; cheap async callback wait preserves DB check"
+      },
+      {
+        "step": "frontend-final-coordinator",
+        "command": [
+          "bash",
+          "-c",
+          "cd frontend && npm run lint && npm run typecheck && npm run test -- --run && npm run build"
+        ],
+        "start_at": "2026-10-01T13:34:48.555432+00:00",
+        "end_at": "2026-10-01T13:34:53.097696+00:00",
+        "duration_seconds": 4.542,
+        "exit_code": 1,
+        "diagnosis": "Coordinator used nonexistent npm typecheck script; lint passed, group stopped before other checks; corrected type-check rerun passed"
+      },
+      {
+        "step": "frontend-release-checks",
+        "command": [
+          "bash",
+          "-c",
+          "cd frontend && npm run lint && npm run type-check && npm run test -- --run && npm run build"
+        ],
+        "start_at": "2026-10-01T13:35:51.691496+00:00",
+        "end_at": "2026-10-01T13:36:31.238843+00:00",
+        "duration_seconds": 39.547,
+        "exit_code": 0
+      },
+      {
+        "step": "context-advisory-check",
+        "command": [
+          "python",
+          "scripts/check_context_freshness.py",
+          "--warning-only"
+        ],
+        "start_at": "2026-10-01T13:38:03.753318+00:00",
+        "end_at": "2026-10-01T13:38:04.097036+00:00",
+        "duration_seconds": 0.344,
+        "exit_code": 0,
+        "result": "ADVISORY FAIL:5errors1warning; warning-only established checker option returns0, not structuralPASS"
+      },
+      {
+        "step": "real-api-browser-release-candidate",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "/tmp/bolt-local-bin/e2e-run.sh"
+        ],
+        "start_at": "2026-10-01T13:35:02.727873+00:00",
+        "end_at": "2026-10-01T13:38:57.990426+00:00",
+        "duration_seconds": 235.263,
+        "exit_code": 1,
+        "diagnosis": "Invalid harness run5PASS/5FAIL: simultaneous build replaced hashed lazy assets and subsequent overlap of output directory after rerun began; application source unchanged; final suite immutable dist"
+      },
+      {
+        "step": "coordinator-keyboard-and-interception-repair",
+        "start_at": "2026-10-01T13:33:57Z",
+        "end_at": "2026-10-01T13:35:02Z",
+        "duration_seconds": 65,
+        "precision": "Starts at UX blocked vote; end rounded commit/run checkpoint",
+        "result": "Transfer scrolling to labelled region; await async route before DB inspection"
+      },
+      {
+        "step": "real-api-browser-immutable-dist",
+        "command": [
+          "/tmp/bolt-local-bin/with-services.sh",
+          "/tmp/bolt-local-bin/e2e-run.sh"
+        ],
+        "start_at": "2026-10-01T13:38:26.971170+00:00",
+        "end_at": "2026-10-01T13:41:10.497099+00:00",
+        "duration_seconds": 163.526,
+        "exit_code": 0
+      },
+      {
+        "step": "G5-feature-handoff-gate",
+        "command": [
+          "python",
+          "scripts/check_feature_gate.py",
+          "--scope",
+          "docs/features/daily-quests.scope.md",
+          "--plan",
+          "docs/features/daily-quests.plan.json",
+          "--gate",
+          "G5"
+        ],
+        "start_at": "2026-10-01T13:43:33.189359+00:00",
+        "end_at": "2026-10-01T13:43:33.253339+00:00",
+        "duration_seconds": 0.064,
+        "exit_code": 0
+      }
+    ],
     "G3": {
       "start_at": "2026-10-01T13:09:16Z",
       "end_at": "2026-10-01T13:20:53Z",
@@ -504,8 +1152,43 @@
     },
     "G4": {
       "start_at": "2026-10-01T13:17:38Z",
-      "end_at": null
-    }
+      "end_at": "2026-10-01T13:41:55Z",
+      "duration_seconds": 1457,
+      "result": "PASS: exactcommit CTO/HeadQA and all required specialists"
+    },
+    "repair_workers": {
+      "backend": {
+        "start_at": "2026-10-01T13:25:08Z",
+        "end_at": "2026-10-01T13:27:56Z",
+        "duration_seconds": 168
+      },
+      "frontend_mobile": {
+        "start_at": "2026-10-01T13:25:24Z",
+        "end_at": "2026-10-01T13:26:28Z",
+        "duration_seconds": 64
+      },
+      "frontend_error_target": {
+        "start_at": "2026-10-01T13:27:40Z",
+        "end_at": "2026-10-01T13:28:00Z",
+        "duration_seconds": 20
+      },
+      "frontend_report_overflow": {
+        "start_at": "2026-10-01T13:30:43Z",
+        "end_at": "2026-10-01T13:31:55Z",
+        "duration_seconds": 72
+      }
+    },
+    "G5": {
+      "start_at": "2026-10-01T13:40:21.742Z",
+      "end_at": "2026-10-01T13:43:33.253339Z",
+      "start_reason": "Tree publication preparation overlaps remaining browser QA; branch update only afterQA",
+      "checkpoint_at": "2026-10-01T13:42:41.724Z",
+      "checkpoint_elapsed_seconds": 139.982,
+      "end_kind": "Application push verified and G5 PASS; handoff-only commit/ref verification follows and final response records exact head/time",
+      "duration_seconds": 191.511339
+    },
+    "elapsed_to_application_push_seconds": 2407.724,
+    "elapsed_to_G5_seconds": 2459.253339
   },
   "verification_runtime": {
     "python": "3.12.14",
@@ -528,6 +1211,12 @@
       "Every tool exec has separate network namespace; services/tests launch together",
       "Fresh synthetic loopback PostgreSQL trust auth, TCP-only; ephemeral nonpersistent Redis",
       "Chromium153 no-zygote/in-process SwiftShader, normal multi-process browser; standard CORS/security remains enabled. Initial single-process reuse crashed and was removed."
+    ],
+    "limitations": [
+      "Hosted CI/live not executed",
+      "Context advisory5errors: inherited tracker next-action defect plus immutable scope classified as tracker; warning source drift",
+      "Real API smoke tests do not assert production OS/security identity; PG identityshim reviewed",
+      "Do not rebuild shared dist while E2E preview runs"
     ]
   }
 }
