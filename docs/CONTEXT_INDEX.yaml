@@ -1,0 +1,220 @@
+version: 1
+last_updated: 2026-10-01
+
+startup:
+  mandatory:
+    - BOLT_BOOTSTRAP.md
+    - docs/PROJECT_BRIEF.md
+    - docs/CONTEXT_INDEX.yaml
+  principle: "Load deeper context selectively; summaries orient, code/live evidence establishes truth."
+
+task_routes:
+  frontend:
+    read:
+      - docs/SYSTEM_MAP.md#frontend
+    inspect:
+      - frontend/src/router.tsx
+      - frontend/src/features
+      - frontend/src/shared
+      - frontend/package.json
+    verify:
+      - "cd frontend && npm run lint"
+      - "cd frontend && npm run type-check"
+      - "cd frontend && npm run test"
+      - "cd frontend && npm run build"
+
+  backend:
+    read:
+      - docs/SYSTEM_MAP.md#backend
+    inspect:
+      - backend/apps
+      - backend/config
+    verify:
+      - "cd backend && ruff check ."
+      - "cd backend && DJANGO_SETTINGS_MODULE=config.settings.test pytest"
+
+  api:
+    read:
+      - docs/SYSTEM_MAP.md#api-and-request-boundaries
+    inspect:
+      - backend/config/urls.py
+      - backend/apps/*/urls.py
+      - backend/apps/*/views.py
+      - backend/apps/*/serializers.py
+      - frontend/src/api/openapi.yaml
+      - frontend/src/shared/api
+      - frontend/src/shared/types
+    consistency:
+      - backend endpoint and serializer
+      - OpenAPI/schema
+      - frontend types/client/hooks
+      - mocks
+      - regression tests
+
+  persistence:
+    read:
+      - docs/SYSTEM_MAP.md#data-and-persistence
+    inspect:
+      - backend/apps/progress/models.py
+      - backend/apps/progress/services.py
+      - backend/apps/exercises/models.py
+      - backend/apps/exercises/attempt_contract.py
+      - backend/apps/exercises/views.py
+
+  answer_recovery:
+    read:
+      - docs/features/answer-recovery.md
+      - docs/SYSTEM_MAP.md#answer-submission-recovery-and-finalization
+    inspect:
+      - frontend/src/shared/store/answerRecovery.ts
+      - frontend/src/shared/store/sessionStore.ts
+      - frontend/src/shared/api/queries/useAnswerRecovery.ts
+      - frontend/src/shared/api/queries/useSession.ts
+      - frontend/src/features/practice/InArenaPage.tsx
+      - frontend/src/features/learn/ClassworkPage.tsx
+      - backend/apps/exercises/attempt_contract.py
+      - backend/apps/exercises/views.py
+      - backend/apps/progress/services.py
+
+  auth:
+    read:
+      - docs/SYSTEM_MAP.md#authentication-and-roles
+    inspect:
+      - backend/apps/users
+      - frontend/src/features/auth
+      - frontend/src/shared/store/authStore.ts
+      - frontend/src/shared/api/client.ts
+      - frontend/src/features/shared/ProtectedRoute.tsx
+      - frontend/src/features/shared/RoleRoute.tsx
+
+  classroom:
+    read:
+      - docs/SYSTEM_MAP.md#classroom-and-teacher-flow
+    inspect:
+      - backend/apps/classroom
+      - frontend/src/features/teacher
+      - frontend/src/features/student
+      - frontend/src/shared/api/queries/useBatches.ts
+      - frontend/src/shared/api/queries/useRoster.ts
+
+  ci_build:
+    read:
+      - docs/RUNBOOK.md#ci
+    inspect:
+      - .github/workflows/ci.yml
+      - frontend/package.json
+      - backend/pyproject.toml
+      - backend/requirements
+
+  aws_deploy:
+    read:
+      - docs/RUNBOOK.md
+    inspect:
+      - docker-compose.prod.yml
+      - Caddyfile
+      - aws-deploy.sh
+      - aws-resume-deploy.sh
+      - aws-teardown.sh
+      - backend/config/settings/production.py
+      - .env.production.example
+      - frontend/vercel.json
+      - vercel.json
+    live_verify_when_authorized:
+      - deployed revision
+      - compute/container state
+      - RDS
+      - Redis/ElastiCache
+      - S3/static/media
+      - DNS/TLS
+      - health endpoint
+      - application/reverse-proxy/worker logs
+
+  architecture:
+    read:
+      - docs/SYSTEM_MAP.md
+      - docs/DECISIONS.md
+      - relevant docs/adr/*.md
+      - docs/ARCHITECTURE.md
+    rule: "Current code + SYSTEM_MAP wins over stale design prose."
+
+  feature_continuation:
+    inspect:
+      - docs/features/<feature>.md
+      - feature branch history
+    require:
+      - status
+      - branch
+      - current checkpoint
+      - verification
+      - known risks
+      - next exact action
+
+change_impact:
+  backend_api_change:
+    check_or_update:
+      - backend API code
+      - frontend/src/api/openapi.yaml
+      - frontend types/client/hooks
+      - mocks
+      - tests
+      - relevant feature doc
+      - docs/SYSTEM_MAP.md if architectural contract changed
+
+  auth_change:
+    check_or_update:
+      - backend/apps/users
+      - frontend auth store/routes/client
+      - permissions/throttles
+      - docs/RUNBOOK.md if env/deploy settings changed
+      - docs/DECISIONS.md or ADR if policy changed
+
+  persistence_or_scoring_change:
+    check_or_update:
+      - backend/apps/progress/services.py
+      - exercises contract/views
+      - data constraints/migrations
+      - relevant feature doc
+      - docs/SYSTEM_MAP.md
+      - ADR if historical interpretation/ownership changes
+
+  deployment_change:
+    check_or_update:
+      - docs/RUNBOOK.md
+      - docs/PROJECT_BRIEF.md
+      - deployment/CI config
+      - environment matrix
+      - rollback notes
+
+  architecture_change:
+    check_or_update:
+      - docs/SYSTEM_MAP.md
+      - docs/DECISIONS.md
+      - docs/adr/<decision>.md
+      - docs/PROJECT_BRIEF.md if globally relevant
+
+  feature_status_change:
+    check_or_update:
+      - docs/features/<feature>.md
+      - docs/PROJECT_BRIEF.md
+      - docs/AI_DEV_LOG.md at milestone
+
+approval_boundaries:
+  autonomous:
+    - read repo/history/docs
+    - inspect available read-only logs/systems
+    - create task/feature branches
+    - modify code/tests/docs within approved task scope
+    - run local/test services and checks
+    - commit and push authorized feature branches
+    - prepare review handoff
+  human_required:
+    - ambiguous product behavior with material user impact
+    - conflicting explicit human decisions
+    - material scope expansion
+    - destructive data migration/backfill
+    - production mutation
+    - AWS/hosting/DNS/security-policy mutation
+    - secrets/credential decisions
+    - merge to protected integration/main
+    - production release
+    - irreversible destructive operation
