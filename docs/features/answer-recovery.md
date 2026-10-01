@@ -1,6 +1,6 @@
 # Answer recovery: approved plan and delivery record
 
-Status: approved by the task owner on 01 October 2026. AR-01/02 foundation is published at b03d167. AR-04/05/06 are integrated; AR-07 real API/browser checks and AR-08 independent review are in progress. Main and feat-Sagar remain frozen. No AWS deployment is authorized.
+Status: ready for developer review after approval on 01 October 2026. AR-01/02 foundation is published at b03d167. AR-03–08 implementation, local verification and independent code review are complete at 6d32de6; the final handoff commit changes only this document. Main and feat-Sagar remain frozen. No AWS deployment is authorized.
 
 Second-pass revision: 01 October 2026, Asia/Kolkata. The task owner approved this contract, branch policy, limits, guidelines and bounded agent delegation, and requested a small implementation suited to a 3–4 developer indie team.
 
@@ -117,7 +117,7 @@ Use one small pure queue/reconciliation module plus existing React/Zustand/hooks
 
 ## Measurable test matrix
 
-These are acceptance tests to implement, not checks already run. Existing misleading names/expectations must be changed only with a documented contract reason, never deleted to make the suite pass.
+This matrix defines the approved acceptance boundaries. Executed evidence and its limits are recorded below; each row is not a claim of a separate browser test. Existing misleading names/expectations were clarified only with a documented contract reason, not deleted to make the suite pass.
 
 | Test IDs | Boundary and expected assertion |
 |---|---|
@@ -216,16 +216,16 @@ After approval, work can proceed without the owner present on a workstation whil
 ## Delivery checkpoint
 
 - Frozen base: `feat-Sagar@c81416d166792caada0868dff0d3242daccbedde`; remote main: `cec94ea187ab3fcf571f73dd4468b1edaf0d290a`.
-- Foundation: `chore/agent-workflow`, isolated sibling worktree; AR-01/02 checked and ready for publication.
-- Coding selection: one backend coding agent and one frontend coding agent, using the current coding model; no separate architecture/team hierarchy. A read-only reviewer follows integration.
-- Next: publish foundation, then AR-03 contract and disjoint implementation tasks.
-- Local and CI results are recorded as executed; this checkpoint does not claim application fixes or capacity validation.
+- Foundation: `chore/agent-workflow@b03d167`, published from an isolated sibling worktree.
+- Coding selection: two GPT-6.1-Sol agents at high effort, with bounded backend/frontend ownership in separate worktrees; coordinator plus one independent reviewer. No additional team hierarchy or orchestration framework.
+- Reviewed implementation: `feat/answer-recovery@6d32de6`; local checks and independent code review passed. The final handoff commit is documentation only; human integration/release is pending.
+- Local verification is recorded below; GitHub CI and production capacity remain unverified.
 
 ### Foundation verification — 01 October 2026
 
 - Backend Ruff passed; pytest passed all 145 collected tests using `config.settings.test`, isolated PostgreSQL 16.15 and Redis 7. An initial invocation inherited development settings; the release baseline is the explicitly configured test-settings run, not that invocation.
 - Frontend `npm ci`, ESLint, TypeScript, Vitest (4 files / 25 tests) and Vite build passed. Lockfile regeneration retained all existing installed package versions and registry integrity metadata; optional-platform metadata was resolved through npm. No package.json dependency change.
-- Node 24.19.0 / npm 11.9.0 / Python 3.12.14 in this environment. CI specifies Node 20 / Python 3.12; Node 20 verification remains outstanding and local success is not GitHub CI evidence.
+- The initial foundation run used Node 24.19.0 / npm 11.9.0 / Python 3.12.14. CI specifies Node 20 / Python 3.12; later Node-20 verification is recorded below. Local success is not GitHub CI evidence.
 - The install regenerated the existing MSW worker; that unrelated generated change was restored and excluded from publication.
 - Existing Ruff configuration and factory warnings remain; no checks were disabled to hide them.
 
@@ -248,7 +248,7 @@ The API worker owns backend implementation/tests only; frontend worker owns runt
 
 Local implementation resources: PostgreSQL 16 at loopback port 5544, Redis 7 at loopback port 6385. API worker uses `bolt_recovery_api` and Redis DB 4; integration uses `bolt_recovery_integration` and Redis DB 5; reviewer uses `bolt_recovery_review` and Redis DB 6. API/frontend integration ports are 8011/4181. Each DB test run creates its own prefixed test DB. Private connection/environment configuration is outside Git. Use test settings explicitly for unit tests; the built-SPA integration runner uses real hashing/JWT/throttles and synthetic users.
 
-Gate status: G0 approved, G1 passed locally, G2 contract/schema committed with disjoint ownership. Historical-null fixtures must verify the safe capability fallback; no production data scan/migration is authorized. G3–G5 are pending. GitHub draft-PR creation returned API Forbidden; native foundation push succeeded, and GitHub CI remains unverified.
+Gate status: G0 approved; G1 foundation passed locally; G2 contract/schema committed with disjoint ownership; G3 scoped implementation integrated; G4 local checks passed; G5 independent code review accepted 6d32de6, followed by this documentation-only handoff. Historical-null fixtures verify the safe capability fallback; no production data scan/migration was performed. GitHub draft-PR creation returned API Forbidden; native Git is used for branch publication, and GitHub CI remains unverified. Human prerequisite integration and release gates remain open.
 
 ### Integration setup (local only)
 
@@ -256,7 +256,7 @@ Gate status: G0 approved, G1 passed locally, G2 contract/schema committed with d
 2. Set `PYTHONPATH` to the checkout's `backend` and `frontend/e2e/recovery` directories and `DJANGO_SETTINGS_MODULE=api_settings`. From the repository root run `python frontend/e2e/recovery/fixtures.py`; it applies local migrations/seeds four synthetic users with PIN 2468, requires the normal password hasher, and prints fixture IDs/call-signs in its final JSON line. Save that line to a private file and set `RECOVERY_FIXTURE_FILE` to its absolute path. Each seed run uses new users; it never deletes result history or flushes shared cache.
 3. From `backend/`, start `python manage.py runserver 127.0.0.1:8011 --noreload` with those settings. Confirm `/api/v1/health/` reports DB/Redis healthy.
 4. From `frontend/`, run `npm ci` and `npm run e2e:recovery`. Supply `RECOVERY_PYTHON` if the Django environment's Python is not on PATH; inherited PYTHONPATH/DB/cache/private key are used by synthetic-only database assertions. Install Playwright's Chromium through its normal verified installer, or set `RECOVERY_CHROMIUM_PATH` to an available trusted Chromium executable.
-5. The runner builds the SPA with `VITE_API_BASE_URL` pinned to `RECOVERY_API_ORIGIN` (default `http://127.0.0.1:8011`) and starts preview at `RECOVERY_PREVIEW_ORIGIN` (default `http://127.0.0.1:4181`). Both origins must be HTTP loopback with no credentials/path/query. The API settings permit only that explicit local preview; production settings/CORS remain unchanged. Stop only the local services started for this run.
+5. The runner builds the SPA with `VITE_API_BASE_URL` pinned to `RECOVERY_API_ORIGIN` (default `http://127.0.0.1:8011`) and starts preview at `RECOVERY_PREVIEW_ORIGIN` (default `http://127.0.0.1:4181`). Both origins must be HTTP loopback with no credentials/path/query. The API settings import the existing base settings, retain real hashing/JWT/throttles, disable development toolbar profiling, reject any inherited replica URL, and permit only the explicit local preview as an additional CORS origin. Production settings/CORS remain unchanged. Stop only the local services started for this run.
 
 The targeted runner does not run or weaken the older mock-only smoke suite. Fault tests forward accepted requests to the real API before dropping responses and use direct synthetic DB counts to verify duplicate protection; separate tests exercise real PIN/JWT and configured user throttles. Local traces/results are kept under ignored node_modules cache; they are not release artifacts or real-user exports.
 
@@ -268,4 +268,54 @@ Foundation checks also passed using Node 20.20.2 / npm 10.8.2 in a local Docker 
 
 ### Frontend integration checkpoint
 
-UI task `7f71de3` was cherry-picked as `ade2f8c`. The worker reports ESLint/TypeScript/Vite build and 53 Vitest tests passing (28 added). The integrated Node-20/browser reruns are in progress, not yet claimed passed. Shared recovery uses a small pure module, the existing Zustand store and a focused hook; gameplay pages shed duplicated save logic. No dependency, database model or new infrastructure service was introduced. UI and server agree that latest accepted receipt may have an identity below maximum and newly finalized reports may contain unanswered questions.
+UI task `7f71de3` was cherry-picked as `ade2f8c`; review fixes culminate in `6d32de6`. Integrated Node-20 checks and 73 Vitest tests passed (48 added against the foundation). Shared recovery uses a small pure module, the existing Zustand store and a focused hook; gameplay pages shed duplicated save logic. No dependency, database model or new infrastructure service was introduced. UI and server agree that latest accepted receipt may have an identity below maximum and newly finalized reports may contain unanswered questions.
+
+### Integrated verification — 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
+
+- Backend: full Ruff passed; all 251 pytest cases passed on Python 3.12.14, PostgreSQL 16.15 and Redis 7 with explicit test settings and isolated Redis DB 7. The run was at 2b5d06c; the backend tree is byte-for-byte unchanged in the reviewed final commit. This includes 106 added cases, five real PostgreSQL lock-order/race tests, and two regressions that route unpinned reads to an unavailable replica alias. The actual lock, replay/manifest/scoring and recovery reads use primary; no live replica was inspected or provisioned.
+- Frontend: ESLint, TypeScript, 73 Vitest tests across six files, and Vite build passed under Node 20.20.2 / npm 10.8.2 on the reviewed final commit. Foundation clean installation already passed; dependency manifests/resolutions remain unchanged by the feature, apart from the integration script.
+- Built SPA / real API: all four Chromium integration cases passed after rebuilding against the isolated API: committed response lost then reload/finalize; uncertain classwork save then same-session resume; actual PIN hashing/JWT/user throttling; expired refresh authentication then same-learner recovery of a finish queue. Each persistence case verifies synthetic database counts/results/XP. No service worker was registered. Runner used Node 24.19.0 / npm 11.9.0 and trusted local Chromium 151; the separate CI-version frontend checks used Node 20.
+- Schema: YAML parsed, all 33 local references resolved, and the three recovery routes checked. This is a targeted consistency check, not full OpenAPI validation. Backend/frontend contract regressions validate receipts and unsafe older-response handling.
+- Guards: non-loopback API origin rejected before network activity; inherited replica URL rejected before fixture queries. Existing CI workflow unchanged. Existing factory/Ruff deprecation notices, Router future-flag notices and missing icon warning were not hidden with disabled checks.
+- GitHub CI, production hostname/source attribution, AWS configuration, release capacity, and the older mock-only smoke suite are not verified by these local checks. No tournament concurrency or load-readiness claim follows from this feature.
+
+### Review findings and fixes
+
+The independent reviewer reproduced failures rather than accepting green unit counts. Findings were corrected in these integrated commits:
+
+| Finding | Fix / evidence |
+|---|---|
+| Active practice with all server questions terminal and absent/corrupt/denied storage could not finish | `142fecc`: normal finalize path, with three actual-page regressions |
+| A different payload at the same identity had no actionable conflict recovery | `4a4822a`: validate/display own server receipt, retain the local payload until explicit server-answer choice; preserve neighbors/manifest |
+| Unavailable storage allowed another session to silently replace the sole pending buffer | `a49f928`: retain it, offer return/discard, discover classwork memory state, invalidate stale callbacks; one store remains |
+| Submitted-session resume had no result retrieval action | `a49f928`: shared confirmed-result retrieval, retained manifest, single automatic attempt and explicit retry after failure |
+| Later queued identities after a conflict could repeatedly hit definitive terminal rejection | `a49f928`: explicit exclusion only for validated failed-snapshot item-level attempt-limit errors; uncertain closed-session work remains retained |
+| Optional replica routing could violate primary consistency under the session lock | `2b5d06c`: pin authoritative reads/writes and best-record reads to primary, with stale-router regressions |
+| Browser fault test intercepted the obsolete single endpoint; dev toolbar caused periodic five-second DNS waits | `cf8f36e`: intercept the actual bulk endpoint; isolated base-settings runner avoids toolbar overhead; direct DNS timing reproduced the local delay |
+| Session request timeout did not bound a subsequent authentication refresh | `a49f928`: ten-second refresh request timeout and real interceptor regression preserving pending work |
+| Rejected-item storage could include unknown/private API error fields | `6d32de6`: reconstruct only the validated question/attempt identity, with identity/index-fallback storage regressions |
+
+Independent review accepted the exact final code SHA above with no remaining blocking findings. Four external QA cases passed: active result resume, submitted result resume, memory-only queue preservation, and conflict adoption followed by terminal exclusion with private-field nonpersistence. Focused reviewer runs passed 16 frontend cases (32 intentionally unselected) and 16 backend cases; these supplement the full coordinator runs, not replace them. The final handoff changes only documentation.
+
+These fixes add no tables, migrations, runtime dependencies or services. Teacher/profile screens changed only where sign-out/account removal needed pending-work isolation; this is not the teacher-dashboard feature. The pre-existing authentication refresh callback lacks a separate account-generation guard; broader authentication race hardening remains a separate concern, not a tested guarantee of this slice.
+
+### Developer handoff and PR-ready description
+
+Title: **Recover learning answers safely and score each question once**
+
+Interrupted saves could lose acknowledgment, create repeat writes or credit one question more than once. This branch adds explicit v2 immutable attempt identities, atomic bulk receipts and finish manifests, then connects the existing practice/classwork pages to bounded same-tab recovery. Practice feedback/retry interactions remain; classwork waits for acceptance; results require confirmed persistence. Newly finalized results count each frozen question once, while existing finalized history is left untouched.
+
+Review order: `feat-Sagar@c81416d` baseline, then `chore/agent-workflow@b03d167`, then `feat/answer-recovery`. All integration PRs target main and remain drafts while prerequisites are unmerged. Do not push new work to feat-Sagar or merge/deploy from this agent task.
+
+- [Published foundation](https://github.com/aranya-squad/Bolt-V1/tree/chore/agent-workflow)
+- [Feature branch](https://github.com/aranya-squad/Bolt-V1/tree/feat/answer-recovery)
+- [Feature-only comparison](https://github.com/aranya-squad/Bolt-V1/compare/b03d167...feat/answer-recovery)
+- [Complete comparison against main](https://github.com/aranya-squad/Bolt-V1/compare/main...feat/answer-recovery) — includes baseline/foundation prerequisites
+
+Vet locally using the commands/setup above, then check normal wrong/correct practice retries, classwork retry/test mode, reload while offline, failed finish/retry, sign-out confirmation/account switching, denied browser storage return/discard, and timed/flash resume without a fresh duration or invented unseen skips. Unit/page tests cover these additional edges; the four listed browser scenarios are the executed real-API subset.
+
+No new migration/backfill is required. Backend must become compatible before the upgraded frontend is released; absent-version callers remain supported but their transport retries are not made replay-safe. Upgraded UI pauses on an incompatible API rather than falsely acknowledging answers. Legacy nullable identities require a separately approved historical-data decision. New scoring stores a version marker in existing session JSON; rollback must preserve interpretation of those new records and must not rewrite historical results or discard pending queues.
+
+Recovery uses sessionStorage, so closing the tab/browser or moving devices is outside its durability promise. Storage-denied recovery survives only in this running tab; explicit discard/logout intentionally removes it. Competition timing/fairness, cross-device/multi-tab coordination, production load testing and AWS optimization remain separate approved work. Live frontend ownership still needs human confirmation before release.
+
+GitHub draft-PR API creation was blocked by Forbidden; no PR number or GitHub CI success is claimed. Native Git publication and this PR-ready description provide the handoff. Human developers own review, prerequisite integration, CI verification and eventual production deployment.
