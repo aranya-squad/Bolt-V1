@@ -17,7 +17,8 @@ export function CreateBatchModal({ onClose }: Props) {
     mutate(name.trim(), { onSuccess: onClose });
   }
 
-  const errMsg = (error as { response?: { data?: { name?: string[] } } })?.response?.data?.name?.[0];
+  const errMsg = (error as { response?: { data?: { name?: string[] } } })?.response?.data?.name?.[0]
+    || (error ? "Could not create the batch. Please try again." : undefined);
 
   return (
     <>

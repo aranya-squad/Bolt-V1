@@ -38,6 +38,7 @@ export const teacherKeys = {
   roster: (identity: TeacherIdentity | null, id: string | undefined) => [...teacherKeys.rosters(identity), id] as const,
   matrices: (identity: TeacherIdentity | null) => [...teacherKeys.root(identity), "level-dashboard"] as const,
   matrix: (identity: TeacherIdentity | null, id: string) => [...teacherKeys.matrices(identity), id] as const,
+  catalogue: (identity: TeacherIdentity | null) => [...teacherKeys.root(identity), "level-catalogue"] as const,
 };
 export const teacherQueryDefaults = {
   staleTime: 1000 * 60 * 2,

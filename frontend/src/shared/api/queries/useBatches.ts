@@ -13,7 +13,7 @@ async function createBatch(name: string, signal: AbortSignal): Promise<Batch> {
   return data;
 }
 
-async function patchBatch(id: string, payload: Partial<Pick<Batch, "name" | "live_session_link" | "is_active">>, signal: AbortSignal): Promise<Batch> {
+async function patchBatch(id: string, payload: Partial<Pick<Batch, "name" | "live_session_link" | "is_active" | "assigned_level_ids">>, signal: AbortSignal): Promise<Batch> {
   const { data } = await apiClient.patch<Batch>(`/classes/${id}/`, payload, { signal });
   return data;
 }

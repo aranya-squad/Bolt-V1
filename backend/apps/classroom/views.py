@@ -1,4 +1,5 @@
-from django.db.models import Avg, Count, Q
+from django.db import transaction
+from django.db.models import Avg, Count, Prefetch, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -32,6 +33,13 @@ class ClassListCreateView(APIView):
             .annotate(
                 active_student_count=Count("enrollments", filter=Q(enrollments__is_active=True))
             )
+            .prefetch_related(
+                Prefetch(
+                    "assigned_levels",
+                    queryset=Level.objects.using("default").order_by("order"),
+                    to_attr="serialized_assigned_levels",
+                )
+            )
         )
         return Response(ClassSerializer(qs, many=True).data)
 
@@ -43,16 +51,19 @@ class ClassListCreateView(APIView):
 
 
 class ClassDetailView(APIView):
-    """PATCH /classes/{id}/ — update name/live_link/is_active (owner only)."""
+    """PATCH /classes/{id}/ — atomically update owned class fields/assigned levels."""
 
     permission_classes = [IsAuthenticated, IsTeacher]
 
     def _get_own(self, request, pk):
         try:
-            return Class.objects.get(pk=pk, teacher=request.user)
+            return (
+                Class.objects.using("default").select_for_update().get(pk=pk, teacher=request.user)
+            )
         except Class.DoesNotExist:
             return None
 
+    @transaction.atomic(using="default")
     def patch(self, request, pk):
         cls = self._get_own(request, pk)
         if cls is None:

@@ -156,6 +156,9 @@ export interface Batch {
   is_active: boolean;
   created_at: string;
   student_count: number;
+  // Optional only for compatibility with an older backend: absent means the
+  // assignment editor is unavailable, rather than an empty saved selection.
+  assigned_level_ids?: string[];
 }
 
 export interface RosterStudent {

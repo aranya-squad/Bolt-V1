@@ -215,7 +215,7 @@ def test_reporting_query_budgets_do_not_grow(students, class_count):
     completed(users[0], lesson, progress=progress)
     factory = APIRequestFactory()
     for view, kwargs, budget, expected_rows in [
-        (ClassListCreateView, {}, 1, class_count),
+        (ClassListCreateView, {}, 2, class_count),
         (RosterView, {"pk": classes[0].id}, 4, students),
         (TeacherLevelDashboardView, {"level_id": level.id}, 5, class_count),
     ]:

@@ -9,6 +9,7 @@ import { Page } from "@/shared/ui/Page";
 import type { RosterStudent } from "@/shared/types";
 import { RANK_NAMES } from "@/shared/lib/rankNames";
 import { useTeacherIdentity } from "@/shared/api/queries/teacherIdentity";
+import { AssignedLevelsEditor } from "./AssignedLevelsEditor";
 
 const TH: React.CSSProperties = {
   textAlign: "left",
@@ -104,6 +105,11 @@ export default function BatchDetailPage() {
           <p role="alert" className="t-body" style={{ color: "var(--err)" }}>
             {roster ? "Failed to refresh roster or batch details. Showing previously loaded data; try Refresh again." : "Failed to load roster or batch details. Try Refresh again."}
           </p>
+        )}
+
+        {batch && (
+          <AssignedLevelsEditor key={`${identity?.epoch}:${batch.id}`} batch={batch}
+            batchUnavailable={batchesQuery.isError || batchesQuery.isFetching} />
         )}
 
         {roster && roster.length === 0 && (

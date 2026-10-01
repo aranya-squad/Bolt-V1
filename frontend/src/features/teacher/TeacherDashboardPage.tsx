@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/shared/store/authStore";
 import { useBatches, usePatchBatch, useRotateJoinCode } from "@/shared/api/queries/useBatches";
-import { useLevels } from "@/shared/api/queries/useLevels";
+import { useTeacherCatalogue } from "@/shared/api/queries/useTeacherCatalogue";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { GlassCard } from "@/shared/ui/GlassCard";
@@ -134,7 +134,7 @@ export default function TeacherDashboardPage() {
   const navigate = useNavigate();
   const { data: batches, isLoading, isError, isFetching, refetch } = useBatches();
   const identity = useTeacherIdentity();
-  const { data: levels } = useLevels();
+  const { data: levels } = useTeacherCatalogue();
   const [createFor, setCreateFor] = useState<TeacherIdentity | null>(null);
 
   function handleLogout() {
