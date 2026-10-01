@@ -173,3 +173,14 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - HUMAN: owner says "Mark G as done" and requests 2–3 new features with mandatory PM/CTO/Head QA scope signoff in this Project/account Work environment. G is DONE by human acceptance; preserved prior evidence limitation, without asserting an independent fresh-session PASS.
 - Context setup is READY FOR HUMAN REVIEW; no setup implementation remains. Human dependency-order integration, hosted PR CI and actual live release evidence remain separate. No merge/deploy/live mutation.
 - Durable conditional planning rule added to AGENTS/bootstrap/agent-workflow, categorized template and ADR 0004. Distinct named agents define and verify two existing teacher workstreams before any coding. Routine implementation needs no extra generic human approval after unanimous scope signoff.
+
+
+## 2026-10-01 — Prospective Bolt AI-SDLC V1
+
+- Branch: `chore/bolt-ai-sdlc-v1`, stacked from `chore/ai-context-system-v2@ec74cf3`.
+- HUMAN: owner requested a lightweight end-to-end agentic SDLC for future feature ideas, preserving current work and human merge/deploy authority.
+- Completed: prospective workflow/gates; version-controlled `feature-scoper` skill source; scope/plan/specialist templates; stdlib deterministic gate checker with focused tests; ADR/router/bootstrap/workflow integration; Project Instructions addition template.
+- Adoption: applies from the next feature development onward. Teacher dashboard/roster correctness and existing batch-level-assignment work already in progress are grandfathered onto ADR 0004 unless explicitly opted in.
+- Verification: checker unit tests executed locally before publication (7 passing); no application/runtime/schema/CI job change. Gate checker is not wired as blocking CI at adoption.
+- Boundary: agents may push authorized feature branches through READY FOR HUMAN REVIEW; humans retain merge, release, deploy, live mutation and unresolved material decisions.
+- Remaining: install/enable the ChatGPT skill through the product UI if desired and add the supplied Project Instructions block; repository source control alone cannot change workspace settings.
