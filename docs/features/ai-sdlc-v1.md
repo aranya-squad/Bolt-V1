@@ -25,6 +25,14 @@ Existing CI YAML intentionally unchanged; its advisory scripts unittest discover
 will find the new test. Backend/frontend source untouched. Hosted CI/LIVE not
 claimed.
 
-Platform limitation: GitHub can persist the workflow but cannot itself register\nnative ChatGPT slash autocomplete, install/enable a workspace skill, or edit Project\nInstructions. Canonical sources are `skills/feature-scoper/SKILL.md` and\n`docs/templates/project-instructions-ai-sdlc.md`; compatibility addendum/mirror\nfiles remain available.
+Platform limitation: GitHub can persist the workflow but cannot itself register
+native ChatGPT slash autocomplete, install/enable a workspace skill, or edit Project
+Instructions. Canonical sources are `skills/feature-scoper/SKILL.md` and
+`docs/templates/project-instructions-ai-sdlc.md`; compatibility addendum/mirror
+files remain available.
 
-## Next Exact Action\n\nHuman-review this branch; add the Project Instructions routing snippet and, if the\nChatGPT UI requires it, install/enable the feature-scoper skill. Use feature-scoper\nfor the next new feature. No merge/deploy here.
+## Next Exact Action
+
+Human-review this branch; add the Project Instructions routing snippet and, if the
+ChatGPT UI requires it, install/enable the feature-scoper skill. Use feature-scoper
+for the next new feature. No merge/deploy here.

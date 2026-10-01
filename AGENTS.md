@@ -62,7 +62,9 @@ existing batch-level-assignment workstreams are grandfathered under the prior
 three-role gate.
 
 When a new chat message begins with `/feature-scoper`, or the owner explicitly
-asks to run feature-scoper, treat the supplied text as raw intake and follow the\ncanonical `skills/feature-scoper/SKILL.md` plus `docs/AI_SDLC.md`;\n`docs/skills/feature-scoper.md` remains a compatibility mirror. Do not jump to coding.
+asks to run feature-scoper, treat the supplied text as raw intake and follow the
+canonical `skills/feature-scoper/SKILL.md` plus `docs/AI_SDLC.md`;
+`docs/skills/feature-scoper.md` remains a compatibility mirror. Do not jump to coding.
 The coordinator verifies refs/source, runs risk routing, obtains PM + CTO + Head QA
 approval of one exact scope digest, creates the execution plan, validates G1/G2,
 then assigns bounded implementation work.

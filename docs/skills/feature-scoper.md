@@ -1,4 +1,7 @@
-# /feature-scoper — Bolt feature intake skill\n\nCanonical installable skill source: `skills/feature-scoper/SKILL.md`. This file is\nretained as a compact human-readable compatibility mirror.
+# /feature-scoper — Bolt feature intake skill
+
+Canonical installable skill source: `skills/feature-scoper/SKILL.md`. This file is
+retained as a compact human-readable compatibility mirror.
 
 Invocation: `/feature-scoper <raw idea/context>`
 

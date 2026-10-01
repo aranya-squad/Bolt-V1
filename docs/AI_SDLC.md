@@ -66,7 +66,9 @@ Require exact scope SHA-256, categorized requirements, acceptance IDs, zero
 blockers, PM APPROVED, CTO APPROVED, Head QA APPROVED and every required specialist
 APPROVED against that same digest.
 
-`python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G1`\n\nCompatibility syntax using explicit `--scope` and `--plan` is also supported.
+`python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G1`
+
+Compatibility syntax using explicit `--scope` and `--plan` is also supported.
 
 No feature implementation before G1 PASS.
 
@@ -89,11 +91,15 @@ Coordinator integrates reviewed task commits. Independent code review + Head QA
 validate the exact integrated commit. Repeat required specialist review when the
 implementation materially affects that risk domain. Repair concrete findings;
 repeated architectural failures escalate to coordinator/CTO. Material scope change
-returns to G1. Run `python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G4` before quality handoff.\n\n## G5 — Human handoff
+returns to G1. Run `python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G4` before quality handoff.
+
+## G5 — Human handoff
 
 All required ACs pass, tasks complete, independent review PASS, QA PASS, required
 security PASS, final commit recorded, authorized feature branch pushed, no blocker,
-status READY FOR HUMAN REVIEW, merged=false and deployed=false. Run\n`python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G5`.\nAI stops here; a human developer decides merge and deployment.
+status READY FOR HUMAN REVIEW, merged=false and deployed=false. Run
+`python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G5`.
+AI stops here; a human developer decides merge and deployment.
 
 ## Human pause conditions
 

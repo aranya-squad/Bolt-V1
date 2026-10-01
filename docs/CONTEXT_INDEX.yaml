@@ -166,7 +166,9 @@ task_routes:
 
   feature_scoper:
     read:
-      - skills/feature-scoper/SKILL.md\n      - docs/skills/feature-scoper.md\n      - docs/AI_SDLC.md
+      - skills/feature-scoper/SKILL.md
+      - docs/skills/feature-scoper.md
+      - docs/AI_SDLC.md
       - docs/templates/feature-scope.md
       - docs/templates/feature-plan.json
     inspect:
@@ -175,8 +177,10 @@ task_routes:
       - relevant docs/features/<feature>.md
       - relevant SYSTEM_MAP / ADRs / source / tests
     verify:
-      - "python scripts/check_feature_gate.py --scope docs/features/<feature>.scope.md --plan docs/features/<feature>.plan.json --gate G1"
-      - "python scripts/check_feature_gate.py --scope docs/features/<feature>.scope.md --plan docs/features/<feature>.plan.json --gate G2"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G1"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G2"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G4"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G5"
     rule: "Prospective only after ADR 0005; never retrofit existing/in-flight features without explicit owner opt-in."
 
 change_impact:

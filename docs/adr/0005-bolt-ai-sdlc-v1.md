@@ -15,7 +15,9 @@ Current/in-flight work must not be broken or restarted.
 
 Adopt Bolt AI-SDLC V1 prospectively for new features started after this ADR's
 activation commit in the owner's Cloud dev - Bolt v1 Project/account Work sessions.
-The canonical reusable workflow source is `skills/feature-scoper/SKILL.md`; the\nProject text trigger `/feature-scoper` and explicit `@feature-scoper` invocation\nroute raw ideas through G0–G5 in `docs/AI_SDLC.md`. ADR 0004 PM+CTO+Head QA approval remains mandatory as G1;
+The canonical reusable workflow source is `skills/feature-scoper/SKILL.md`; the
+Project text trigger `/feature-scoper` and explicit `@feature-scoper` invocation
+route raw ideas through G0–G5 in `docs/AI_SDLC.md`. ADR 0004 PM+CTO+Head QA approval remains mandatory as G1;
 specialists are risk-routed. Freeze exact scope bytes, use standard-library gate
 checks, Wave → Category → User Story → Task planning, normally <=2 writers,
 independent integrated-code review and QA, and stop at pushed READY FOR HUMAN
@@ -34,7 +36,9 @@ dependency; conditional specialists keep simple work lightweight.
 ## Consequences
 
 New features create tracker + frozen scope + JSON plan. Material behavior/contract/
-acceptance changes require new digest/reapproval. Existing CI/application runtime\nis unchanged. Repository source control does not itself register native slash\nautocomplete, install a ChatGPT workspace skill, or edit Project Instructions. The checker validates records, not truth of claimed test/reviewer
+acceptance changes require new digest/reapproval. Existing CI/application runtime
+is unchanged. Repository source control does not itself register native slash
+autocomplete, install a ChatGPT workspace skill, or edit Project Instructions. The checker validates records, not truth of claimed test/reviewer
 evidence. ADR 0003 human integration/release boundaries remain.
 
 ## Evidence / human approval
