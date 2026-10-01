@@ -109,3 +109,14 @@ This is the durable cross-session development journal for ChatGPT Project work, 
   0 warnings; syntax/diff checks. Hosted CI not yet verified.
 - Remaining/next: cold-start trace and final consistency; feature tracker owns
   exact continuation. No runtime source, production data or live system changed.
+
+## 2026-10-01 — Context V2 cold-start validation
+
+- Branch: `chore/ai-context-system-v2`; resumed tooling checkpoint `cdaffa4`.
+- Completed: same-session compact-context exercise answered all 12 questions;
+  selectively traced practice UI → v2 API receipts → primary progress writes
+  and manifest finalization. Detailed evidence/limits live in the feature tracker.
+- Verification: Python 3.12.14, 18 checker tests pass; strict and advisory modes
+  each report 0 errors/0 warnings. Runtime diff against reviewed code remains empty.
+- Remaining/next: H final consistency/safety review and durable review checkpoint.
+  No independent agent/browser test, hosted CI or live inspection is claimed.

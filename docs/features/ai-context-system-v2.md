@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: 2c27fc8b4782e143ded2d293388ed46367cca501
+current_commit: cdaffa46d351a67997662b7dc7a3e867185a9be3
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -36,13 +36,16 @@ warning-only CI. No application changes, merge, deployment or live mutation.
 - E–F complete: offline standard-library checker, focused regression tests,
   independent advisory CI job and explicit promotion criteria in RUNBOOK.
 
+- G complete: all 12 cold-start questions resolved through the compact startup
+  and selective routes; actual practice answer/finalization path traced below.
+  Resumed published `cdaffa4`; A–F were preserved rather than restarted.
+
 ## In Progress
 
-- G: cold-start validation; H: final source/diff/path/consistency review.
+- H: final source/diff/path/consistency review and review checkpoint.
 
 ## Remaining
 
-- G: minimal-context cold-start validation and real UI → API → data trace.
 - H: final consistency, secrets/diff/path checks and review checkpoint.
 
 ## Verification
@@ -56,6 +59,55 @@ warning-only CI. No application changes, merge, deployment or live mutation.
 - CI: configuration inspected only; no hosted run claimed. Backend/frontend/build
   jobs and triggers unchanged; context job/steps advisory, build has no dependency.
 - Application test counts remain prior recorded evidence, not re-executed here.
+
+## Cold-start validation (G)
+
+PASS, 2026-10-01 at `cdaffa4`. Method: a same-session, constrained document
+exercise starting from only bootstrap/brief/router, then following selected
+routes. This is not an independent fresh-agent review or a new browser/API test.
+No full historical assessment or full dev log was needed to answer the questions.
+
+| Question | Recovered answer / selective evidence |
+|---|---|
+| 1. What is Bolt? | Abacus learning platform for students/teachers; PROJECT_BRIEF Product. |
+| 2. What is implemented? | Auth, levels/lessons, classwork/practice, progress/XP, classes/rosters/import and recovery on this lineage. Recorded recovery tests are local TEST; not production proof. |
+| 3. What is in progress? | Context V2 G–H; owning tracker gives exact remaining work. Recovery is READY FOR HUMAN REVIEW on its owning branch. |
+| 4. What is next? | Finish H, then human dependency-order review/integration, PR CI and live-source verification; tournament rules/load work stays separate. |
+| 5. What is blocked/unknown? | Live frontend revision, AWS topology and log availability UNKNOWN; tournament rules require HUMAN decision. None blocks this repository setup. |
+| 6. What is the architecture? | React/Router/Query/Axios/Zustand → DRF `/api/v1` → PostgreSQL; Redis cache/Celery. SYSTEM_MAP locates ownership; RUNBOOK distinguishes source deployment from LIVE. |
+| 7. Where is an API bug investigated? | Router api route → Django URL/view/serializer/contract, client schema/types/hooks/mocks/tests; reproduce actual request before changes. |
+| 8. Where is an outage investigated? | Router aws_deploy → RUNBOOK debugging route: deployed revision/origin, health, Caddy/web logs, worker/beat and DB/Redis when relevant/authorized. CloudWatch/Sentry availability must be verified. |
+| 9. What needs human approval? | Merge/release/live mutation, secrets/security decisions, destructive data/backfill, unresolved product/conflicting decisions and material scope expansion; bootstrap/ADR 0003. |
+| 10. How is a lost task resumed? | Inspect current refs, feature handoff/checkpoint and relevant history; continue committed work. Inaccessible uncommitted state is not assumed to survive; CLOUD_DEV_HANDOFF. |
+| 11. Who owns active state? | `docs/features/<feature>.md` on its branch; brief summarizes global state and log records history. CURRENT_STATE is pointer-only. |
+| 12. What wins conflicts? | Inspected authorized LIVE/current CODE beats summaries/history; explicit new HUMAN decisions supersede older policy and must be recorded. |
+
+### Real practice path traced (CODE)
+
+1. `frontend/src/features/practice/InArenaPage.tsx` loads `useSession`, calls
+   `useAnswerRecovery`, and enqueues an immutable attempt from `handleSubmit`.
+2. `frontend/src/shared/store/sessionStore.ts` persists the queue using
+   `answerRecovery.ts`/sessionStorage. `flush` refreshes mutable session metadata,
+   reconciles server receipts and sends batches of at most 100 through `submitBulk`.
+3. `frontend/src/shared/api/queries/useSession.ts` POSTs v2 to
+   `/api/v1/sessions/<id>/attempts/bulk/`; `validateBulk` verifies each receipt
+   against identity and payload before `acknowledge` removes pending work.
+4. `backend/config/urls.py` and `backend/apps/exercises/urls.py` route to
+   `BulkSubmitAttemptView`: authenticated own-session lookup, primary DB row lock
+   and atomic transaction. `attempt_contract.accept_batch` validates the batch,
+   handles exact replay/conflicts and calls `progress.services.record_attempt`
+   for new append-only `QuestionAttempt` rows. Server grading is authoritative.
+5. Store `finish` freezes the pending identity manifest, drains the queue, then
+   POSTs `/api/v1/sessions/<id>/submit/`. `FinalizeSessionView` locks the session,
+   validates required persisted identities and returns an existing result or
+   calls `progress.services.finalize_session`.
+6. That service derives score from persisted attempts, creates ProgressRecord/
+   XPEvent/completion state on primary, marks submitted with scoring version 2
+   and invalidates caches after commit. Client result validation precedes storage
+   cleanup and `onFinished` navigation to victory.
+
+Limits: same-tab recovery; no cross-device/tournament guarantee. No application
+tests or live health/provider/log inspection were performed by this exercise.
 
 ## Known Risks / Unknowns
 
@@ -71,9 +123,10 @@ None for this approved setup. Human review/integration/release remain later gate
 
 ## Next Exact Action
 
-Start from only bootstrap/brief/router; answer all 12 cold-start questions,
-selectively inspect the recovery UI → API → progress-service path, record evidence
-and limitations. Then inspect final diff/paths/safety and publish review checkpoint.
+Inspect final branch diff, canonical links/paths, secret-free additions and shared
+approval/source-of-truth boundaries; rerun affected documentation/tool checks.
+Update global brief and this tracker to READY FOR HUMAN REVIEW, commit and push
+the authorized branch after rechecking refs. Do not merge or deploy.
 
 ## Checkpoint convention
 
