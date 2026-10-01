@@ -164,6 +164,21 @@ describe("answer recovery API/storage boundary", () => {
     post.mockRejectedValueOnce(fail(409, { code: "identity_conflict", detail: "Identity conflict." }));
     expect(await store().flush()).toBe(false); expect(store().recovery?.pending).toEqual([valid]); expect(store().retryAt).toBeNull();
   });
+  it.each(["identity", "index"])("rejected %s error entries persist only the validated identity, never unknown/private fields", async source => {
+    setup(); const bad = store().enqueue(1, false)!; const valid = store().enqueue(2, false)!;
+    const identity = { question_index: bad.question_index, attempt_number: bad.attempt_number };
+    const errorItem = { ...(source === "identity" ? identity : {}), index: 0, code: "invalid_attempt", detail: "synthetic server detail", expected_answer: 987654321, private_note: "synthetic private note" };
+    vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(400, { detail: "Rejected input.", items: [errorItem] }));
+    expect(await store().flush()).toBe(false);
+    expect(store().recovery?.rejected).toEqual([identity]);
+    const raw = sessionStorage.getItem(storageKey(user.id, "session-1"))!;
+    const stored: { rejected: unknown[] } = JSON.parse(raw);
+    expect(stored.rejected).toEqual([identity]);
+    expect(raw).not.toMatch(/expected_answer|private_note|987654321|synthetic server detail|synthetic private note|invalid_attempt/);
+    store().excludeRejected();
+    expect(store().recovery?.pending).toEqual([valid]);
+    expect(store().recovery?.rejected).toEqual([]);
+  });
   it("a transient save error can retry through metadata reconciliation and drain normally", async () => {
     const meta = setup(); const item = store().enqueue(2, false)!;
     const post = vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(503)).mockResolvedValueOnce({ data: { contract_version: 2, verdicts: [receipt(item)] } });

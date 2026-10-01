@@ -69,8 +69,11 @@ function failure(error: unknown, snapshot: PendingAttempt[] = []) {
     if (status === 400 || status === 409 || status === 404) {
       const rejected = (status === 400 || status === 409 && body.code === "attempt_limit") && Array.isArray(body.items) ? body.items.flatMap((item: unknown) => {
         if (status === 409 && (typeof item !== "object" || item === null || !("code" in item) || item.code !== "attempt_limit")) return [];
-        if (isIdentity(item)) return snapshot.some(a => identityKey(a) === identityKey(item)) ? [item] : [];
-        if (typeof item === "object" && item !== null && "index" in item && typeof item.index === "number" && Number.isInteger(item.index) && snapshot[item.index]) return [snapshot[item.index]];
+        if (isIdentity(item)) return snapshot.some(a => identityKey(a) === identityKey(item)) ? [{ question_index: item.question_index, attempt_number: item.attempt_number }] : [];
+        if (typeof item === "object" && item !== null && "index" in item && typeof item.index === "number" && Number.isInteger(item.index) && snapshot[item.index]) {
+          const { question_index, attempt_number } = snapshot[item.index];
+          return [{ question_index, attempt_number }];
+        }
         return [];
       }) : [];
       if (store.recovery && rejected.length) persist({ ...store.recovery, rejected });
