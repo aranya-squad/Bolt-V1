@@ -1,6 +1,6 @@
 # Answer recovery: approved plan and delivery record
 
-Status: approved by the task owner on 01 October 2026. AR-01/02 foundation checks passed; implementation has not started. Main and feat-Sagar remain frozen. No AWS deployment is authorized.
+Status: approved by the task owner on 01 October 2026. AR-01/02 foundation is published at b03d167. AR-03 wire contract is agreed for implementation; coding assignments follow this commit. Main and feat-Sagar remain frozen. No AWS deployment is authorized.
 
 Second-pass revision: 01 October 2026, Asia/Kolkata. The task owner approved this contract, branch policy, limits, guidelines and bounded agent delegation, and requested a small implementation suited to a 3–4 developer indie team.
 
@@ -228,3 +228,24 @@ After approval, work can proceed without the owner present on a workstation whil
 - Node 24.19.0 / npm 11.9.0 / Python 3.12.14 in this environment. CI specifies Node 20 / Python 3.12; Node 20 verification remains outstanding and local success is not GitHub CI evidence.
 - The install regenerated the existing MSW worker; that unrelated generated change was restored and excluded from publication.
 - Existing Ruff configuration and factory warnings remain; no checks were disabled to hide them.
+
+### AR-03 wire contract and runtime ownership
+
+Implement these exact field names in addition to the frozen behavioral contract above. No new endpoint or model is required.
+
+| Surface | Fields / behavior |
+|---|---|
+| Session GET/start metadata | `attempt_contract_version: 2`, `state: active/submitted/abandoned`, `started_at`, `server_now`, nullable `lesson_id`/`level_id`, existing effective `time_limit_sec`/`flash_speed_ms`/`is_test_mode`, `question_states` |
+| Each question state | `question_index`, `max_attempt_number` (0 when none), `attempt_count`, `terminal`, nullable `latest_receipt`; bounded by question count, not lifetime retries |
+| Accepted receipt | `contract_version: 2`, `question_index`, `attempt_number`, `accepted: true`, canonical `submitted_answer`, original `elapsed_ms`, `is_skip`, `is_correct`, `xp_delta: 0` |
+| Single/bulk | Single body adds version/identity; bulk envelope adds version and keeps `attempts`. Bulk returns `{contract_version: 2, verdicts: receipts}`. Each receipt includes its version; HTTP success alone is not acceptance. |
+| Finalize | `{contract_version: 2, expected_attempts: identities}`; result retains ProgressRecord keys and adds `contract_version: 2`. Validate required identities even for an existing result. |
+| Errors | `code`, `detail`, optional `items` (input index/identity/code/detail), own-session `receipt` for identity conflict, `missing_attempts` for incomplete manifest. Preserve tenant-safe 401/404. |
+| Legacy nullable rows | Do not renumber/backfill. Session metadata advertises version 1 if any attempt identity is null; upgraded UI blocks unsafe resumed input and explains incompatibility. Ordinary legacy non-null sessions can reconcile from stored identities. Completed history remains unchanged. |
+| Frozen timing / scoring | For new sessions freeze effective `time_limit_sec` in existing config; existing sessions use documented fallback. Persist `scoring_version: 2` in existing config only when newly finalizing; reports without marker keep historical interpretation. Keep generator parameters intact. |
+
+The API worker owns backend implementation/tests only; frontend worker owns runtime types, queue, hooks, gameplay and narrow auth/logout wiring only. Coordinator alone edits OpenAPI, feature docs, package.json integration test command, Playwright integration configuration and e2e files. Mocks belong to the frontend worker. Workers read this contract and report disagreement before writing a divergent field.
+
+Local implementation resources: PostgreSQL 16 at loopback port 5544, Redis 7 at loopback port 6385. API worker uses `bolt_recovery_api` and Redis DB 4; integration uses `bolt_recovery_integration` and Redis DB 5; reviewer uses `bolt_recovery_review` and Redis DB 6. API/frontend integration ports are 8011/4181. Each DB test run creates its own prefixed test DB. Private connection/environment configuration is outside Git. Use test settings explicitly for unit tests; the built-SPA integration runner uses real hashing/JWT/throttles and synthetic users.
+
+Gate status: G0 approved, G1 passed locally, G2 contract/schema committed with disjoint ownership. Historical-null fixtures must verify the safe capability fallback; no production data scan/migration is authorized. G3–G5 are pending. GitHub draft-PR creation returned API Forbidden; native foundation push succeeded, and GitHub CI remains unverified.

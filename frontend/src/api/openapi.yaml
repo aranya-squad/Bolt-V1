@@ -97,6 +97,17 @@ components:
         kind:           { type: string, enum: [CLASSWORK, HOMEWORK, FLASH_CARDS, ZEN, TIME_ATTACK, CUSTOM] }
         questions:      { type: array, items: { $ref: "#/components/schemas/SessionQuestion" } }
         time_limit_sec: { type: integer, description: "0 means no time limit" }
+        is_test_mode: { type: boolean }
+        flash_speed_ms: { type: integer, nullable: true }
+        attempt_contract_version: { type: integer, enum: [1, 2], description: "Version 1 denotes legacy nullable identities that cannot safely resume via v2." }
+        state: { type: string, enum: [active, submitted, abandoned] }
+        started_at: { type: string, format: date-time }
+        server_now: { type: string, format: date-time }
+        lesson_id: { type: string, nullable: true }
+        level_id: { type: string, nullable: true }
+        question_states:
+          type: array
+          items: { $ref: "#/components/schemas/QuestionState" }
 
     AttemptVerdict:
       type: object
@@ -105,6 +116,69 @@ components:
         question_index: { type: integer }
         is_correct:     { type: boolean }
         xp_delta:       { type: integer }
+
+    AttemptIdentity:
+      type: object
+      required: [question_index, attempt_number]
+      properties:
+        question_index: { type: integer, minimum: 0, maximum: 32767 }
+        attempt_number: { type: integer, minimum: 1, maximum: 32767 }
+
+    AttemptInputV2:
+      allOf:
+        - $ref: "#/components/schemas/AttemptIdentity"
+        - type: object
+          required: [answer, elapsed_ms]
+          properties:
+            answer: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            elapsed_ms: { type: integer, minimum: 0, maximum: 2147483647 }
+            is_skip: { type: boolean }
+
+    AttemptReceipt:
+      allOf:
+        - $ref: "#/components/schemas/AttemptVerdict"
+        - $ref: "#/components/schemas/AttemptIdentity"
+        - type: object
+          required: [contract_version, accepted, submitted_answer, elapsed_ms, is_skip]
+          properties:
+            contract_version: { type: integer, enum: [2] }
+            accepted: { type: boolean, enum: [true] }
+            submitted_answer: { type: integer }
+            elapsed_ms: { type: integer }
+            is_skip: { type: boolean }
+
+    QuestionState:
+      type: object
+      required: [question_index, max_attempt_number, attempt_count, terminal, latest_receipt]
+      properties:
+        question_index: { type: integer }
+        max_attempt_number: { type: integer, minimum: 0, maximum: 32767 }
+        attempt_count: { type: integer, minimum: 0 }
+        terminal: { type: boolean }
+        latest_receipt:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/AttemptReceipt" }]
+
+    RecoveryError:
+      type: object
+      required: [code, detail]
+      properties:
+        code: { type: string, enum: [invalid_attempt, duplicate_identity, identity_conflict, attempt_limit, session_closed, pending_attempts, unsupported_contract] }
+        detail: { type: string }
+        receipt: { $ref: "#/components/schemas/AttemptReceipt" }
+        missing_attempts:
+          type: array
+          items: { $ref: "#/components/schemas/AttemptIdentity" }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              index: { type: integer }
+              question_index: { type: integer }
+              attempt_number: { type: integer }
+              code: { type: string }
+              detail: { type: string }
 
     ProgressRecord:
       type: object
@@ -118,6 +192,7 @@ components:
         time_taken_sec:  { type: integer }
         xp_earned:       { type: integer }
         created_at:      { type: string, format: date-time }
+        contract_version: { type: integer, enum: [2], description: "Present on successful v2 finalize responses." }
 
     QuestionAttempt:
       type: object
@@ -133,7 +208,7 @@ components:
 
     QuestionVerdict:
       type: string
-      enum: [correct, wrong, fixed]
+      enum: [correct, wrong, fixed, skipped]
 
     SessionReport:
       type: object
@@ -384,7 +459,7 @@ paths:
 
   /sessions/{sessionId}/attempts/:
     post:
-      summary: Submit an answer attempt for a question
+      summary: Submit an answer; v2 stable identity is replay-safe, absent version is legacy
       parameters:
         - name: sessionId
           in: path
@@ -401,11 +476,58 @@ paths:
                 question_index: { type: integer }
                 answer:         { type: integer }
                 elapsed_ms:     { type: integer }
+                contract_version: { type: integer, enum: [2] }
+                attempt_number: { type: integer, minimum: 1, maximum: 32767 }
+                is_skip: { type: boolean }
       responses:
         200:
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/AttemptVerdict" }
+              schema:
+                oneOf:
+                  - { $ref: "#/components/schemas/AttemptVerdict" }
+                  - { $ref: "#/components/schemas/AttemptReceipt" }
+        400:
+          description: Invalid input or unsupported explicit version
+        409:
+          description: Conflicting identity, terminal question or closed session
+
+  /sessions/{sessionId}/attempts/bulk/:
+    post:
+      summary: Atomic v2 batch; legacy absent-version behavior is retained during rollout
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [attempts]
+              properties:
+                contract_version: { type: integer, enum: [2] }
+                attempts:
+                  type: array
+                  maxItems: 100
+                  items: { $ref: "#/components/schemas/AttemptInputV2" }
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contract_version: { type: integer, enum: [2] }
+                  verdicts:
+                    type: array
+                    items: { $ref: "#/components/schemas/AttemptReceipt" }
+        400:
+          description: Invalid batch; v2 creates zero new rows
+        409:
+          description: Identity or session conflict; v2 creates zero new rows
 
   /sessions/{sessionId}/submit/:
     post:
@@ -415,11 +537,26 @@ paths:
           in: path
           required: true
           schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                contract_version: { type: integer, enum: [2] }
+                expected_attempts:
+                  type: array
+                  maxItems: 200
+                  uniqueItems: true
+                  description: Required for v2; retain finish-time unresolved identities until submit is acknowledged.
+                  items: { $ref: "#/components/schemas/AttemptIdentity" }
       responses:
         200:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ProgressRecord" }
+        409:
+          description: Declared required identities missing or session abandoned; no new result or XP
 
   /sessions/{sessionId}/report/:
     get:
