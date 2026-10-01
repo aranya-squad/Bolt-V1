@@ -62,6 +62,7 @@ Use `CODE`, `LIVE`, `CI`, `TEST`, `HUMAN`, `PROPOSAL`, and `UNKNOWN` when the di
   feature needs PM, Senior Tech Manager/CTO and Head QA agent signoff of one exact
   scope before coding. Follow the environment-specific gate in AGENTS and
   `docs/agent-workflow.md`; preserve its limited applicability.
+- Feature ideas initiated after the 2026-10-01 Bolt AI-SDLC V1 adoption checkpoint use `docs/AI_SDLC.md`; work already in progress at adoption is grandfathered unless the owner opts it in. `/feature-scoper` means run that prospective workflow. Do not let the new gate retroactively block existing work.
 
 ## Task completion
 
