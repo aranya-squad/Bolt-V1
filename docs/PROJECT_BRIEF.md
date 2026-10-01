@@ -2,7 +2,7 @@
 last_updated: 2026-10-01
 verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
 verified_context_branch: chore/ai-context-system-v2
-verified_context_commit: dd09954b1292af7980d9703a15a0624245ffe713
+verified_context_commit: ce544953295b386b5a8cfff532240d1732692131
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -81,6 +81,11 @@ migrated startup, checker (18 tests), advisory CI and final consistency review.
 Completeness review found G evidence limited to a same-session exercise. A fresh
 session must validate the 12 questions/source trace before final readiness.
 Hosted CI and live systems have not been verified.
+
+The subsequent verification attempt recovered the topics/source trace but was
+contaminated by a commit-detail response exposing prior answers. It cannot close
+G. Bootstrap now specifies ref-only inspection and delayed patches for this test.
+No setup implementation gap was identified; clean-session validation remains.
 
 Active setup status and next exact action: `docs/features/ai-context-system-v2.md`.
 One-time implementation specification: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.

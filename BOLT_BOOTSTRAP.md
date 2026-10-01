@@ -16,6 +16,15 @@ For any substantial Bolt task:
 
 Do not begin implementation from summaries alone.
 
+For a cold-start verification, inspect refs through `git ls-remote` or GitHub's
+branch/ref endpoints. Commit-detail tools may return patches containing prior
+answers. Record startup-only answers before reading any commit diff, setup
+handoff, feature tracker, historical assessment or previous validation report.
+Then follow selective routes and record the source trace before comparing with
+the setup requirements. If prior answers were exposed early, label the run
+contaminated and repeat in a clean session; checker success cannot repair that
+evidence gap.
+
 ## Evidence order
 
 Prefer truth in this order:

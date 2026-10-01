@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: dd09954b1292af7980d9703a15a0624245ffe713
+current_commit: ce544953295b386b5a8cfff532240d1732692131
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -170,6 +170,34 @@ Role/consent changes need the W0-PROD-03 product matrix. Unknown-call-sign auth,
 image exclusions and internal health/bootstrap repairs remain separate prerelease
 backlog; the current login source still contains the malformed dummy hash.
 
+## Verification attempt — 2026-10-01, starting at ce544953
+
+- Remote refs rechecked through connected GitHub: setup `ce544953`, main
+  `cec94ea`, recovery `88cfff2`, workflow `b03d167`, continuous context `c8675e6`;
+  no newer remote work found. Clean local checkout copied into an isolated task
+  directory; original checkouts were preserved.
+- **G FAIL for fresh-session certification.** During initial ref inspection,
+  `fetch_commit` returned the previous cold-start answers in its diff before the
+  startup-only answers were recorded. This is a procedure failure, not evidence
+  of a missing product/source route. Prior chat/project memory was not evidence.
+- Startup-constrained answers and subsequent actual-source practice trace were
+  recorded before intentionally opening tracker/handoff in
+  `docs/context-verification-2026-10-01.md`. All 12 topics were recoverable;
+  exact architecture/request/persistence/outage investigation required selective
+  SYSTEM_MAP/RUNBOOK/source retrieval as designed. No semantic gap was identified.
+- Repaired the verification procedure in BOLT_BOOTSTRAP: use ref-only endpoints,
+  defer commit patches/trackers/previous answers, and reject contaminated runs.
+  This repair needs a genuinely clean session to establish its fresh-context
+  outcome. No remaining setup implementation identified; G evidence remains.
+- TEST: Python 3.12, 18 checker regressions pass; strict and advisory modes report
+  0 errors/0 warnings. H candidate checks and limitations are recorded in the
+  verification report. No runtime/schema/migration changes; no live actions.
+- CI: connected GitHub returned no PR-triggered runs for `ce544953`; query is
+  first-page/PR-filtered, not a complete CI audit. Publication is not CI proof.
+- Setup stays IN PROGRESS; do not restore review readiness from this attempt.
+  Teacher-dashboard assessment may proceed as independent planning, without
+  implementing that feature or implying setup is closed.
+
 ## Known Risks / Unknowns
 
 - LIVE: AWS/Vercel revision, infrastructure, logs and health remain UNKNOWN;
@@ -188,6 +216,11 @@ Run a new session starting only from repository identity/ref plus BOLT_BOOTSTRAP
 PROJECT_BRIEF and CONTEXT_INDEX. Answer the 12 G questions, follow selective routes
 and trace UI → API → persistence; publish its actual result/limitations here and
 recheck H. Do not infer a new-session pass from this transcript.
+
+Use branch/ref endpoints only until the startup answers and source trace are
+recorded. Avoid `fetch_commit` at this stage: it returns patches that can expose
+prior answers. Do not read `docs/context-verification-2026-10-01.md` before the
+new run's answers/trace. A passing clean G run is the exact remaining setup gate.
 
 Then human reviewers inspect the context-only range
 `c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35..chore/ai-context-system-v2`, then

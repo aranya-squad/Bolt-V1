@@ -151,3 +151,11 @@ This is the durable cross-session development journal for ChatGPT Project work, 
   screens. Tournament rounds need rules; prerelease auth/image/health work remains.
 - Next exact setup action: independent fresh-context session runs G and records
   result, then recheck H and restore review readiness. No merge or deployment.
+
+## 2026-10-01 — Context verification attempt and method repair
+
+- Rechecked remote refs; setup remained ce544953, main cec94ea and recovery 88cfff2. Preserved all previous work and performed no merge/deploy/live mutation.
+- Startup answers and actual practice acceptance/finalization trace are recorded in `docs/context-verification-2026-10-01.md`. Ref inspection accidentally exposed previous answers through a commit-detail diff. G FAIL for freshness certification; setup remains IN PROGRESS rather than claiming closure.
+- Bootstrap now specifies branch/ref-only inspection and delayed patches/prior reports for cold-start tests. No source-recoverability or setup implementation defect identified. Next: a clean session repeats G, rechecks H and records readiness if it passes.
+- Executed: 18 checker tests, strict/advisory checker (0 errors/warnings), diff check and runtime equality against 6d32de6. No application/hosted/live test claim.
+- Teacher-dashboard reassessment continues as planning only; current screens/active enrollment/query amplification inspected.
