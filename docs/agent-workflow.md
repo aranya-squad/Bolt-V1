@@ -40,7 +40,7 @@ unresolved human product rules, consent/security policy or production mutation.
 
 For new features started after ADR 0005 activation, the three-role gate above is
 G1 inside the broader workflow in `docs/AI_SDLC.md` and
-`docs/skills/feature-scoper.md`. Activation is deliberately non-retroactive:
+`skills/feature-scoper/SKILL.md` (with `docs/skills/feature-scoper.md` retained as\na compatibility mirror). Activation is deliberately non-retroactive:
 completed, implemented or already-being-scoped features keep their current
 workflow unless the owner opts them in. Preserve the current teacher
 dashboard/roster-correctness and batch-level-assignment workstreams.
@@ -51,8 +51,7 @@ New AI-SDLC features use:
 - `docs/features/<feature>.plan.json`: approvals, risk route, Wave → Category →
   User Story → Task graph, traceability, quality evidence and publication state.
 
-Run `scripts/check_feature_gate.py` at G1 before coding, G2 before worker dispatch
-and G5 before READY FOR HUMAN REVIEW. The checker validates recorded invariants;
+Run `scripts/check_feature_gate.py` at G1 before coding, G2 before worker dispatch,\nG4 after integrated review/QA and G5 before READY FOR HUMAN REVIEW. The checker validates recorded invariants;
 it does not run agents/tests/Git or convert assertions into execution evidence.
 Default parallelism is one coordinator plus at most two independent writers,
 followed by integration and independent review/QA. Economical models may handle

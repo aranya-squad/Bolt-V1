@@ -1,9 +1,9 @@
 {
   "__instructions": [
     "Prospective AI-SDLC V1 only.",
-    "Hash exact <feature>.scope.md bytes into scope.sha256 and every approval.",
+    "Hash exact <feature>.scope.md bytes into scope.sha256, plan_scope_sha256 and every approval.",
     "Mutable status lives here, not in frozen scope.",
-    "Run check_feature_gate.py at G1/G2/G5."
+    "Run check_feature_gate.py at G1/G2/G4/G5."
   ],
   "ai_sdlc_version": 1,
   "prospective_only": true,
@@ -28,7 +28,7 @@
       "required": false,
       "reason": ""
     },
-    "devops": {
+    "operations": {
       "required": false,
       "reason": ""
     }
@@ -143,5 +143,11 @@
     "merged": false,
     "deployed": false
   },
-  "final_status": "IN PROGRESS"
+  "final_status": "IN PROGRESS",
+  "context": {
+    "remote_refs_checked": false,
+    "existing_behavior_inspected": false,
+    "dependencies_recorded": false
+  },
+  "plan_scope_sha256": "replace"
 }

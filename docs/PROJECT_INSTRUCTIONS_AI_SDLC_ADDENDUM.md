@@ -8,3 +8,4 @@ For prospective new Bolt features, a message beginning /feature-scoper is a dedi
 
 GitHub cannot itself register native slash-command autocomplete or edit the
 ChatGPT Project Instructions UI.
+\nCanonical source-controlled Project Instructions block: `docs/templates/project-instructions-ai-sdlc.md`.\nCanonical skill source: `skills/feature-scoper/SKILL.md`.\n

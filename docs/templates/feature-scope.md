@@ -30,6 +30,24 @@ and authoritative state. Do not rely solely on previous chat/product plans.
 Explicit non-goals, exclusions and product decisions. Record conservative defaults
 that reviewers can approve; escalate material ambiguous rules to the owner.
 
+## NEEDS
+
+Mandatory implementation contract. Give each need a stable ID such as `N-01`
+and map it to one or more observable Acceptance Criteria.
+
+## WANTS
+
+Useful ideas excluded from the current implementation unless explicitly promoted
+through a material scope revision.
+
+## DEFERRED
+
+Intentionally postponed work, including the reason/trigger when useful.
+
+## NON-GOALS
+
+Explicit boundaries that prevent accidental feature growth.
+
 ## Contract and implementation boundaries
 
 Actors/ownership; UX loading/empty/error/freshness; API fields/errors/compatibility;

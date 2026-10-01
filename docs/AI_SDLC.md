@@ -19,6 +19,14 @@ grandfathered work: teacher dashboard/roster correctness and existing batch leve
 assignment. Tiny bug/maintenance work may use normal workflow unless explicitly
 sent through `/feature-scoper` or it introduces new product behavior.
 
+## Feature-scoper entry point
+
+The canonical reusable skill source is `skills/feature-scoper/SKILL.md`.
+`@feature-scoper`, the Project text trigger `/feature-scoper`, or an explicit
+request to run the Bolt feature SDLC should use it. `docs/skills/feature-scoper.md`
+is retained as a compatibility/readable mirror. Repository files do not by
+themselves register native slash autocomplete or install a ChatGPT workspace skill.
+
 ## Roles and risk routing
 
 Always: SDLC Coordinator, Product Manager, Senior Tech Manager/CTO, Head QA.
@@ -29,7 +37,7 @@ triggered:
   secrets, privilege, destructive operations, abuse/rate limiting/security policy.
 - Data/Integrity for progress/scoring/XP/history, migrations/backfills,
   concurrency/locking/reconciliation or tournament fairness.
-- DevOps for CI/deployment/runtime/infrastructure contracts; live mutation still
+- Operations for CI/deployment/runtime/infrastructure contracts; live mutation still
   needs separate human authorization.
 
 Workers receive bounded tasks; independent reviewer inspects the integrated commit.
@@ -58,7 +66,7 @@ Require exact scope SHA-256, categorized requirements, acceptance IDs, zero
 blockers, PM APPROVED, CTO APPROVED, Head QA APPROVED and every required specialist
 APPROVED against that same digest.
 
-`python scripts/check_feature_gate.py --scope docs/features/<feature>.scope.md --plan docs/features/<feature>.plan.json --gate G1`
+`python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G1`\n\nCompatibility syntax using explicit `--scope` and `--plan` is also supported.
 
 No feature implementation before G1 PASS.
 
@@ -81,14 +89,11 @@ Coordinator integrates reviewed task commits. Independent code review + Head QA
 validate the exact integrated commit. Repeat required specialist review when the
 implementation materially affects that risk domain. Repair concrete findings;
 repeated architectural failures escalate to coordinator/CTO. Material scope change
-returns to G1.
-
-## G5 — Human handoff
+returns to G1. Run `python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G4` before quality handoff.\n\n## G5 — Human handoff
 
 All required ACs pass, tasks complete, independent review PASS, QA PASS, required
 security PASS, final commit recorded, authorized feature branch pushed, no blocker,
-status READY FOR HUMAN REVIEW, merged=false and deployed=false. Run checker with
-`--gate G5`. AI stops here; a human developer decides merge and deployment.
+status READY FOR HUMAN REVIEW, merged=false and deployed=false. Run\n`python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G5`.\nAI stops here; a human developer decides merge and deployment.
 
 ## Human pause conditions
 

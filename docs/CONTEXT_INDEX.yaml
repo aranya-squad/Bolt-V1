@@ -166,8 +166,7 @@ task_routes:
 
   feature_scoper:
     read:
-      - docs/skills/feature-scoper.md
-      - docs/AI_SDLC.md
+      - skills/feature-scoper/SKILL.md\n      - docs/skills/feature-scoper.md\n      - docs/AI_SDLC.md
       - docs/templates/feature-scope.md
       - docs/templates/feature-plan.json
     inspect:

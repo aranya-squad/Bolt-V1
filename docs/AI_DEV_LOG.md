@@ -180,18 +180,16 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - Goal: add a non-breaking AI-assisted SDLC and repo-backed `/feature-scoper`
   intake for the next new feature onward, preserving current work.
 - Completed: ADR 0005; G0–G5 workflow; PM/CTO/Head QA gate retained as G1;
-  conditional Frontend/Security/Data/DevOps routing; frozen scope + JSON
-  Wave→Category→Story→Task plan; deterministic gate checker; Project Instructions
-  routing addendum; bounded worker/review/QA/stop-at-push rules.
+  conditional Frontend/Security/Data/Operations routing; frozen scope + JSON\n  Wave→Category→Story→Task plan; deterministic G1/G2/G4/G5 gate checker; canonical\n  `skills/feature-scoper/SKILL.md` plus compatibility mirror; Project Instructions\n  template/addendum; bounded worker/review/QA/stop-at-push rules.
 - Grandfathered: teacher dashboard/roster correctness, current batch level
   assignment, and any other completed/in-progress/already-scoped work unless the
   owner explicitly opts it in.
 - Verification: remote head/diff verified; only governance/docs/checker/test files
-  changed; committed checker regressions pass 8/8 and Python compilation passes.
+  changed; focused checker regressions pass 15/15 in isolated validation and Python compilation passes.
   Existing CI YAML, backend/frontend runtime source, schema/dependencies and live
   infrastructure were not changed. Hosted CI/LIVE remain unverified.
 - Boundary: GitHub cannot register native ChatGPT slash autocomplete or edit the
-  Project Instructions UI; add `docs/PROJECT_INSTRUCTIONS_AI_SDLC_ADDENDUM.md`.
+  Project Instructions UI; canonical source-controlled guidance is\n  `docs/templates/project-instructions-ai-sdlc.md` and `skills/feature-scoper/SKILL.md`.
 - Next: human-review this branch and add the compact Project Instructions routing
   rule; use `/feature-scoper <idea>` for the next new feature. No merge/deploy.
 
