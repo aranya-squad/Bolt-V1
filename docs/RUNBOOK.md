@@ -82,6 +82,31 @@ Use the setup recorded in `docs/features/answer-recovery.md`. Do not call normal
 
 A push to an ordinary feature branch by itself does **not** prove CI ran.
 
+## Context freshness job (advisory)
+
+The independent `context-freshness` job uses Python 3.12 and full Git history.
+It runs `python -m unittest discover -s scripts/tests -v`, then
+`python scripts/check_context_freshness.py --warning-only --github-actions`.
+No dependencies beyond the standard library and Git; no network/production calls
+from the checker. Structural errors and freshness findings emit warning
+annotations. The checker returns zero in warning-only mode; job and steps also
+use `continue-on-error: true` to contain unexpected tooling failures. The build
+still depends only on backend/frontend, and triggers are unchanged.
+
+Local strict mode: `python scripts/check_context_freshness.py` exits nonzero on
+structural errors; age/history/source drift warnings alone remain advisory.
+An unavailable Git/export or shallow history produces a warning, not invented
+commit verification. Metadata accepts flat scalar YAML only. Source-drift checks
+compare backend/frontend with the brief's application verification checkpoint;
+they do not certify deployment or semantic accuracy of every summary.
+
+**Promotion criteria:** after representative PRs and exports/shallow/full-history
+runs show stable signals, a separately approved workflow change may remove
+warning-only mode and job/step continue-on-error. Make the resulting status a
+required PR check only with human branch-protection approval; decide explicitly
+whether age/source-drift warnings should ever block. Do not silently turn this
+initial rollout into an application release gate.
+
 ## Backend job
 
 - Ubuntu

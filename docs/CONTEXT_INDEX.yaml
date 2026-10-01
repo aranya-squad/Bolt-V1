@@ -102,6 +102,8 @@ task_routes:
       - docs/RUNBOOK.md#ci
     inspect:
       - .github/workflows/ci.yml
+      - scripts/check_context_freshness.py
+      - scripts/tests/test_context_freshness.py
       - frontend/package.json
       - backend/pyproject.toml
       - backend/requirements
@@ -136,6 +138,19 @@ task_routes:
       - relevant docs/adr/*.md
       - docs/ARCHITECTURE.md
     rule: "Current code + SYSTEM_MAP wins over stale design prose."
+
+  context_system:
+    read:
+      - docs/features/ai-context-system-v2.md
+      - docs/AI_CONTEXT_SYSTEM_SETUP.md
+      - docs/DECISIONS.md
+    inspect:
+      - scripts/check_context_freshness.py
+      - scripts/tests/test_context_freshness.py
+      - .github/workflows/ci.yml
+    verify:
+      - "python scripts/check_context_freshness.py"
+      - "python -m unittest discover -s scripts/tests -v"
 
   feature_continuation:
     inspect:

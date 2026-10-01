@@ -6,6 +6,26 @@ on:
     branches: [main]
 
 jobs:
+  context-freshness:
+    # Advisory rollout: no application/build dependency on this job.
+    continue-on-error: true
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Test offline context checker (advisory)
+        continue-on-error: true
+        run: python -m unittest discover -s scripts/tests -v
+      - name: Report context freshness warnings
+        continue-on-error: true
+        run: python scripts/check_context_freshness.py --warning-only --github-actions
+
   backend:
     runs-on: ubuntu-latest
     services:

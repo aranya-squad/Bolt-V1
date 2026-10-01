@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: 933bfd7488abd4b862cab8b4f79361bfb7d8a086
+current_commit: 2c27fc8b4782e143ded2d293388ed46367cca501
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -33,14 +33,15 @@ warning-only CI. No application changes, merge, deployment or live mutation.
   migrated; CURRENT_STATE is pointer-only; historical architecture/setup handoff
   labeled; recovery metadata prepended while its detailed body remains unchanged.
 
+- E–F complete: offline standard-library checker, focused regression tests,
+  independent advisory CI job and explicit promotion criteria in RUNBOOK.
+
 ## In Progress
 
-- E: implement context freshness checker and meaningful regression tests.
+- G: cold-start validation; H: final source/diff/path/consistency review.
 
 ## Remaining
 
-- E: standard-library freshness checker and focused tests.
-- F: independent warning-only CI integration and promotion criteria.
 - G: minimal-context cold-start validation and real UI → API → data trace.
 - H: final consistency, secrets/diff/path checks and review checkpoint.
 
@@ -50,8 +51,11 @@ warning-only CI. No application changes, merge, deployment or live mutation.
   code is preserved on this branch.
 - CODE: inspected Compose, Caddy, Gunicorn, CI, frontend scripts, session API
   hooks/routes and progress service ownership.
-- TEST: no new checker exists yet; application test results in answer-recovery
-  are prior recorded evidence, not re-executed or promoted to CI/LIVE here.
+- TEST: 18 checker regressions pass; strict and GitHub warning-only modes report
+  zero errors/warnings on the full clone. Python compilation and diff checks pass.
+- CI: configuration inspected only; no hosted run claimed. Backend/frontend/build
+  jobs and triggers unchanged; context job/steps advisory, build has no dependency.
+- Application test counts remain prior recorded evidence, not re-executed here.
 
 ## Known Risks / Unknowns
 
@@ -67,9 +71,9 @@ None for this approved setup. Human review/integration/release remain later gate
 
 ## Next Exact Action
 
-Implement scripts/check_context_freshness.py and focused standard-library tests
-(E); run against full repository, then integrate an independent warning-only CI
-job with documented promotion criteria (F).
+Start from only bootstrap/brief/router; answer all 12 cold-start questions,
+selectively inspect the recovery UI → API → progress-service path, record evidence
+and limitations. Then inspect final diff/paths/safety and publish review checkpoint.
 
 ## Checkpoint convention
 

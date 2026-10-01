@@ -98,3 +98,14 @@ This is the durable cross-session development journal for ChatGPT Project work, 
   startup; human integration/live mutation boundaries retained.
 - Remaining/next: checker/tests, warning-only CI, cold-start and final validation.
   Exact active progress: `docs/features/ai-context-system-v2.md`.
+
+## 2026-10-01 — Context freshness tooling and advisory CI
+
+- Branch: `chore/ai-context-system-v2`; migration checkpoint `2c27fc8`.
+- Completed: standard-library offline metadata/path/Git/source-drift checker;
+  regressions for missing/malformed/stale data, shallow history, advisory exit and
+  annotation escaping; isolated non-blocking CI job and promotion guidance.
+- Verification: 18 unit tests pass; strict/advisory repository checks: 0 errors,
+  0 warnings; syntax/diff checks. Hosted CI not yet verified.
+- Remaining/next: cold-start trace and final consistency; feature tracker owns
+  exact continuation. No runtime source, production data or live system changed.
