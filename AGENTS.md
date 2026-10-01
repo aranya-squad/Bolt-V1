@@ -51,6 +51,12 @@ scope; do not add an extra generic human scope-confirmation gate. Escalate genui
 unresolved product decisions/material expansions under the shared boundaries.
 See `docs/agent-workflow.md` and `docs/templates/feature-scope.md` for the record.
 
+### Prospective Bolt AI-SDLC V1
+
+HUMAN decision, 2026-10-01: feature ideas initiated after the AI-SDLC V1 adoption checkpoint use `docs/AI_SDLC.md`. Work already in progress at adoption is grandfathered onto its current ADR 0004 path unless the owner explicitly opts it in. Do not reopen or block current work solely to satisfy the new process.
+
+When `feature-scoper` is invoked (including the Project trigger `/feature-scoper`), classify new-feature versus continuation/bug first, then follow the prospective gates. Human decisions are authoritative: agents may challenge with evidence but do not silently override. Covered new feature coding requires G1 frozen-scope approval and G2 execution-plan validation. AI stops at G5 / READY FOR HUMAN REVIEW; human merge/release/live boundaries remain unchanged.
+
 1. Define the behavior, roles, acceptance criteria, dependencies and permitted code areas. Reproduce a reported defect before fixing it. Request approval when the task owner requires a planning gate.
 2. Create one integration branch/worktree per reviewable feature from a recorded base. If foundations are unmerged, document prerequisites, merge order and feature-only/full comparison ranges. Integration PRs target `main` and remain drafts while prerequisites are pending; helper branches integrate locally into the feature branch.
 3. Delegate bounded independent tasks when authorized and supported. Give each writing agent its own worktree/branch, an agreed contract and exclusive file ownership. A single developer can follow the same process sequentially.
