@@ -2,7 +2,7 @@
 last_updated: 2026-10-01
 verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
 verified_context_branch: chore/ai-context-system-v2
-verified_context_commit: 95aeb06eff2ea98b0f35c5b9c0f5eee5b1408b87
+verified_context_commit: 53a061b59b6f0c01f9939e730ddb961a06fea82a
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -68,7 +68,7 @@ Not proven by this evidence: GitHub CI, production deployment, live AWS capacity
 
 A branch/worktree/handoff workflow exists in `AGENTS.md` and `docs/agent-workflow.md`. Human integration/release remains the default boundary.
 
-## IN PROGRESS
+## READY FOR HUMAN REVIEW
 
 ### AI context system V2
 
@@ -76,13 +76,22 @@ Branch: `chore/ai-context-system-v2`
 
 Goal: make fresh AI sessions load one fast brief, route to task-specific deep context, verify against actual code/live evidence, operate autonomously inside scope and keep context fresh without repeated human explanation.
 
+Setup A–H is complete locally: canonical docs/ADRs and migrated entry points,
+offline checker (18 tests), advisory CI configuration, cold-start exercise and
+final consistency review. Hosted CI and live systems have not been verified.
+
 Active setup status and next exact action: `docs/features/ai-context-system-v2.md`.
 One-time implementation specification: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
 
+## IN PROGRESS
+
+No implementation task is active in this context snapshot. Recheck refs and
+owning feature docs before starting work; review-ready does not mean merged.
+
 ## NEXT
 
-1. Complete/verify the AI context V2 files, freshness tooling and cold-start test on `chore/ai-context-system-v2`.
-2. Human-review/integrate the workflow foundation and answer-recovery work in the documented dependency order.
+1. Human-review context V2 on `chore/ai-context-system-v2`; exact evidence and continuation are in its feature tracker.
+2. Human-review/integrate the baseline, workflow foundation, answer recovery and context branches in their documented dependency order.
 3. Verify normal GitHub CI through the appropriate PR/integration path.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
 5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
