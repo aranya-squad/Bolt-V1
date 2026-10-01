@@ -2,7 +2,7 @@
 status: READY FOR HUMAN REVIEW
 branch: chore/ai-context-system-v2
 base_commit: ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0
-current_commit: c75c1f7b4e67bb71c668c4370a59918aef045ab5
+current_commit: cbe8b0c93622d818afdc9b5a57bfbe5ca8bb09d6
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -20,7 +20,7 @@ workflow/decision/brief integration; human merge/deploy boundary preserved.
 Grandfathered: teacher dashboard/roster correctness, current batch-level assignment,
 and generally any completed/in-progress/already-scoped work unless owner opts in.
 
-Verification: focused checker suite passed 15 tests in isolated validation and Python compilation passed.
+Verification: the committed feature-gate checker suite passed 15/15 in isolated execution and Python compilation passed. Existing context-checker regression logic was replayed in isolation with 18/18 passing; the full context-freshness CLI could not run against a materialized checkout because this environment has no GitHub DNS/checkout access, so current-branch route/metadata/diff invariants were checked through the connected GitHub source instead.
 Existing CI YAML intentionally unchanged; its advisory scripts unittest discovery
 will find the new test. Backend/frontend source untouched. Hosted CI/LIVE not
 claimed.

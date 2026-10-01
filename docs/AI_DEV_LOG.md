@@ -176,7 +176,7 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 
 ## 2026-10-01 — Bolt AI-SDLC V1 prospective workflow
 
-- Branch / implementation commit: `chore/ai-context-system-v2@8028d0c9f61c632a09fb5af384de6ae351c734b2`.
+- Branch / verified setup commit: `chore/ai-context-system-v2@cbe8b0c93622d818afdc9b5a57bfbe5ca8bb09d6`.
 - Goal: add a non-breaking AI-assisted SDLC and repo-backed `/feature-scoper`
   intake for the next new feature onward, preserving current work.
 - Completed: ADR 0005; G0–G5 workflow; PM/CTO/Head QA gate retained as G1;
@@ -188,7 +188,7 @@ This is the durable cross-session development journal for ChatGPT Project work, 
   assignment, and any other completed/in-progress/already-scoped work unless the
   owner explicitly opts it in.
 - Verification: remote head/diff verified; only governance/docs/checker/test files
-  changed; focused checker regressions pass 15/15 in isolated validation and Python compilation passes.
+  changed; the committed feature-gate regressions pass 15/15 in isolated execution and Python compilation passes. Existing context-checker regression logic replayed 18/18; current-branch route/metadata/diff invariants were verified through connected GitHub because a full checkout was unavailable.
   Existing CI YAML, backend/frontend runtime source, schema/dependencies and live
   infrastructure were not changed. Hosted CI/LIVE remain unverified.
 - Boundary: GitHub cannot register native ChatGPT slash autocomplete or edit the
