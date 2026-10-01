@@ -1,0 +1,464 @@
+{
+  "ai_sdlc_version": 1,
+  "prospective_only": true,
+  "feature_id": "daily-quests",
+  "tracker_path": "docs/features/daily-quests.md",
+  "scope": {
+    "path": "docs/features/daily-quests.scope.md",
+    "version": "1.0",
+    "sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+    "base_commit": "c75c1f7b4e67bb71c668c4370a59918aef045ab5"
+  },
+  "risk_route": {
+    "frontend_ux": {
+      "required": true,
+      "reason": "New Hub interaction, mobile and accessible completion states"
+    },
+    "security": {
+      "required": true,
+      "reason": "Student/owner-scoped endpoints and replay abuse controls"
+    },
+    "data_integrity": {
+      "required": true,
+      "reason": "New daily persistence, primary reads, session locks and existing XP"
+    },
+    "devops": {
+      "required": false,
+      "reason": "No runtime/CI/deployment/infrastructure contract change"
+    }
+  },
+  "unresolved_blockers": [],
+  "approvals": [
+    {
+      "role": "product_manager",
+      "agent_id": "/root/pm",
+      "decision": "APPROVED",
+      "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+      "start_at": "2026-10-01T13:07:42Z",
+      "end_at": "2026-10-01T13:07:47Z",
+      "duration_seconds": 5
+    },
+    {
+      "role": "cto",
+      "agent_id": "/root/cto",
+      "decision": "APPROVED",
+      "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+      "start_at": "2026-10-01T13:07:38Z",
+      "end_at": "2026-10-01T13:07:53Z",
+      "duration_seconds": 15
+    },
+    {
+      "role": "head_qa",
+      "agent_id": "/root/head_qa",
+      "decision": "APPROVED",
+      "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+      "start_at": "2026-10-01T13:05:10Z",
+      "end_at": "2026-10-01T13:07:50Z",
+      "duration_seconds": 160
+    }
+  ],
+  "specialist_reviews": [
+    {
+      "role": "frontend_ux",
+      "agent_id": "/root/frontend_ux",
+      "required": true,
+      "decision": "APPROVED",
+      "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+      "start_at": "2026-10-01T13:07:56Z",
+      "end_at": "2026-10-01T13:08:02Z",
+      "duration_seconds": 6
+    },
+    {
+      "role": "security",
+      "agent_id": "/root/security",
+      "required": true,
+      "decision": "APPROVED",
+      "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+      "start_at": "2026-10-01T13:07:48Z",
+      "end_at": "2026-10-01T13:07:53Z",
+      "duration_seconds": 5
+    },
+    {
+      "role": "data_integrity",
+      "agent_id": "/root/data_integrity",
+      "required": true,
+      "decision": "APPROVED",
+      "scope_sha256": "2f879b568f5b83e00ead86a85181cdd61e2630025dfc696f95a9049dc7a271bb",
+      "start_at": "2026-10-01T13:07:52Z",
+      "end_at": "2026-10-01T13:07:57Z",
+      "duration_seconds": 5
+    }
+  ],
+  "implementation_authorized": true,
+  "requirements": [
+    {
+      "id": "N-01",
+      "kind": "NEED",
+      "summary": "Stable mission/content",
+      "acceptance_ids": [
+        "AC-01",
+        "AC-02"
+      ]
+    },
+    {
+      "id": "N-02",
+      "kind": "NEED",
+      "summary": "One tap and saved progress",
+      "acceptance_ids": [
+        "AC-03",
+        "AC-04"
+      ]
+    },
+    {
+      "id": "N-03",
+      "kind": "NEED",
+      "summary": "Verified effort completion",
+      "acceptance_ids": [
+        "AC-04",
+        "AC-05"
+      ]
+    },
+    {
+      "id": "N-04",
+      "kind": "NEED",
+      "summary": "Pinned calendar/history",
+      "acceptance_ids": [
+        "AC-02",
+        "AC-06"
+      ]
+    },
+    {
+      "id": "N-05",
+      "kind": "NEED",
+      "summary": "Idempotent sessions/rewards",
+      "acceptance_ids": [
+        "AC-05",
+        "AC-07"
+      ]
+    },
+    {
+      "id": "N-06",
+      "kind": "NEED",
+      "summary": "Interrupted recovery",
+      "acceptance_ids": [
+        "AC-06",
+        "AC-08"
+      ]
+    },
+    {
+      "id": "N-07",
+      "kind": "NEED",
+      "summary": "Accessible mobile celebration",
+      "acceptance_ids": [
+        "AC-03",
+        "AC-09"
+      ]
+    },
+    {
+      "id": "N-08",
+      "kind": "NEED",
+      "summary": "Owner API consistency",
+      "acceptance_ids": [
+        "AC-07",
+        "AC-10"
+      ]
+    },
+    {
+      "id": "W-01",
+      "kind": "WANT",
+      "summary": "Themes/adaptation/reminders/history/bonus rewards deferred",
+      "acceptance_ids": []
+    },
+    {
+      "id": "D-01",
+      "kind": "DEFERRED",
+      "summary": "Cosmetics/curriculum changes",
+      "acceptance_ids": []
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "AC-01",
+      "description": "Primary eligibility and valid existing content",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-02",
+      "description": "Pinned server date/frozen configuration/DST",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-03",
+      "description": "Hub mission states/one tap",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-04",
+      "description": "Accepted effort, wrong advancement, ordinary regression",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-05",
+      "description": "Complete-only finalize and correct existing XP",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-06",
+      "description": "History, midnight resume, stale cleanup",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-07",
+      "description": "Real DB concurrency and owner auth",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-08",
+      "description": "Lost response/reload/pending recovery",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-09",
+      "description": "Mobile/keyboard/status/reduced motion",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    },
+    {
+      "id": "AC-10",
+      "description": "Migration/contracts/full checks/real API",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    }
+  ],
+  "waves": [
+    {
+      "id": "W1",
+      "name": "Approved implementation",
+      "categories": [
+        {
+          "id": "backend",
+          "stories": [
+            {
+              "id": "US-01",
+              "title": "Safe daily mission persistence",
+              "acceptance_ids": [
+                "AC-01",
+                "AC-02",
+                "AC-05",
+                "AC-06",
+                "AC-07",
+                "AC-10"
+              ],
+              "tasks": [
+                {
+                  "id": "T-BE",
+                  "title": "Daily persistence, API, finalization and DB regression",
+                  "owner_class": "backend_worker",
+                  "model_class": "strong_reasoning",
+                  "depends_on": [],
+                  "writable_paths": [
+                    "backend/apps/exercises/daily_quests.py",
+                    "backend/apps/exercises/models.py",
+                    "backend/apps/exercises/migrations/0005_dailyquest.py",
+                    "backend/apps/exercises/urls.py",
+                    "backend/apps/exercises/serializers.py",
+                    "backend/apps/exercises/tasks.py",
+                    "backend/apps/progress/services.py",
+                    "backend/apps/exercises/tests/test_daily_quests.py"
+                  ],
+                  "checks": [
+                    "backend Ruff",
+                    "focused PostgreSQL tests",
+                    "migration check"
+                  ],
+                  "traceability": [
+                    "AC-01",
+                    "AC-02",
+                    "AC-05",
+                    "AC-06",
+                    "AC-07",
+                    "AC-10"
+                  ],
+                  "status": "PENDING",
+                  "commit": null,
+                  "evidence": []
+                }
+              ]
+            }
+          ]
+        },
+        {
+          "id": "frontend",
+          "stories": [
+            {
+              "id": "US-02",
+              "title": "Student daily flow",
+              "acceptance_ids": [
+                "AC-03",
+                "AC-04",
+                "AC-08",
+                "AC-09",
+                "AC-10"
+              ],
+              "tasks": [
+                {
+                  "id": "T-FE",
+                  "title": "Hub card, mission practice/report and UI tests",
+                  "owner_class": "frontend_worker",
+                  "model_class": "strong_reasoning",
+                  "depends_on": [],
+                  "writable_paths": [
+                    "frontend/src/features/hub/HubPage.tsx",
+                    "frontend/src/features/hub/DailyMissionCard.tsx",
+                    "frontend/src/features/hub/dailyMission.css",
+                    "frontend/src/features/hub/DailyMissionCard.test.tsx",
+                    "frontend/src/shared/api/queries/useDailyQuest.ts",
+                    "frontend/src/features/practice/InArenaPage.tsx",
+                    "frontend/src/features/practice/VictoryPage.tsx",
+                    "frontend/src/shared/types/index.ts",
+                    "frontend/src/mocks/handlers.ts",
+                    "frontend/src/mocks/data.ts"
+                  ],
+                  "checks": [
+                    "frontend lint/type/Vitest/build"
+                  ],
+                  "traceability": [
+                    "AC-03",
+                    "AC-04",
+                    "AC-08",
+                    "AC-09",
+                    "AC-10"
+                  ],
+                  "status": "PENDING",
+                  "commit": null,
+                  "evidence": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "W2",
+      "name": "Integration and review",
+      "categories": [
+        {
+          "id": "quality",
+          "stories": [
+            {
+              "id": "US-03",
+              "title": "Verified real daily flow",
+              "acceptance_ids": [
+                "AC-01",
+                "AC-02",
+                "AC-03",
+                "AC-04",
+                "AC-05",
+                "AC-06",
+                "AC-07",
+                "AC-08",
+                "AC-09",
+                "AC-10"
+              ],
+              "tasks": [
+                {
+                  "id": "T-QA",
+                  "title": "Real API/mobile/race verification and OpenAPI integration",
+                  "owner_class": "coordinator",
+                  "model_class": "strong_reasoning",
+                  "depends_on": [
+                    "T-BE",
+                    "T-FE"
+                  ],
+                  "writable_paths": [
+                    "frontend/src/api/openapi.yaml",
+                    "frontend/e2e/recovery/daily-quests.spec.ts",
+                    "frontend/e2e/recovery/fixtures.py",
+                    "docs/features/daily-quests.md",
+                    "docs/features/daily-quests.plan.json",
+                    "docs/AI_DEV_LOG.md"
+                  ],
+                  "checks": [
+                    "full backend/frontend checks",
+                    "built-SPA real API Playwright",
+                    "migration forward/backward rehearsal",
+                    "independent reviews"
+                  ],
+                  "traceability": [
+                    "AC-01",
+                    "AC-02",
+                    "AC-03",
+                    "AC-04",
+                    "AC-05",
+                    "AC-06",
+                    "AC-07",
+                    "AC-08",
+                    "AC-09",
+                    "AC-10"
+                  ],
+                  "status": "PENDING",
+                  "commit": null,
+                  "evidence": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quality_reviews": {
+    "integrated_commit": null,
+    "code_review": "PENDING",
+    "qa_review": "PENDING",
+    "security_required": true,
+    "security_review": "PENDING",
+    "findings": []
+  },
+  "publication": {
+    "feature_branch": "feat/daily-quests",
+    "feature_branch_pushed": false,
+    "final_commit": null,
+    "merged": false,
+    "deployed": false
+  },
+  "final_status": "IN PROGRESS",
+  "timing": {
+    "request_submitted_at": "2026-10-01T13:02:34Z",
+    "clock": "UTC ISO8601 wall-clock; concurrent phase durations overlap",
+    "G0": {
+      "start_at": "2026-10-01T13:02:34Z",
+      "end_at": "2026-10-01T13:07:11Z",
+      "duration_seconds": 277
+    },
+    "G1": {
+      "start_at": "2026-10-01T13:05:29Z",
+      "end_at": "2026-10-01T13:08:02Z",
+      "duration_seconds": 153
+    },
+    "G2": {
+      "start_at": "2026-10-01T13:08:02Z",
+      "end_at": "2026-10-01T13:09:03.974308+00:00"
+    },
+    "events": []
+  }
+}
