@@ -4,16 +4,21 @@ import { GlassCard } from "@/shared/ui/GlassCard";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { PageSkeleton } from "@/features/shared/PageSkeleton";
 import { useTeacherLevelDashboard } from "@/shared/api/queries/useTeacherLevelDashboard";
+import { useTeacherIdentity } from "@/shared/api/queries/teacherIdentity";
 
 export default function TeacherLevelDashboardPage() {
   const { levelId } = useParams<{ levelId: string }>();
-  const { data, isLoading, isError } = useTeacherLevelDashboard(levelId ?? "");
+  const { data, isLoading, isError, isFetching, refetch } = useTeacherLevelDashboard(levelId ?? "");
+  const identity = useTeacherIdentity();
 
   if (isLoading) return <PageSkeleton />;
-  if (isError || !data) {
+  if (!data) {
     return (
       <Page>
-        <p style={{ color: "var(--err)" }}>Failed to load level dashboard.</p>
+        <p role="alert" style={{ color: "var(--err)" }}>Failed to load level dashboard. Try Refresh again.</p>
+        <BoltButton variant="ghost" size="md" disabled={!identity || isFetching} onClick={() => { void refetch(); }}>
+          {isFetching ? "REFRESHING…" : "REFRESH"}
+        </BoltButton>
         <Link to="/teacher">
           <BoltButton variant="ghost" size="md">BACK</BoltButton>
         </Link>
@@ -32,13 +37,19 @@ export default function TeacherLevelDashboardPage() {
         <h1 className="t-h1" style={{ color: "var(--y-bolt)", margin: 0 }}>
           LEVEL {level.order} — {level.name.toUpperCase()}
         </h1>
+        <BoltButton variant="ghost" size="sm" disabled={!identity || isFetching} onClick={() => { void refetch(); }}>
+          {isFetching ? "REFRESHING…" : "REFRESH"}
+        </BoltButton>
       </div>
+      {isFetching && <p role="status" style={{ color: "var(--fg-muted)" }}>Refreshing level dashboard…</p>}
+      {isError && <p role="alert" style={{ color: "var(--err)" }}>Failed to refresh level dashboard. Showing previously loaded data; try Refresh again.</p>}
 
       {classes.length === 0 && (
         <p className="t-body-sm" style={{ color: "var(--fg-sand)" }}>
           No classes have this level assigned.
         </p>
       )}
+      {lessons.length === 0 && <p style={{ color: "var(--fg-muted)" }}>No topics in this level yet.</p>}
 
       {classes.map((cls) => (
         <GlassCard
@@ -90,8 +101,8 @@ export default function TeacherLevelDashboardPage() {
               </tr>
             </thead>
             <tbody>
-              {lessons.map((lesson, idx) => {
-                const stat = cls.lessons[idx];
+              {lessons.map(lesson => {
+                const stat = cls.lessons.find(item => item.lesson_id === lesson.id);
                 const cw = stat?.classwork_completed ?? 0;
                 const hw = stat?.homework_completed ?? 0;
                 const total = cls.total_students;

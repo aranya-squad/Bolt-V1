@@ -6,12 +6,14 @@ export interface VerdictState {
   retriedThisQuestion: boolean;
   wasSkip: boolean;
   isLastQuestion: boolean;
+  terminal?: boolean;
 }
 
 export type VerdictAction = "retry" | "advance" | "finalize";
 
 export function resolveVerdictAction(state: VerdictState): VerdictAction {
   const canRetry =
+    !state.terminal &&
     !state.isCorrect &&
     !state.testMode &&
     !state.retriedThisQuestion &&

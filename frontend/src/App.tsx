@@ -47,7 +47,7 @@ export default function App() {
     }
     apiClient.get("/auth/me/")
       .then(({ data }) => setUser(data))
-      .catch(() => { /* interceptor handles logout-and-redirect on auth failure */ })
+      .catch(() => { /* Authentication expiry suspends answer recovery in the interceptor. */ })
       .finally(() => setHydrated());
   }, []);
 

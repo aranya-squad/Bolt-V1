@@ -81,6 +81,68 @@ components:
         homework_completed:    { type: boolean }
         is_locked:             { type: boolean }
 
+    Batch:
+      type: object
+      required: [id, name, join_code, live_session_link, is_active, created_at, student_count]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, maxLength: 128 }
+        join_code: { type: string }
+        live_session_link: { type: string }
+        is_active: { type: boolean }
+        created_at: { type: string, format: date-time }
+        student_count: { type: integer, minimum: 0, description: Active Enrollment count; archived owned batches remain listed. }
+
+    RosterStudent:
+      type: object
+      required: [id, call_sign, current_level, accuracy_pct, enrolled_at]
+      properties:
+        id: { type: string, format: uuid }
+        call_sign: { type: string }
+        current_level: { type: integer, minimum: 1, maximum: 10, description: "CLASSWORK LevelCompletion count + 1, capped at 10." }
+        accuracy_pct: { type: number, nullable: true, description: Arithmetic mean of all persisted student ProgressRecord accuracy values rounded to one decimal; null without history. }
+        enrolled_at: { type: string, format: date-time }
+
+    TeacherLevelDashboard:
+      type: object
+      required: [level, lessons, classes]
+      properties:
+        level:
+          type: object
+          required: [id, order, name]
+          properties:
+            id: { type: string, format: uuid }
+            order: { type: integer }
+            name: { type: string }
+        lessons:
+          type: array
+          items:
+            type: object
+            required: [id, name, order]
+            properties:
+              id: { type: string, description: String representation of the integer lesson ID. }
+              name: { type: string }
+              order: { type: integer }
+        classes:
+          type: array
+          description: Owned active classes with this level assigned; only active enrollments contribute. Shared students count separately in each class.
+          items:
+            type: object
+            required: [id, name, total_students, lessons]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              total_students: { type: integer, minimum: 0 }
+              lessons:
+                type: array
+                items:
+                  type: object
+                  required: [lesson_id, classwork_completed, homework_completed]
+                  properties:
+                    lesson_id: { type: string, description: String representation of the integer lesson ID. }
+                    classwork_completed: { type: integer, minimum: 0 }
+                    homework_completed: { type: integer, minimum: 0 }
+
     SessionQuestion:
       type: object
       required: [index, text, operation]
@@ -97,6 +159,17 @@ components:
         kind:           { type: string, enum: [CLASSWORK, HOMEWORK, FLASH_CARDS, ZEN, TIME_ATTACK, CUSTOM] }
         questions:      { type: array, items: { $ref: "#/components/schemas/SessionQuestion" } }
         time_limit_sec: { type: integer, description: "0 means no time limit" }
+        is_test_mode: { type: boolean }
+        flash_speed_ms: { type: integer, nullable: true }
+        attempt_contract_version: { type: integer, enum: [1, 2], description: "Version 1 denotes legacy nullable identities that cannot safely resume via v2." }
+        state: { type: string, enum: [active, submitted, abandoned] }
+        started_at: { type: string, format: date-time }
+        server_now: { type: string, format: date-time }
+        lesson_id: { type: string, nullable: true }
+        level_id: { type: string, nullable: true }
+        question_states:
+          type: array
+          items: { $ref: "#/components/schemas/QuestionState" }
 
     AttemptVerdict:
       type: object
@@ -105,6 +178,89 @@ components:
         question_index: { type: integer }
         is_correct:     { type: boolean }
         xp_delta:       { type: integer }
+
+    AttemptIdentity:
+      type: object
+      required: [question_index, attempt_number]
+      properties:
+        question_index: { type: integer, minimum: 0, maximum: 32767 }
+        attempt_number: { type: integer, minimum: 1, maximum: 32767 }
+
+    AttemptInputV2:
+      allOf:
+        - $ref: "#/components/schemas/AttemptIdentity"
+        - type: object
+          required: [answer, elapsed_ms]
+          properties:
+            answer: { type: integer, minimum: -2147483648, maximum: 2147483647 }
+            elapsed_ms: { type: integer, minimum: 0, maximum: 2147483647 }
+            is_skip: { type: boolean }
+
+    LegacyAttemptInput:
+      type: object
+      description: Absent-version compatibility payload; legacy identities are server allocated.
+      required: [question_index, answer, elapsed_ms]
+      not: { required: [contract_version] }
+      properties:
+        question_index: { type: integer }
+        answer: { type: integer }
+        elapsed_ms: { type: integer }
+        attempt_number: { type: integer, description: "Old practice may send zero-based counters; these are not v2 identities." }
+        is_skip: { type: boolean }
+
+    SingleAttemptRequestV2:
+      allOf:
+        - { $ref: "#/components/schemas/AttemptInputV2" }
+        - type: object
+          required: [contract_version]
+          properties:
+            contract_version: { type: integer, enum: [2] }
+
+    AttemptReceipt:
+      allOf:
+        - $ref: "#/components/schemas/AttemptVerdict"
+        - $ref: "#/components/schemas/AttemptIdentity"
+        - type: object
+          required: [contract_version, accepted, submitted_answer, elapsed_ms, is_skip]
+          properties:
+            contract_version: { type: integer, enum: [2] }
+            accepted: { type: boolean, enum: [true] }
+            submitted_answer: { type: integer }
+            elapsed_ms: { type: integer }
+            is_skip: { type: boolean }
+
+    QuestionState:
+      type: object
+      required: [question_index, max_attempt_number, attempt_count, terminal, latest_receipt]
+      properties:
+        question_index: { type: integer }
+        max_attempt_number: { type: integer, minimum: 0, maximum: 32767 }
+        attempt_count: { type: integer, minimum: 0 }
+        terminal: { type: boolean }
+        latest_receipt:
+          nullable: true
+          allOf: [{ $ref: "#/components/schemas/AttemptReceipt" }]
+
+    RecoveryError:
+      type: object
+      required: [code, detail]
+      properties:
+        code: { type: string, enum: [invalid_attempt, duplicate_identity, identity_conflict, attempt_limit, session_closed, pending_attempts, unsupported_contract] }
+        detail: { type: string }
+        receipt: { $ref: "#/components/schemas/AttemptReceipt" }
+        missing_attempts:
+          type: array
+          items: { $ref: "#/components/schemas/AttemptIdentity" }
+        items:
+          type: array
+          items:
+            type: object
+            properties:
+              index: { type: integer }
+              question_index: { type: integer }
+              attempt_number: { type: integer }
+              code: { type: string }
+              detail: { type: string }
 
     ProgressRecord:
       type: object
@@ -118,6 +274,7 @@ components:
         time_taken_sec:  { type: integer }
         xp_earned:       { type: integer }
         created_at:      { type: string, format: date-time }
+        contract_version: { type: integer, enum: [2], description: "Present on successful v2 finalize responses." }
 
     QuestionAttempt:
       type: object
@@ -133,7 +290,7 @@ components:
 
     QuestionVerdict:
       type: string
-      enum: [correct, wrong, fixed]
+      enum: [correct, wrong, fixed, skipped, unanswered]
 
     SessionReport:
       type: object
@@ -157,6 +314,115 @@ security:
 
 # ── Paths ────────────────────────────────────────────────────────────────────
 paths:
+  /classes/:
+    get:
+      summary: List the authenticated teacher's own active and archived batches
+      description: Reporting reads use primary. Separate list/roster/matrix requests are not one shared transactional snapshot.
+      responses:
+        200:
+          description: Owned batches with active enrollment counts
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/Batch" } }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+    post:
+      summary: Create a name-only owned batch
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+      responses:
+        201:
+          description: Owned batch created
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Batch" }
+        400: { description: Invalid batch name }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+
+  /classes/{id}/:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      summary: Update an owned batch, including archived batches
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+                live_session_link: { type: string, description: "A valid URL, or an empty string to clear the link." }
+                is_active: { type: boolean }
+      responses:
+        200:
+          description: Updated batch
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Batch" }
+        400: { description: Invalid fields }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Missing or foreign batch }
+
+  /classes/{id}/rotate-code/:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      summary: Replace an owned batch's join code
+      responses:
+        200:
+          description: New join code
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [join_code]
+                properties:
+                  join_code: { type: string }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Missing or foreign batch }
+
+  /classes/{id}/roster/:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Read the active roster and persisted student metrics from primary
+      responses:
+        200:
+          description: Active enrollments, with null accuracy for students without history
+          content:
+            application/json:
+              schema: { type: array, items: { $ref: "#/components/schemas/RosterStudent" } }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Missing or foreign batch }
+
+  /classes/levels/{levelId}/dashboard/:
+    parameters:
+      - { name: levelId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      summary: Read owned active assigned classes' lesson completion matrix from primary
+      description: Each cell is identified by lesson_id; unique student lesson/kind completion presence counts once, including retakes.
+      responses:
+        200:
+          description: Level, ordered lessons and per-class active-student completion counts
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/TeacherLevelDashboard" }
+        401: { description: Authentication required }
+        403: { description: TEACHER role required }
+        404: { description: Level missing }
+
   /auth/login/:
     post:
       summary: Authenticate a user
@@ -384,7 +650,7 @@ paths:
 
   /sessions/{sessionId}/attempts/:
     post:
-      summary: Submit an answer attempt for a question
+      summary: Submit an answer; v2 stable identity is replay-safe, absent version is legacy
       parameters:
         - name: sessionId
           in: path
@@ -395,17 +661,69 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [question_index, answer, elapsed_ms]
-              properties:
-                question_index: { type: integer }
-                answer:         { type: integer }
-                elapsed_ms:     { type: integer }
+              oneOf:
+                - { $ref: "#/components/schemas/LegacyAttemptInput" }
+                - { $ref: "#/components/schemas/SingleAttemptRequestV2" }
       responses:
         200:
           content:
             application/json:
-              schema: { $ref: "#/components/schemas/AttemptVerdict" }
+              schema:
+                anyOf:
+                  - { $ref: "#/components/schemas/AttemptVerdict" }
+                  - { $ref: "#/components/schemas/AttemptReceipt" }
+        400:
+          description: Invalid input or unsupported explicit version
+        409:
+          description: Conflicting identity, terminal question or closed session
+
+  /sessions/{sessionId}/attempts/bulk/:
+    post:
+      summary: Atomic v2 batch; legacy absent-version behavior is retained during rollout
+      parameters:
+        - name: sessionId
+          in: path
+          required: true
+          schema: { type: string }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [contract_version, attempts]
+                  properties:
+                    contract_version: { type: integer, enum: [2] }
+                    attempts:
+                      type: array
+                      maxItems: 100
+                      items: { $ref: "#/components/schemas/AttemptInputV2" }
+                - type: object
+                  required: [attempts]
+                  not: { required: [contract_version] }
+                  properties:
+                    attempts:
+                      type: array
+                      items: { $ref: "#/components/schemas/LegacyAttemptInput" }
+      responses:
+        200:
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  contract_version: { type: integer, enum: [2] }
+                  verdicts:
+                    type: array
+                    items:
+                      anyOf:
+                        - { $ref: "#/components/schemas/AttemptVerdict" }
+                        - { $ref: "#/components/schemas/AttemptReceipt" }
+        400:
+          description: Invalid batch; v2 creates zero new rows
+        409:
+          description: Identity or session conflict; v2 creates zero new rows
 
   /sessions/{sessionId}/submit/:
     post:
@@ -415,11 +733,30 @@ paths:
           in: path
           required: true
           schema: { type: string }
+      requestBody:
+        content:
+          application/json:
+            schema:
+              oneOf:
+                - type: object
+                  required: [contract_version, expected_attempts]
+                  properties:
+                    contract_version: { type: integer, enum: [2] }
+                    expected_attempts:
+                      type: array
+                      maxItems: 200
+                      uniqueItems: true
+                      description: Retain finish-time unresolved identities until submit is acknowledged.
+                      items: { $ref: "#/components/schemas/AttemptIdentity" }
+                - type: object
+                  not: { required: [contract_version] }
       responses:
         200:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/ProgressRecord" }
+        409:
+          description: Declared required identities missing or session abandoned; no new result or XP
 
   /sessions/{sessionId}/report/:
     get:

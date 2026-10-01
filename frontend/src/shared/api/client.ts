@@ -24,7 +24,7 @@ let refreshInFlight: Promise<string> | null = null;
 async function doRefresh(): Promise<string> {
   if (!refreshInFlight) {
     refreshInFlight = axios
-      .post(`${API_BASE}/api/v1/auth/refresh/`, {}, { withCredentials: true })
+      .post(`${API_BASE}/api/v1/auth/refresh/`, {}, { withCredentials: true, timeout: 10000 })
       .then(({ data }) => {
         useAuthStore.getState().setAccessToken(data.access);
         return data.access as string;
@@ -41,17 +41,17 @@ apiClient.interceptors.response.use(
   (response) => response,
   async (error) => {
     const original = error.config;
-    if (error.response?.status === 401 && !original._retry) {
+    if (error.response?.status === 401 && original && !original._retry) {
       original._retry = true;
       try {
         const newToken = await doRefresh();
         original.headers.Authorization = `Bearer ${newToken}`;
         return apiClient(original);
       } catch {
-        useAuthStore.getState().logout();
-        window.location.href = "/login";
+        useAuthStore.getState().expire();
       }
     }
+    if (error.response?.status === 401) useAuthStore.getState().expire();
     return Promise.reject(error);
   }
 );

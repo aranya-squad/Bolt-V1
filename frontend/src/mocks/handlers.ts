@@ -1,4 +1,7 @@
 import { http, HttpResponse } from "msw";
+import type { AcceptedReceipt, SessionKind, SessionMeta } from "@/shared/types";
+import { identityKey, isPending, matchesReceipt } from "@/shared/store/answerRecovery";
+import { classroomHandlers } from "./classroomHandlers";
 import {
   MOCK_USER,
   MOCK_XP_PROGRESS,
@@ -16,7 +19,35 @@ function nextSessionId() {
   return `sess_mock_${String(sessionCounter++).padStart(4, "0")}`;
 }
 
+const sessions = new Map<string, SessionMeta>();
+const receipts = new Map<string, AcceptedReceipt[]>();
+function remember(meta: SessionMeta) { sessions.set(meta.session_id, meta); return meta; }
+function mockWrite(sessionId: string, value: unknown, bulk: boolean) {
+  const session = sessions.get(sessionId);
+  if (!session) return HttpResponse.json({ detail: "Session unavailable." }, { status: 404 });
+  const body = typeof value === "object" && value !== null ? value as Record<string, unknown> : {};
+  const attempts = bulk ? body.attempts : [body];
+  if (body.contract_version !== 2 || !Array.isArray(attempts) || attempts.length > 100 || !attempts.every(isPending)) return HttpResponse.json({ code: "invalid_attempt", detail: "Invalid v2 attempt." }, { status: 400 });
+  const previous = receipts.get(sessionId) ?? [];
+  const accepted: AcceptedReceipt[] = [];
+  for (const a of attempts) {
+    const prior = previous.find(r => identityKey(r) === identityKey(a));
+    if (prior && !matchesReceipt(a, prior)) return HttpResponse.json({ code: "identity_conflict", detail: "Attempt identity conflict.", receipt: prior }, { status: 409 });
+    const expected = [20, 62, 37, 63, 33, 61, 36, 62, 54, 82];
+    accepted.push(prior ?? { contract_version: 2, question_index: a.question_index, attempt_number: a.attempt_number, submitted_answer: a.answer, elapsed_ms: a.elapsed_ms, is_skip: a.is_skip, is_correct: !a.is_skip && a.answer === expected[a.question_index % expected.length], accepted: true, xp_delta: 0 });
+  }
+  const updated = [...previous, ...accepted.filter(a => !previous.some(r => identityKey(r) === identityKey(a)))];
+  receipts.set(sessionId, updated);
+  session.question_states = session.questions.map(q => {
+    const rows = updated.filter(a => a.question_index === q.index).sort((a, b) => a.attempt_number - b.attempt_number);
+    const latest = rows[rows.length - 1] ?? null;
+    return { question_index: q.index, max_attempt_number: latest?.attempt_number ?? 0, attempt_count: rows.length, terminal: !!latest && (latest.is_correct || latest.is_skip || session.is_test_mode), latest_receipt: latest };
+  });
+  return HttpResponse.json(bulk ? { contract_version: 2, verdicts: accepted } : accepted[0]);
+}
+
 export const handlers = [
+  ...classroomHandlers,
   // ── Auth ────────────────────────────────────────────────────────────────
 
   http.post(`${BASE}/auth/login/`, async () => {
@@ -80,52 +111,41 @@ export const handlers = [
 
   // ── Session start ────────────────────────────────────────────────────────
 
-  http.post(`${BASE}/levels/:levelId/lessons/:lessonId/classwork/start/`, () => {
-    const sessionId = nextSessionId();
-    return HttpResponse.json(makeMockSession(sessionId, "CLASSWORK"), { status: 201 });
+  http.post(`${BASE}/levels/:levelId/lessons/:lessonId/classwork/start/`, async ({ request, params }) => {
+    const body = await request.json() as { is_test_mode?: boolean };
+    const meta = makeMockSession(nextSessionId(), "CLASSWORK");
+    return HttpResponse.json(remember({ ...meta, level_id: String(params.levelId), lesson_id: String(params.lessonId), is_test_mode: body.is_test_mode === true }), { status: 201 });
   }),
-
-  http.post(`${BASE}/levels/:levelId/classwork/start/`, () => {
-    const sessionId = nextSessionId();
-    return HttpResponse.json(makeMockSession(sessionId, "CLASSWORK"), { status: 201 });
+  http.post(`${BASE}/levels/:levelId/classwork/start/`, async ({ request, params }) => {
+    const body = await request.json() as { is_test_mode?: boolean };
+    const meta = makeMockSession(nextSessionId(), "CLASSWORK");
+    return HttpResponse.json(remember({ ...meta, level_id: String(params.levelId), is_test_mode: body.is_test_mode === true }), { status: 201 });
   }),
-
   http.post(`${BASE}/practice/start/`, async ({ request }) => {
-    const body = await request.json() as Record<string, unknown>;
-    const sessionId = nextSessionId();
-    const mode = (body.mode as string) ?? "FLASH_CARDS";
-    const count = (body.question_count as number) ?? 10;
-    return HttpResponse.json(makeMockSession(sessionId, mode, count), { status: 201 });
+    const body = await request.json() as { mode?: SessionKind; question_count?: number };
+    return HttpResponse.json(remember(makeMockSession(nextSessionId(), body.mode ?? "FLASH_CARDS", body.question_count ?? 10)), { status: 201 });
   }),
-
-  // ── Active session ───────────────────────────────────────────────────────
-
   http.get(`${BASE}/sessions/:sessionId/`, ({ params }) => {
-    return HttpResponse.json(makeMockSession(params.sessionId as string, "CLASSWORK"));
+    const meta = sessions.get(String(params.sessionId));
+    return meta ? HttpResponse.json({ ...meta, server_now: new Date().toISOString() }) : HttpResponse.json({ detail: "Session unavailable." }, { status: 404 });
   }),
-
-  http.post(`${BASE}/sessions/:sessionId/attempts/`, async ({ request }) => {
-    const body = await request.json() as { question_index: number; answer: number; elapsed_ms: number };
-    const isSkip = body.answer === -999999;
-    const expected = [20, 62, 37, 63, 33, 61, 36, 62, 54, 82];
-    const isCorrect = !isSkip && body.answer === expected[body.question_index % expected.length];
+  http.post(`${BASE}/sessions/:sessionId/attempts/`, async ({ request, params }) => mockWrite(String(params.sessionId), await request.json(), false)),
+  http.post(`${BASE}/sessions/:sessionId/attempts/bulk/`, async ({ request, params }) => mockWrite(String(params.sessionId), await request.json(), true)),
+  http.post(`${BASE}/sessions/:sessionId/submit/`, async ({ request, params }) => {
+    const body = await request.json() as { contract_version?: number; expected_attempts?: { question_index: number; attempt_number: number }[] };
+    const sessionId = String(params.sessionId);
+    const meta = sessions.get(sessionId);
+    if (!meta) return HttpResponse.json({ detail: "Session unavailable." }, { status: 404 });
+    const rows = receipts.get(sessionId) ?? [];
+    if (body.contract_version !== 2 || !Array.isArray(body.expected_attempts)) return HttpResponse.json({ code: "invalid_attempt", detail: "Expected a v2 manifest." }, { status: 400 });
+    const missing = body.expected_attempts.filter(a => !rows.some(r => identityKey(a) === identityKey(r)));
+    if (missing.length) return HttpResponse.json({ code: "pending_attempts", detail: "Required answers remain pending.", missing_attempts: missing }, { status: 409 });
+    meta.state = "submitted";
+    const correct = new Set(rows.filter(a => a.is_correct && !a.is_skip).map(a => a.question_index)).size;
     return HttpResponse.json({
-      question_index: body.question_index,
-      is_correct: isCorrect,
-      xp_delta: isCorrect ? 10 : 0,
-    });
-  }),
-
-  http.post(`${BASE}/sessions/:sessionId/submit/`, ({ params }) => {
-    return HttpResponse.json({
-      id: `pr_${params.sessionId}`,
-      session_id: params.sessionId,
-      score_correct: 7,
-      score_total: 10,
-      accuracy_pct: 70,
-      time_taken_sec: 183,
-      xp_earned: 120,
-      created_at: new Date().toISOString(),
+      contract_version: 2, id: `pr_${sessionId}`, session_id: sessionId, score_correct: correct,
+      score_total: meta.questions.length, accuracy_pct: correct / meta.questions.length * 100,
+      time_taken_sec: 183, xp_earned: correct * 10, created_at: meta.started_at,
     });
   }),
 

@@ -53,7 +53,7 @@ export default function AdminImportPage() {
 
       <GlassCard style={{ maxWidth: 600, padding: "var(--s-xl)" }}>
         <p className="t-body-sm" style={{ color: "var(--fg-sand)", marginBottom: "var(--s-lg)" }}>
-          Upload the BOLT ALL LEVELS DATASET (.xlsx). Each sheet named "L{"{n}"} C{"{m}"}" is
+          Upload the BOLT ALL LEVELS DATASET (.xlsx). Each sheet named &quot;L{"{n}"} C{"{m}"}&quot; is
           imported as Level n, Class m. Existing questions for those classes are replaced.
         </p>
 

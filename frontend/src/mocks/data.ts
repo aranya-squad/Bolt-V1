@@ -1,3 +1,5 @@
+import type { SessionKind, SessionMeta } from "@/shared/types";
+
 // Stable mock data — used by MSW handlers in dev mode.
 
 export const MOCK_USER = {
@@ -78,16 +80,26 @@ function makeQuestion(index: number): { text: string; expected: number } {
   return pairs[index % pairs.length];
 }
 
-export function makeMockSession(sessionId: string, kind: string, count = 10) {
+export function makeMockSession(sessionId: string, kind: SessionKind, count = 10): SessionMeta {
   return {
     session_id: sessionId,
     kind,
+    attempt_contract_version: 2,
+    state: "active",
+    started_at: new Date().toISOString(),
+    server_now: new Date().toISOString(),
+    lesson_id: null,
+    level_id: null,
+    is_test_mode: false,
+    flash_speed_ms: kind === "FLASH_CARDS" ? 2000 : null,
+    question_states: Array.from({ length: count }, (_, question_index) => ({ question_index, max_attempt_number: 0, attempt_count: 0, terminal: false, latest_receipt: null })),
     questions: Array.from({ length: count }, (_, i) => ({
       index: i,
       text: makeQuestion(i).text,
       operation: "ADD",
+      ...(!["CLASSWORK", "HOMEWORK"].includes(kind) ? { answer: makeQuestion(i).expected } : {}),
     })),
-    time_limit_sec: 600,
+    time_limit_sec: ["ZEN", "FLASH_CARDS"].includes(kind) ? 0 : 600,
   };
 }
 
