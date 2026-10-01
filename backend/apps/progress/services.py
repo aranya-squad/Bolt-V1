@@ -7,6 +7,7 @@ from django.core.cache import cache
 from django.db import transaction
 from django.utils import timezone
 
+from apps.exercises.attempt_contract import question_verdicts
 from apps.exercises.models import ArenaSession
 
 from .models import (
@@ -65,8 +66,12 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     if session.submitted_at is not None:
         raise ValueError(f"Session {session.id} is already finalized")
 
+    if session.abandoned_at is not None:
+        raise ValueError(f"Session {session.id} is abandoned")
+
     attempts = list(session.attempts.all())
-    score_correct = sum(1 for a in attempts if a.is_correct)
+    verdicts = question_verdicts(attempts, len(session.questions_json))
+    score_correct = sum(v in {"correct", "fixed"} for v in verdicts.values())
     # Use total questions in session, not submitted attempts — partial sessions
     # (e.g. timer expired) should show "8/30", not "8/8".
     score_total = len(session.questions_json)
@@ -159,6 +164,7 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     transaction.on_commit(lambda: cache.delete(f"level_context:{user_id}"))
 
     session.submitted_at = timezone.now()
-    session.save(update_fields=["submitted_at"])
+    session.config_json = {**session.config_json, "scoring_version": 2}
+    session.save(update_fields=["submitted_at", "config_json"])
 
     return record
