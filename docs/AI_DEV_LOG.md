@@ -85,3 +85,16 @@ This is the durable cross-session development journal for ChatGPT Project work, 
   - Keep these files current as features are integrated/released.
 - Next recommended task:
   - Use `docs/CLOUD_DEV_HANDOFF.md` as the standard starting/ending protocol for future cloud tasks.
+
+## 2026-10-01 — AI Context System V2 canonical migration
+
+- Branch: `chore/ai-context-system-v2`; preceding source-audit checkpoint `933bfd7`.
+- Completed: preserved initial spine; audited code/config; added three durable
+  decisions; migrated AGENTS/CURRENT_STATE/cloud startup; marked historical
+  architecture and setup handoff; added recovery metadata without body edits.
+- Verification: runtime trees unchanged from reviewed recovery code; diff/path
+  checks. Prior answer-recovery test counts remain recorded TEST, not CI/LIVE.
+- Decisions: Git/feature handoffs own progress, brief owns global state; minimal
+  startup; human integration/live mutation boundaries retained.
+- Remaining/next: checker/tests, warning-only CI, cold-start and final validation.
+  Exact active progress: `docs/features/ai-context-system-v2.md`.

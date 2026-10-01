@@ -8,7 +8,9 @@ For any substantial Bolt task:
 
 1. Inspect the current GitHub repository/ref state.
 2. Read `docs/PROJECT_BRIEF.md`.
-3. Check whether that brief is stale relative to relevant recent commits.
+3. Run `python scripts/check_context_freshness.py` when available; compare the
+   brief with relevant recent source commits. Structural checks cannot establish
+   semantic freshness or live state.
 4. Read `docs/CONTEXT_INDEX.yaml` and load only the deeper context relevant to the task.
 5. Inspect the actual code/schema/tests/CI and, when relevant and authorized, live infrastructure/logs before making conclusions or changes.
 
@@ -79,4 +81,5 @@ At substantial task start, compare the brief's verification metadata with releva
 
 A scheduled Project Instructions review on the 15th and 30th is a safety net. Also flag/update context immediately after major architecture, workflow, product, deployment, source-of-truth or human-decision changes.
 
+Use `docs/DECISIONS.md` and `docs/adr/README.md` for durable rationale.
 See `docs/AI_CONTEXT_SYSTEM_SETUP.md` for the one-time V2 setup design and `docs/agent-workflow.md` for deeper multi-agent/worktree guidance.

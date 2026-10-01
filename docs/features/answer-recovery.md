@@ -1,3 +1,22 @@
+---
+status: READY FOR HUMAN REVIEW
+branch: feat/answer-recovery
+base_commit: b03d167b8b5478feb4d306ec51a5872c0b5b3951
+reviewed_code_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
+current_commit: 88cfff2791c9adc3648a39cf39a21a73c97e1697
+last_checkpoint: 2026-10-01
+owner: ai
+---
+
+## Next Exact Action
+
+Human developers review the published baseline/foundation/recovery in the
+recorded dependency order, verify PR CI, then decide integration. Confirm actual
+production frontend source/revision before any release. No merge/deploy is
+performed or authorized by this context task. Metadata reflects the inspected
+owning branch head; the body below is the preserved historical approval and
+verified delivery record, including now-completed initial prerequisites.
+
 # Answer recovery: approved plan and delivery record
 
 Status: ready for developer review after approval on 01 October 2026. AR-01/02 foundation is published at b03d167. AR-03–08 implementation, local verification and independent code review are complete at 6d32de6; the final handoff commit changes only this document. Main and feat-Sagar remain frozen. No AWS deployment is authorized.

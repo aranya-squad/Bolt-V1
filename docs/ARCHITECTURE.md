@@ -1,5 +1,11 @@
 # Bolt Abacus — Architecture
 
+> **Historical/design reference (May 2026).** Operational ownership and flows
+> are in `docs/SYSTEM_MAP.md`; current state is in `docs/PROJECT_BRIEF.md`.
+> Older guardian enrollment, deployment alternatives, scaffolding questions and
+> planned integrity controls here require source verification before use. Retained
+> stack/design rationale may still apply; no section is automatically LIVE evidence.
+
 > **Status:** v1.1 — senior-architect revision of the original scaffold plan
 > **Last updated:** May 2026
 > **Audience:** Engineers building from this document. Read **§1 (Review Notes)** before reading anything else — it lists exactly what changed from the original plan and why.

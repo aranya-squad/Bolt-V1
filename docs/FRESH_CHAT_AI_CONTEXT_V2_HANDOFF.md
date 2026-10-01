@@ -1,5 +1,9 @@
 # Bolt V1 — Fresh Chat Continuation Handoff
 
+> Historical continuation instructions at creation. Before executing the remaining
+> steps below, inspect `docs/features/ai-context-system-v2.md` and current remote
+> refs; the tracker records which steps are already complete.
+
 **Use this entire document as the first message in a fresh ChatGPT/Codex chat.**
 
 The purpose is to let a fresh AI session continue the Bolt V1 AI-native development setup without asking the human to repeat context.

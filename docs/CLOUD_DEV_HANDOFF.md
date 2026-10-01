@@ -1,100 +1,57 @@
 # Bolt V1 — Cloud Development Handoff
 
-Use this file when starting, resuming or handing off work between ChatGPT Project, Codex Cloud, local development and other coding agents.
+## Startup
 
-## Start-of-task protocol
+Inspect current remote refs; read `BOLT_BOOTSTRAP.md`, `docs/PROJECT_BRIEF.md`
+and `docs/CONTEXT_INDEX.yaml`. Check freshness, then load the active feature doc
+and task-specific source/operations context. Confirm branch/base, approved scope
+and verifiable acceptance criteria before editing. Follow `AGENTS.md` boundaries;
+load `docs/agent-workflow.md` for deeper worktree/integration guidance as needed.
 
-1. Fetch the repository and inspect remote refs.
-2. Read `AGENTS.md`.
-3. Read `docs/CURRENT_STATE.md` and the latest entries in `docs/AI_DEV_LOG.md`.
-4. Read `docs/agent-workflow.md`.
-5. Read the active feature file under `docs/features/`.
-6. Confirm the base commit and branch before editing.
-7. Define a narrow task goal and verifiable acceptance criteria.
-8. Reproduce an existing bug before fixing it when applicable.
+## Durable checkpoints
 
-Do not assume a previous cloud workspace, database, terminal process or uncommitted file still exists.
+At meaningful implementation/contract/verification milestones, or a blocker:
 
-## Standard task prompt footer
+1. Update the owning `docs/features/<feature>.md`: status, branch, base/current or
+   reviewed commit, checkpoint date, owner, completed/remaining/blocked, exact
+   checks and `Next Exact Action`.
+2. Commit scoped work and publish to the authorized feature branch after checking
+   remote refs/diff. Preserve newer work; never force-reset it.
+3. Append a concise milestone to `docs/AI_DEV_LOG.md`; update
+   `docs/PROJECT_BRIEF.md` only when global state changes.
 
-For non-trivial cloud tasks, append the following instructions:
+An exact SHA inside a file names an already-existing inspected checkpoint. The
+containing commit is obtained from Git/GitHub file history; self-referential SHAs
+are impossible. On resumption verify the remote head rather than trusting snapshots.
 
-```text
-Before finishing:
-1. Keep work on the authorized task/feature branch; do not merge or deploy.
-2. Run the relevant repository checks and record exactly what ran.
-3. Commit useful completed work with scoped commit messages.
-4. Update the active docs/features/<feature>.md handoff.
-5. Append a concise entry to docs/AI_DEV_LOG.md.
-6. Update docs/CURRENT_STATE.md only if the actual repository/project state changed.
-7. Report:
-   - branch and final commit
-   - files/areas changed
-   - tests/checks and results
-   - migrations/API/config changes
-   - unresolved risks or decisions
-   - exact next recommended task
-```
+At completion report branch/final commit, status, changed areas, exact checks,
+API/migration/config/rollback implications, evidence gaps and next exact action.
+Do not merge or deploy. Do not weaken checks or claim local TEST as CI/LIVE.
 
-## Mid-task checkpoints
+## Status semantics
 
-Create a durable checkpoint when any of these occurs:
+- **IN PROGRESS**: implementation/verification still active.
+- **BLOCKED**: a named decision/access/dependency prevents required work.
+- **READY FOR HUMAN REVIEW**: scope and local verification complete; unmerged.
+- **MERGED**: human integration confirmed by Git/PR evidence.
+- **RELEASED**: production deployment independently confirmed by LIVE evidence.
 
-- a contract/API decision is finalized;
-- backend and frontend ownership is split;
-- a meaningful implementation slice passes tests;
-- an external dependency blocks further work;
-- a cloud session may end before completion.
+A local test pass never implies MERGED/RELEASED. Feature docs own active state;
+PROJECT_BRIEF summarizes global state; the dev log is chronological history.
+For source/evidence precedence use BOLT_BOOTSTRAP, not a second hierarchy here.
 
-A checkpoint should be a scoped commit plus an update in the feature handoff. Do not rely on a chat transcript alone.
+## If a cloud task disappears
 
-## How ChatGPT Project should consume results
+The environment and conversation are separate. Never assume inaccessible
+uncommitted files, databases or processes survived.
 
-When resuming in this ChatGPT Project, provide or reference the branch/commit. The project can then inspect GitHub commits, diffs, PR state and the durable docs rather than requiring the original cloud conversation.
+1. Inspect published branches/commits and current refs.
+2. Read the relevant feature handoff and latest relevant dev-log entries.
+3. Compare candidate branch/checkpoint to main and recorded prerequisites.
+4. Resume committed/verified work on its owning branch even if the thread is gone.
+5. If the only work was inaccessible/uncommitted, recover from the last durable
+   checkpoint; reproduce missing evidence instead of inventing completion.
 
-Preferred state hierarchy:
-
-1. Git commit/tree
-2. active `docs/features/<feature>.md`
-3. `docs/CURRENT_STATE.md`
-4. `docs/AI_DEV_LOG.md`
-5. cloud-task/chat transcript
-
-The transcript is useful context but is not canonical because it may disappear from navigation or become unavailable across surfaces.
-
-## Completion states
-
-Use one of these labels in feature handoffs:
-
-- **IN PROGRESS** — implementation is still active.
-- **BLOCKED** — a specific external decision/access/dependency is required.
-- **READY FOR HUMAN REVIEW** — scoped implementation and local verification are complete; not yet merged.
-- **MERGED** — human integration is complete.
-- **RELEASED** — production deployment has been independently confirmed.
-
-Never collapse READY FOR HUMAN REVIEW into MERGED or RELEASED.
-
-## Current answer-recovery handoff
-
-As of 01 October 2026:
-
-- Foundation: `chore/agent-workflow@b03d167`
-- Reviewed feature: `feat/answer-recovery@6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1`
-- Status: **READY FOR HUMAN REVIEW**
-- GitHub CI: not verified from the originating task
-- Production deployment: not performed by the task
-- Canonical feature handoff: `docs/features/answer-recovery.md`
-
-## If a Codex Cloud chat disappears from the sidebar
-
-Treat the cloud environment and the task conversation as separate things. The environment can still exist while a task thread is no longer visible in the expected navigation.
-
-Recovery procedure:
-
-1. Check the repository for newly published branches/commits.
-2. Inspect the active feature handoff and latest AI dev log.
-3. Compare candidate feature branches against `main`.
-4. If the work is committed and verified, continue from that branch even if the original cloud thread is unavailable.
-5. If the work is only in an inaccessible/uncommitted cloud workspace, do not assume it survived; restart from the last durable Git checkpoint.
-
-For this repository, the 01 October answer-recovery work is durably present on GitHub, so continuing development does not depend on recovering the original sidebar chat.
+Current global state: `docs/PROJECT_BRIEF.md`. Answer recovery:
+`docs/features/answer-recovery.md`. Context setup:
+`docs/features/ai-context-system-v2.md`. Read each on its owning branch.

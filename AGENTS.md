@@ -6,7 +6,13 @@ Applies to this repository across local workstations, cloud tasks and developer 
 
 Bolt is a React/TypeScript/Vite learning SPA backed by Django/DRF, PostgreSQL and Redis, with Celery for background work and Gunicorn/Caddy/Compose for the documented deployment. Reuse the existing stack and `/api/v1` contracts. Durable answer/progress writes belong in `backend/apps/progress/services.py`; preserve database constraints and append-only history.
 
-Start new sessions by reading `docs/CURRENT_STATE.md`, `docs/AI_DEV_LOG.md` and `docs/CLOUD_DEV_HANDOFF.md`, then read `docs/assessment01-10-2026.md` and `docs/next-steps01-10-2026.md` for recorded findings. They distinguish local reproduction, source evidence, proposals and unknowns; they are not proof of live AWS configuration or release acceptance. Confirm the approved frontend source before frontend implementation; current CI builds `frontend/` in this repository.
+Start substantial sessions with `BOLT_BOOTSTRAP.md`, `docs/PROJECT_BRIEF.md`
+and `docs/CONTEXT_INDEX.yaml`, in that order. Verify remote refs and freshness,
+then load only relevant feature docs, SYSTEM_MAP, RUNBOOK, decisions and source.
+Historical assessments/plans and the full AI_DEV_LOG are selective references,
+not mandatory startup loads. Current evidence wins over historical summaries.
+`Bolt-V1/frontend` is the approved working source for this lineage; verify actual
+hosting source/revision before production release. CI builds `frontend/` here.
 
 ## Shared boundaries
 

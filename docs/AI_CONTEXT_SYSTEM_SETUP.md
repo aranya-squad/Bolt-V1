@@ -1,6 +1,7 @@
 # Bolt V1 — AI Context System V2 Setup
 
-Status: implementation specification for the repository-native AI context system.
+Status: one-time implementation specification; current setup status/verification
+is owned by `docs/features/ai-context-system-v2.md`.
 Created: 2026-10-01.
 Target branch: `chore/ai-context-system-v2`.
 
