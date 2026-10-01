@@ -1,8 +1,8 @@
 ---
-status: READY FOR HUMAN REVIEW
+status: IN PROGRESS
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: 53a061b59b6f0c01f9939e730ddb961a06fea82a
+current_commit: dd09954b1292af7980d9703a15a0624245ffe713
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -36,7 +36,7 @@ warning-only CI. No application changes, merge, deployment or live mutation.
 - E–F complete: offline standard-library checker, focused regression tests,
   independent advisory CI job and explicit promotion criteria in RUNBOOK.
 
-- G complete: all 12 cold-start questions resolved through the compact startup
+- G document exercise complete: all 12 cold-start questions resolved through the compact startup
   and selective routes; actual practice answer/finalization path traced below.
   Resumed published `cdaffa4`; A–F were preserved rather than restarted.
 
@@ -47,12 +47,15 @@ warning-only CI. No application changes, merge, deployment or live mutation.
 
 ## In Progress
 
-None. Approved repository setup A–H is complete; awaiting human review.
+G validation gap identified during the requested completeness review: a new
+session with no prior Bolt context must run the cold-start exercise. The existing
+same-session exercise is useful but cannot prove fresh-session recoverability.
 
 ## Remaining
 
-No setup implementation remains. Human review/integration and hosted PR CI are
-next; live verification belongs to a separately authorized operational task.
+No implementation changes identified by this review. Complete G in a fresh
+session, then restore READY FOR HUMAN REVIEW. Hosted PR CI and human integration
+follow; live verification belongs to a separately authorized operational task.
 
 ## Verification
 
@@ -79,7 +82,8 @@ next; live verification belongs to a separately authorized operational task.
 
 ## Cold-start validation (G)
 
-PASS, 2026-10-01 at `cdaffa4`. Method: a same-session, constrained document
+DOCUMENT EXERCISE PASS; fresh-session validation PENDING. Recorded 2026-10-01
+at `cdaffa4`. Method: a same-session, constrained document
 exercise starting from only bootstrap/brief/router, then following selected
 routes. This is not an independent fresh-agent review or a new browser/API test.
 No full historical assessment or full dev log was needed to answer the questions.
@@ -126,6 +130,46 @@ No full historical assessment or full dev log was needed to answer the questions
 Limits: same-tab recovery; no cross-device/tournament guarantee. No application
 tests or live health/provider/log inspection were performed by this exercise.
 
+## Completeness review — 2026-10-01
+
+Reviewed published `dd09954` against the repository handoff A–H, actual diffs,
+checker/tests, ADRs, startup migration and previous feature plan. Same-agent
+review; no independent reviewer sign-off is claimed.
+
+| Step | Review result |
+|---|---|
+| A | Complete: source/config audit, factual fixes, canonical state ownership; no runtime changes. |
+| B | Complete: decision index and three ADRs with rationale, alternatives, consequences and approval evidence. |
+| C | Complete: compact AGENTS/cloud startup; CURRENT_STATE pointer; preserved history/design. |
+| D | Complete: recovery metadata/next action added without rewriting detailed delivery record. |
+| E | Complete: offline standard-library checker, metadata/commit/path checks and 18 passing regressions. |
+| F | Complete configuration: independent warning-only job; app jobs/triggers unchanged. Hosted verification remains pending. |
+| G | Partial: all 12 questions and real source trace documented, but performed after this session had already read deeper context. Require an isolated fresh-session run before final completion. |
+| H | Complete local review: diff/path/safety/source-of-truth checks; durable checkpoints; no merge/deploy. Recheck after G is published. |
+
+Fresh review checks: 18 tests pass, strict checker 0 errors/0 warnings, diff check
+passes, runtime trees equal reviewed `6d32de6`; connected GitHub returns no
+PR-triggered workflow runs for `dd09954` (first-page query, not all CI history).
+No new code/tool defect requiring repair was found. Checker limitations remain
+deliberate: structural/source-drift hints cannot certify semantic/live accuracy;
+source-drift comparison covers backend/frontend, not every infrastructure file.
+
+### Previous plan and next feature
+
+Approved recovery plan explicitly says reassess `feat/teacher-dashboard` after
+recovery handoff, and defer `feat/tournament-rounds` until rules are approved.
+No teacher-dashboard/tournament-rounds remote branch was found in this check.
+The older `feature/v2-wave0-1-auth-rework@c2421de` (June 29) is already an ancestor
+of this lineage; it is not a new parallel task to recreate.
+
+Recommended teacher slice (PROPOSAL, not implementation authorization): measure
+and batch roster/class/dashboard queries (W4-PERF-02), check active-enrollment
+consistency and preserve teacher ownership; verify built SPA + real local API
+against persisted completion/accuracy. Existing screens are the starting point.
+Role/consent changes need the W0-PROD-03 product matrix. Unknown-call-sign auth,
+image exclusions and internal health/bootstrap repairs remain separate prerelease
+backlog; the current login source still contains the malformed dummy hash.
+
 ## Known Risks / Unknowns
 
 - LIVE: AWS/Vercel revision, infrastructure, logs and health remain UNKNOWN;
@@ -140,7 +184,12 @@ None for this approved setup. Human review/integration/release remain later gate
 
 ## Next Exact Action
 
-Human reviewers inspect the context-only range
+Run a new session starting only from repository identity/ref plus BOLT_BOOTSTRAP,
+PROJECT_BRIEF and CONTEXT_INDEX. Answer the 12 G questions, follow selective routes
+and trace UI → API → persistence; publish its actual result/limitations here and
+recheck H. Do not infer a new-session pass from this transcript.
+
+Then human reviewers inspect the context-only range
 `c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35..chore/ai-context-system-v2`, then
 review the full main comparison including unmerged prerequisites. Follow the
 baseline → workflow foundation → recovery → continuous context → context V2
