@@ -62,6 +62,10 @@ Use `CODE`, `LIVE`, `CI`, `TEST`, `HUMAN`, `PROPOSAL`, and `UNKNOWN` when the di
   feature needs PM, Senior Tech Manager/CTO and Head QA agent signoff of one exact
   scope before coding. Follow the environment-specific gate in AGENTS and
   `docs/agent-workflow.md`; preserve its limited applicability.
+- For new features started after ADR 0005 activation, use Bolt AI-SDLC V1.
+  A message beginning `/feature-scoper` is the repo-backed intake trigger: load
+  `docs/skills/feature-scoper.md` and `docs/AI_SDLC.md`, then run G0→G5. Existing
+  or in-flight features are not retroactively migrated unless the owner opts in.
 
 ## Task completion
 

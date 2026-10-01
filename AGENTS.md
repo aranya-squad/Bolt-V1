@@ -51,6 +51,35 @@ scope; do not add an extra generic human scope-confirmation gate. Escalate genui
 unresolved product decisions/material expansions under the shared boundaries.
 See `docs/agent-workflow.md` and `docs/templates/feature-scope.md` for the record.
 
+### Bolt AI-SDLC V1 — prospective feature flow
+
+HUMAN decision, 2026-10-01: Bolt AI-SDLC V1 applies prospectively to new feature
+development started after the commit recording ADR 0005 in this owner's Cloud dev
+- Bolt v1 Project/account Work sessions. Do not retroactively re-plan, re-sign,
+re-task or reopen completed, in-progress or already-being-scoped work unless the
+owner explicitly opts it in. The current teacher dashboard/roster-correctness and
+existing batch-level-assignment workstreams are grandfathered under the prior
+three-role gate.
+
+When a new chat message begins with `/feature-scoper`, or the owner explicitly
+asks to run feature-scoper, treat the supplied text as raw intake and follow
+`docs/skills/feature-scoper.md` plus `docs/AI_SDLC.md`. Do not jump to coding.
+The coordinator verifies refs/source, runs risk routing, obtains PM + CTO + Head QA
+approval of one exact scope digest, creates the execution plan, validates G1/G2,
+then assigns bounded implementation work.
+
+The coordinator never substitutes its own approval for a mandatory independent
+role. Frontend/UX, Security, Data/Integrity or DevOps review is conditional on the
+risk router. Human input is requested only for genuine product ambiguity/conflict,
+material expansion, destructive data/live operations, secrets/security-policy
+choices, merge/release/deploy or other irreversible decisions. Explicit owner
+direction is authoritative; agents may challenge it with evidence but must not
+silently override it.
+
+AI-SDLC stops after an authorized feature branch is verified, committed and pushed
+as `READY FOR HUMAN REVIEW`. Agents do not merge to `main`, deploy or mutate
+production as part of this flow. See ADR 0005.
+
 1. Define the behavior, roles, acceptance criteria, dependencies and permitted code areas. Reproduce a reported defect before fixing it. Request approval when the task owner requires a planning gate.
 2. Create one integration branch/worktree per reviewable feature from a recorded base. If foundations are unmerged, document prerequisites, merge order and feature-only/full comparison ranges. Integration PRs target `main` and remain drafts while prerequisites are pending; helper branches integrate locally into the feature branch.
 3. Delegate bounded independent tasks when authorized and supported. Give each writing agent its own worktree/branch, an agreed contract and exclusive file ownership. A single developer can follow the same process sequentially.

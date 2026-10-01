@@ -1,0 +1,147 @@
+{
+  "__instructions": [
+    "Prospective AI-SDLC V1 only.",
+    "Hash exact <feature>.scope.md bytes into scope.sha256 and every approval.",
+    "Mutable status lives here, not in frozen scope.",
+    "Run check_feature_gate.py at G1/G2/G5."
+  ],
+  "ai_sdlc_version": 1,
+  "prospective_only": true,
+  "feature_id": "replace-me",
+  "tracker_path": "docs/features/replace-me.md",
+  "scope": {
+    "path": "docs/features/replace-me.scope.md",
+    "version": "1.0",
+    "sha256": "replace",
+    "base_commit": "replace"
+  },
+  "risk_route": {
+    "frontend_ux": {
+      "required": false,
+      "reason": ""
+    },
+    "security": {
+      "required": false,
+      "reason": ""
+    },
+    "data_integrity": {
+      "required": false,
+      "reason": ""
+    },
+    "devops": {
+      "required": false,
+      "reason": ""
+    }
+  },
+  "unresolved_blockers": [],
+  "approvals": [
+    {
+      "role": "product_manager",
+      "agent_id": "",
+      "decision": "PENDING",
+      "scope_sha256": ""
+    },
+    {
+      "role": "cto",
+      "agent_id": "",
+      "decision": "PENDING",
+      "scope_sha256": ""
+    },
+    {
+      "role": "head_qa",
+      "agent_id": "",
+      "decision": "PENDING",
+      "scope_sha256": ""
+    }
+  ],
+  "specialist_reviews": [],
+  "implementation_authorized": false,
+  "requirements": [
+    {
+      "id": "N-01",
+      "kind": "NEED",
+      "summary": "replace",
+      "acceptance_ids": [
+        "AC-01"
+      ]
+    },
+    {
+      "id": "W-01",
+      "kind": "WANT",
+      "summary": "replace",
+      "acceptance_ids": []
+    },
+    {
+      "id": "D-01",
+      "kind": "DEFERRED",
+      "summary": "replace",
+      "acceptance_ids": []
+    }
+  ],
+  "acceptance": [
+    {
+      "id": "AC-01",
+      "description": "observable outcome",
+      "required": true,
+      "status": "PENDING",
+      "evidence": []
+    }
+  ],
+  "waves": [
+    {
+      "id": "W1",
+      "name": "Contract/foundation",
+      "categories": [
+        {
+          "id": "backend",
+          "stories": [
+            {
+              "id": "US-01",
+              "title": "replace",
+              "acceptance_ids": [
+                "AC-01"
+              ],
+              "tasks": [
+                {
+                  "id": "T-01",
+                  "title": "replace",
+                  "owner_class": "worker",
+                  "model_class": "economical",
+                  "depends_on": [],
+                  "writable_paths": [
+                    "replace/path"
+                  ],
+                  "checks": [
+                    "replace check"
+                  ],
+                  "traceability": [
+                    "AC-01"
+                  ],
+                  "status": "PENDING",
+                  "commit": null,
+                  "evidence": []
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "quality_reviews": {
+    "integrated_commit": null,
+    "code_review": "PENDING",
+    "qa_review": "PENDING",
+    "security_required": false,
+    "security_review": "NOT_REQUIRED",
+    "findings": []
+  },
+  "publication": {
+    "feature_branch": "",
+    "feature_branch_pushed": false,
+    "final_commit": null,
+    "merged": false,
+    "deployed": false
+  },
+  "final_status": "IN PROGRESS"
+}

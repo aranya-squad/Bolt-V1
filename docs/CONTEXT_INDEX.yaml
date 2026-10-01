@@ -164,6 +164,22 @@ task_routes:
       - known risks
       - next exact action
 
+  feature_scoper:
+    read:
+      - docs/skills/feature-scoper.md
+      - docs/AI_SDLC.md
+      - docs/templates/feature-scope.md
+      - docs/templates/feature-plan.json
+    inspect:
+      - current remote refs
+      - docs/PROJECT_BRIEF.md
+      - relevant docs/features/<feature>.md
+      - relevant SYSTEM_MAP / ADRs / source / tests
+    verify:
+      - "python scripts/check_feature_gate.py --scope docs/features/<feature>.scope.md --plan docs/features/<feature>.plan.json --gate G1"
+      - "python scripts/check_feature_gate.py --scope docs/features/<feature>.scope.md --plan docs/features/<feature>.plan.json --gate G2"
+    rule: "Prospective only after ADR 0005; never retrofit existing/in-flight features without explicit owner opt-in."
+
 change_impact:
   backend_api_change:
     check_or_update:

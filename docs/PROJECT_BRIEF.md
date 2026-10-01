@@ -68,6 +68,16 @@ Not proven by this evidence: GitHub CI, production deployment, live AWS capacity
 
 A branch/worktree/handoff workflow exists in `AGENTS.md` and `docs/agent-workflow.md`. Human integration/release remains the default boundary.
 
+### Bolt AI-SDLC V1 [CODE + HUMAN policy]
+
+This branch contains a prospective repo-backed AI-SDLC for new features started
+after ADR 0005: `/feature-scoper`, PM/CTO/QA approval, risk-routed specialists,
+frozen scope digest, machine-readable Wave → Category → Story → Task plan,
+deterministic G1/G2/G5 checks, bounded workers, independent review/QA and
+stop-at-push handoff. Existing/already-scoped work is not migrated unless the
+owner opts in. Teacher dashboard/roster and current batch-level-assignment work
+remain grandfathered.
+
 ## READY FOR HUMAN REVIEW
 
 ### AI context system V2

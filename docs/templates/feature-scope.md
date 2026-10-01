@@ -4,6 +4,12 @@ Use for the mandatory three-role gate where AGENTS says it applies. This templat
 is not an active feature tracker. Copy into the owning feature branch and record
 version plus SHA-256 before implementation starts.
 
+For prospective AI-SDLC V1 features, materialize the finalized scope as
+`docs/features/<feature>.scope.md`, hash its exact bytes and keep mutable progress
+in `<feature>.md` plus approvals/execution in `<feature>.plan.json`. Do not edit
+the frozen scope after signatures; material change means new version/digest and
+renewed approval. Existing/in-flight features may retain their current format.
+
 ## Identity and outcome
 
 Feature ID/title; requester direction; applicability environment; problem; user

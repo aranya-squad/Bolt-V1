@@ -36,6 +36,29 @@ Signoff means a sound, bounded plan. Executed QA/CI, independent code review,
 human integration and release remain separate gates. Agent review cannot decide
 unresolved human product rules, consent/security policy or production mutation.
 
+### Prospective Bolt AI-SDLC V1
+
+For new features started after ADR 0005 activation, the three-role gate above is
+G1 inside the broader workflow in `docs/AI_SDLC.md` and
+`docs/skills/feature-scoper.md`. Activation is deliberately non-retroactive:
+completed, implemented or already-being-scoped features keep their current
+workflow unless the owner opts them in. Preserve the current teacher
+dashboard/roster-correctness and batch-level-assignment workstreams.
+
+New AI-SDLC features use:
+- `docs/features/<feature>.md`: mutable tracker/handoff;
+- `docs/features/<feature>.scope.md`: frozen scope bytes;
+- `docs/features/<feature>.plan.json`: approvals, risk route, Wave → Category →
+  User Story → Task graph, traceability, quality evidence and publication state.
+
+Run `scripts/check_feature_gate.py` at G1 before coding, G2 before worker dispatch
+and G5 before READY FOR HUMAN REVIEW. The checker validates recorded invariants;
+it does not run agents/tests/Git or convert assertions into execution evidence.
+Default parallelism is one coordinator plus at most two independent writers,
+followed by integration and independent review/QA. Economical models may handle
+narrow tasks; architecture, security, migration/concurrency and final review use
+stronger reasoning. Worker self-approval is invalid.
+
 ## Branches and worktrees
 
 One integration branch per reviewable feature, e.g. `feat/answer-recovery`. Use helper branches such as `task/answer-recovery-api` and `task/answer-recovery-ui` only for delegated writes. These are not independent product features; the coordinator brings their commits into the feature branch.
