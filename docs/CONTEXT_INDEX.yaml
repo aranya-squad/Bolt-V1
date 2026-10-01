@@ -152,6 +152,22 @@ task_routes:
       - "python scripts/check_context_freshness.py"
       - "python -m unittest discover -s scripts/tests -v"
 
+  new_feature_ai_sdlc:
+    read:
+      - docs/AI_SDLC.md
+      - skills/feature-scoper/SKILL.md
+      - docs/templates/feature-scope.md
+      - docs/templates/feature-plan.json
+    inspect:
+      - actual affected source/tests
+      - current remote refs
+    verify:
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G1"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G2"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G4"
+      - "python scripts/check_feature_gate.py docs/features/<feature>.plan.json --gate G5"
+    rule: "Prospective from the 2026-10-01 adoption checkpoint; do not retroactively block work already in progress unless the owner explicitly opts it in."
+
   feature_continuation:
     inspect:
       - docs/features/<feature>.md
