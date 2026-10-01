@@ -1,5 +1,5 @@
 import { beforeEach, afterEach, describe, expect, it, vi } from "vitest";
-import { AxiosError, AxiosHeaders } from "axios";
+import axios, { AxiosError, AxiosHeaders } from "axios";
 import { apiClient } from "@/shared/api/client";
 import { useSessionStore } from "../sessionStore";
 import { useAuthStore } from "../authStore";
@@ -224,6 +224,56 @@ describe("answer recovery API/storage boundary", () => {
     expect(await store().finish()).toMatchObject({ id: "result-1" });
     expect(post.mock.calls.at(-1)?.[1]).toEqual({ contract_version: 2, expected_attempts: [{ question_index: 0, attempt_number: 1 }] });
     expect(sessionStorage.getItem(storageKey(user.id, meta.session_id))).toBeNull();
+  });
+  it("deterministic limit items outside the failed snapshot never become discardable", async () => {
+    setup(); const item = store().enqueue(1, false)!;
+    vi.spyOn(apiClient, "post").mockRejectedValue(fail(409, { code: "attempt_limit", items: [{ code: "attempt_limit", question_index: 1, attempt_number: 42 }] }));
+    expect(await store().flush()).toBe(false); store().excludeRejected();
+    expect(store().recovery?.rejected).toEqual([]); expect(store().recovery?.pending).toEqual([item]);
+  });
+  it("memory-only unresolved work blocks another session and stale callbacks cannot replace it", async () => {
+    const meta = setup(); vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new DOMException("full", "QuotaExceededError"); });
+    const item = store().enqueue(2, false)!;
+    let resolveResponse: ((value: { data: unknown }) => void) | undefined;
+    vi.spyOn(apiClient, "post").mockImplementationOnce(() => new Promise(resolve => { resolveResponse = resolve; }));
+    const flushing = store().flush(); await vi.waitFor(() => expect(resolveResponse).toBeDefined());
+    store().initialize(user.id, { ...meta, session_id: "session-2" }, "practice:session-2");
+    expect(store().switchBlocked).toBe(true); expect(store().recovery?.sessionId).toBe(meta.session_id);
+    resolveResponse!({ data: { contract_version: 2, verdicts: [receipt(item)] } });
+    expect(await flushing).toBe(false); expect(store().recovery?.pending).toEqual([item]);
+    expect(await store().finish()).toBeNull();
+    store().initialize(user.id, meta, context); // Returning resumes the same queue.
+    expect(store().switchBlocked).toBe(false); expect(store().recovery?.pending).toEqual([item]);
+  });
+  it("refresh timeout through the real response interceptor suspends and preserves the queue", async () => {
+    setup(); const item = store().enqueue(2, false)!;
+    vi.restoreAllMocks();
+    const adapter = apiClient.defaults.adapter;
+    apiClient.defaults.adapter = async config => { throw new AxiosError("expired", "ERR_BAD_RESPONSE", config, undefined, {
+      status: 401, statusText: "expired", data: {}, headers: new AxiosHeaders(), config,
+    }); };
+    const refresh = vi.spyOn(axios, "post").mockRejectedValue(new AxiosError("refresh timeout", "ECONNABORTED"));
+    try {
+      expect(await store().flush()).toBe(false);
+      expect(refresh).toHaveBeenCalledWith("/api/v1/auth/refresh/", {}, { withCredentials: true, timeout: 10000 });
+      expect(store().status).toBe("suspended"); expect(store().recovery?.pending).toEqual([item]);
+      expect(useAuthStore.getState().accessToken).toBeNull();
+    } finally { apiClient.defaults.adapter = adapter; }
+  });
+  it("after adopting a terminal server answer, a higher local attempt_limit can be explicitly excluded", async () => {
+    const meta = setup(); const first = store().enqueue(1, false)!; const higher = store().enqueue(2, false)!;
+    const actual = { ...receipt(first), submitted_answer: 2, is_correct: true, elapsed_ms: 500 };
+    const post = vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(409, { code: "identity_conflict", receipt: actual }));
+    expect(await store().finish()).toBeNull();
+    meta.question_states![0] = { question_index: 0, max_attempt_number: 1, attempt_count: 1, terminal: true, latest_receipt: actual };
+    await store().useServerAnswer(); expect(store().recovery?.pending).toEqual([higher]);
+    post.mockRejectedValueOnce(fail(409, { code: "attempt_limit", detail: "Question complete.", items: [{ index: 0, code: "attempt_limit", question_index: 0, attempt_number: 2 }] }));
+    expect(await store().finish()).toBeNull(); expect(store().recovery?.rejected).toHaveLength(1);
+    expect(store().recovery?.pending).toEqual([higher]);
+    store().excludeRejected(); expect(store().recovery?.pending).toEqual([]);
+    expect(store().recovery?.manifest).toEqual([{ question_index: 0, attempt_number: 1 }]);
+    post.mockResolvedValueOnce({ data: { contract_version: 2, id: "existing-answer-result", session_id: meta.session_id, created_at: new Date().toISOString(), score_correct: 1, score_total: 2, accuracy_pct: 50, time_taken_sec: 1, xp_earned: 1 } });
+    expect(await store().finish()).toMatchObject({ id: "existing-answer-result" });
   });
   it("UI-05: abandoned sessions retain missing work without accepting new input/final result", async () => {
     const meta = setup(); const item = store().enqueue(2, true)!; expect(item.answer).toBe(SKIP_ANSWER);

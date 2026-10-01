@@ -24,7 +24,7 @@ let refreshInFlight: Promise<string> | null = null;
 async function doRefresh(): Promise<string> {
   if (!refreshInFlight) {
     refreshInFlight = axios
-      .post(`${API_BASE}/api/v1/auth/refresh/`, {}, { withCredentials: true })
+      .post(`${API_BASE}/api/v1/auth/refresh/`, {}, { withCredentials: true, timeout: 10000 })
       .then(({ data }) => {
         useAuthStore.getState().setAccessToken(data.access);
         return data.access as string;

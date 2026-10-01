@@ -76,6 +76,12 @@ export default function InArenaPage() {
     return () => window.clearTimeout(timer);
   }, [verdict, saved?.feedbackUntil, blocked, handleVerdictDismiss]);
 
+  if (recovery.needsSwitchChoice) {
+    return <main className="page-wrap"><SyncDot state="error" pending={recovery.heldPending}
+      message="Unsaved answers from another session are held only in memory. Return to save them or explicitly discard them before opening this session."
+      onReturn={() => navigate(recovery.returnTo)} onDiscard={recovery.discardForSwitch} /></main>;
+  }
+
   if (isLoading) {
     return <div className="page-loading">LOADING…</div>;
   }

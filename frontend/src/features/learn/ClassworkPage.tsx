@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStartClasswork } from "@/shared/api/queries/useClasswork";
@@ -7,6 +7,7 @@ import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
 import { useSession } from "@/shared/api/queries/useSession";
 import { useAnswerRecovery } from "@/shared/api/queries/useAnswerRecovery";
 import { findRecoverySession } from "@/shared/store/answerRecovery";
+import { useSessionStore } from "@/shared/store/sessionStore";
 import { useAuthStore } from "@/shared/store/authStore";
 import { SyncDot } from "@/shared/ui/SyncDot";
 import type { ProgressRecord } from "@/shared/types";
@@ -24,7 +25,10 @@ export default function ClassworkPage() {
 
   const context = `learn:${levelId}:${lessonId ?? ""}`;
   const userId = useAuthStore(s => s.user?.id);
-  const [resumeId] = useState(() => userId ? findRecoverySession(userId, context) : null);
+  const resumeId = useMemo(() => {
+    const held = useSessionStore.getState();
+    return userId ? findRecoverySession(userId, context, held.meta?.state === "submitted" ? null : held.recovery) : null;
+  }, [userId, context]);
   const [testModeOption, setTestModeOption] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const { mutate: startSession, data: startedMeta, isPending: starting, isError: startError } = useStartClasswork(levelId!, lessonId);
@@ -76,6 +80,12 @@ export default function ClassworkPage() {
   const timerPct = (timerValue / timerMax) * 100;
   const timerAccent = timerPct < 20 ? ("streak" as const) : ("yellow" as const);
   const question = sessionMeta?.questions[currentIndex];
+
+  if (recovery.needsSwitchChoice) {
+    return <main className="page-wrap"><SyncDot state="error" pending={recovery.heldPending}
+      message="Unsaved answers from another session are held only in memory. Return to save them or explicitly discard them before opening this session."
+      onReturn={() => navigate(recovery.returnTo)} onDiscard={recovery.discardForSwitch} /></main>;
+  }
 
   // Pre-start: session not yet created — let student configure test mode before committing.
   if (!sessionMeta && !starting && !startError && !resumeId) {

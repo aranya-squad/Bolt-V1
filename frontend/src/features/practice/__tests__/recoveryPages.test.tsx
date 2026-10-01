@@ -171,6 +171,55 @@ describe("observable recovery in existing gameplay pages", () => {
       `/sessions/${m.session_id}/submit/`, { contract_version: 2, expected_attempts: [] },
     ]);
   });
+  it("memory-only classwork work is discovered on remount without starting another session", async () => {
+    const m = meta("CLASSWORK"); useSessionStore.getState().initialize(USER.id, m, "learn:l1:");
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new DOMException("denied", "SecurityError"); });
+    const item = useSessionStore.getState().enqueue(0, true)!;
+    sessionStorage.clear();
+    vi.spyOn(apiClient, "get").mockResolvedValue({ data: m });
+    const post = vi.spyOn(apiClient, "post").mockRejectedValue(unavailable());
+    page(true); await tick();
+    expect(screen.queryByRole("button", { name: "BEGIN SESSION" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Q 1 \/ 2/)).toBeInTheDocument();
+    expect(useSessionStore.getState().recovery!.pending).toEqual([item]);
+    expect(post.mock.calls.every(([url]) => url.endsWith("attempts/bulk/"))).toBe(true);
+  });
+  it.each(["return", "discard"])("memory-only session switch offers visible %s choice and retains work until chosen", async choice => {
+    const old = { ...meta(), session_id: "other-session" };
+    useSessionStore.getState().initialize(USER.id, old, "practice:other-session");
+    vi.spyOn(Storage.prototype, "setItem").mockImplementation(() => { throw new DOMException("denied", "SecurityError"); });
+    const item = useSessionStore.getState().enqueue(1, false)!;
+    const current = meta();
+    vi.spyOn(apiClient, "get").mockImplementation(async url => ({ data: url.includes("other-session") ? old : current }));
+    vi.spyOn(apiClient, "post").mockRejectedValue(unavailable());
+    page(); await tick();
+    expect(screen.getByRole("status")).toHaveTextContent("held only in memory");
+    expect(useSessionStore.getState().recovery!.pending).toEqual([item]);
+    expect(screen.queryByPlaceholderText("Answer")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: choice === "return" ? "Return to unsaved session" : "Discard unsaved answers and open session" })); await tick();
+    expect(screen.getByPlaceholderText("Answer")).toBeInTheDocument();
+    expect(useSessionStore.getState().recovery!.sessionId).toBe(choice === "return" ? old.session_id : current.session_id);
+    expect(useSessionStore.getState().recovery!.pending).toEqual(choice === "return" ? [item] : []);
+  });
+  it.each([false, true])("submitted practice resume retrieves a confirmed result, failed retrieval=%s remains retryable", async failFirst => {
+    const m = meta(); m.state = "submitted";
+    // Partial submitted sessions (for example timer expiry) also retrieve their stable result.
+    m.question_states![0] = { question_index: 0, max_attempt_number: 1, attempt_count: 1, terminal: true, latest_receipt: accepted({ question_index: 0, attempt_number: 1, answer: 2, elapsed_ms: 500, is_skip: false }) };
+    vi.spyOn(apiClient, "get").mockResolvedValue({ data: m });
+    const result = { contract_version: 2, id: "submitted-result", session_id: m.session_id, created_at: new Date().toISOString(), score_correct: 1, score_total: 2, accuracy_pct: 50, time_taken_sec: 1, xp_earned: 10 };
+    const post = vi.spyOn(apiClient, "post");
+    if (failFirst) post.mockRejectedValueOnce(unavailable());
+    post.mockResolvedValue({ data: result });
+    page(); await tick(); await tick();
+    if (failFirst) {
+      expect(screen.queryByText("Confirmed victory")).not.toBeInTheDocument();
+      expect(useSessionStore.getState().recovery!.manifest).toEqual([]);
+      fireEvent.click(screen.getByRole("button", { name: "Retry finish" })); await tick();
+    }
+    expect(screen.getByText("Confirmed victory")).toBeInTheDocument();
+    expect(post).toHaveBeenCalledTimes(failFirst ? 2 : 1);
+    expect(post.mock.calls.every(([url]) => url.endsWith("submit/"))).toBe(true);
+  });
   it("UI-02: corrupt storage is visible and never described as saved locally", async () => {
     sessionStorage.setItem(storageKey(USER.id, "ui-session"), "not-json");
     vi.spyOn(apiClient, "get").mockResolvedValue({ data: meta() }); page(); await tick();

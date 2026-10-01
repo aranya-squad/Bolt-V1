@@ -106,7 +106,8 @@ export function saveRecovery(state: RecoveryState): StorageStatus {
     return "available";
   } catch { return "unavailable"; }
 }
-export function findRecoverySession(userId: string, context: string): string | null {
+export function findRecoverySession(userId: string, context: string, memory?: RecoveryState | null): string | null {
+  if (memory?.userId === userId && memory.context === context) return memory.sessionId;
   try {
     for (let i = 0; i < sessionStorage.length; i++) {
       const key = sessionStorage.key(i);

@@ -12,6 +12,7 @@ interface SessionState {
   meta: SessionMeta | null;
   storage: StorageStatus;
   verified: boolean;
+  switchBlocked: boolean;
   status: SaveStatus;
   message: string;
   retryAt: number | null;
@@ -32,7 +33,7 @@ let finishInFlight: Promise<ProgressRecord | null> | null = null;
 let generation = 0;
 let retryCount = 0;
 let rateLimitedUntil = 0;
-const INITIAL = { recovery: null, meta: null, storage: "available" as StorageStatus, verified: false, status: "accepted" as SaveStatus, message: "", retryAt: null, conflict: null };
+const INITIAL = { recovery: null, meta: null, storage: "available" as StorageStatus, verified: false, switchBlocked: false, status: "accepted" as SaveStatus, message: "", retryAt: null, conflict: null };
 function capability(meta: SessionMeta) {
   if (!Array.isArray(meta.questions) || !Array.isArray(meta.question_states) || meta.question_states.length !== meta.questions.length) return false;
   if (!meta.question_states.every(q => q && Number.isInteger(q.question_index) && q.question_index >= 0 && q.question_index < meta.questions.length &&
@@ -66,8 +67,9 @@ function failure(error: unknown, snapshot: PendingAttempt[] = []) {
       return;
     }
     if (status === 400 || status === 409 || status === 404) {
-      const rejected = status === 400 && Array.isArray(body.items) ? body.items.flatMap((item: unknown) => {
-        if (isIdentity(item)) return [item];
+      const rejected = (status === 400 || status === 409 && body.code === "attempt_limit") && Array.isArray(body.items) ? body.items.flatMap((item: unknown) => {
+        if (status === 409 && (typeof item !== "object" || item === null || !("code" in item) || item.code !== "attempt_limit")) return [];
+        if (isIdentity(item)) return snapshot.some(a => identityKey(a) === identityKey(item)) ? [item] : [];
         if (typeof item === "object" && item !== null && "index" in item && typeof item.index === "number" && Number.isInteger(item.index) && snapshot[item.index]) return [snapshot[item.index]];
         return [];
       }) : [];
@@ -95,10 +97,15 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
     const previous = get();
     const old = previous.recovery;
     const same = old?.userId === userId && old.sessionId === meta.session_id && old.context === context;
+    if (!same && old?.userId === userId && (old.pending.length || old.manifest) && previous.storage !== "available") {
+      if (!previous.switchBlocked) { generation++; flushInFlight = null; finishInFlight = null; }
+      set({ switchBlocked: true, status: "error", retryAt: null, message: "Unsaved answers from another session are held only in memory. Return to that session or explicitly discard them before opening this one." });
+      return;
+    }
     if (!same) { generation++; retryCount = 0; rateLimitedUntil = 0; set({ conflict: null }); }
     const loaded = same ? { state: old, storage: get().storage } : loadRecovery(userId, meta.session_id, context);
     const state = loaded.state ?? createRecovery(userId, meta, context);
-    set({ meta, recovery: state, storage: loaded.storage, verified: false });
+    set({ meta, recovery: state, storage: loaded.storage, verified: false, switchBlocked: false });
     if (!capability(meta)) { set({ status: "unsupported", message: "This session needs a compatible API upgrade. Pending answers are retained; input is paused.", retryAt: null }); return; }
     const contextMatches = context.startsWith("practice:") ? !["CLASSWORK", "HOMEWORK"].includes(meta.kind) : ["CLASSWORK", "HOMEWORK"].includes(meta.kind) && (meta.level_id === null || meta.level_id === context.split(":")[1]) && (meta.lesson_id === null || meta.lesson_id === (context.split(":")[2] || null));
     if (!contextMatches) { set({ status: "error", message: "Session context does not match this page. Input is paused." }); return; }
@@ -106,7 +113,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
       const next = reconcile(state, meta);
       persist(next);
       const conflict = same && previous.conflict && next.pending.some(a => identityKey(a) === identityKey(previous.conflict!)) ? previous.conflict : null;
-      const retainError = same && previous.status !== "saving" && (previous.status === "error" || !!conflict) && next.pending.length > 0;
+      const retainError = same && !previous.switchBlocked && previous.status !== "saving" && (previous.status === "error" || !!conflict) && next.pending.length > 0;
       set({ verified: true, conflict, status: retainError ? "error" : next.pending.length ? "pending" : "accepted",
         message: meta.state === "abandoned" ? "This session was abandoned. Unresolved answers are retained; new input is paused." : retainError ? previous.message : "",
         retryAt: retainError ? previous.retryAt : null });
@@ -115,7 +122,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   update: patch => { const r = get().recovery; if (r) persist({ ...r, ...patch }); },
   enqueue: (answer, isSkip, feedback) => {
     const { recovery: r, meta, status, verified } = get();
-    if (!r || !meta || !verified || meta.state !== "active" || r.manifest || get().conflict || ["unsupported", "suspended"].includes(status)) return null;
+    if (!r || !meta || !verified || get().switchBlocked || meta.state !== "active" || r.manifest || get().conflict || ["unsupported", "suspended"].includes(status)) return null;
     if (meta.question_states?.find(q => q.question_index === r.index)?.terminal) {
       set({ message: "This question is already complete on the server. Continue from its accepted outcome." });
       return null;
@@ -139,7 +146,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   flush: () => {
     if (flushInFlight) return flushInFlight;
     const { recovery: r, status, verified } = get();
-    if (!r || !verified || ["unsupported", "suspended"].includes(status) || r.rejected.length || get().conflict || rateLimitedUntil > Date.now()) return Promise.resolve(false);
+    if (!r || !verified || get().switchBlocked || ["unsupported", "suspended"].includes(status) || r.rejected.length || get().conflict || rateLimitedUntil > Date.now()) return Promise.resolve(false);
     const token = generation;
     const flight = (async () => {
       set({ status: "saving", message: "", retryAt: null });
@@ -171,7 +178,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   finish: () => {
     if (finishInFlight) return finishInFlight;
     const r = get().recovery;
-    if (!r) return Promise.resolve(null);
+    if (!r || get().switchBlocked) return Promise.resolve(null);
     if (!r.manifest) persist({ ...r, manifest: r.pending.map(({ question_index, attempt_number }) => ({ question_index, attempt_number })) });
     const token = generation;
     const flight = (async () => {
@@ -192,7 +199,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   },
   useServerAnswer: async () => {
     const { recovery: r, conflict, status } = get();
-    if (!r || !conflict || !get().verified || status === "saving") return;
+    if (!r || !conflict || get().switchBlocked || !get().verified || status === "saving") return;
     const token = generation;
     set({ status: "saving", retryAt: null });
     try {

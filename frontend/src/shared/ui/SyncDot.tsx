@@ -13,6 +13,8 @@ interface SyncDotProps {
   onFinish?: () => void;
   conflict?: AcceptedReceipt | null;
   onUseServerAnswer?: () => void;
+  onReturn?: () => void;
+  onDiscard?: () => void;
 }
 
 const STATES: Record<SyncState, { color: string; label: string; pulse: boolean }> = {
@@ -25,7 +27,7 @@ const STATES: Record<SyncState, { color: string; label: string; pulse: boolean }
   suspended: { color: "var(--err)", label: "Sign in to recover", pulse: false },
 };
 
-export function SyncDot({ state = "idle", pending = 0, message, storageWarning, onRetry, onExclude, onFinish, conflict, onUseServerAnswer }: SyncDotProps) {
+export function SyncDot({ state = "idle", pending = 0, message, storageWarning, onRetry, onExclude, onFinish, conflict, onUseServerAnswer, onReturn, onDiscard }: SyncDotProps) {
   const s = STATES[state];
   return (
     <div role="status" aria-live="polite" style={{ maxWidth: 480 }}>
@@ -68,6 +70,8 @@ export function SyncDot({ state = "idle", pending = 0, message, storageWarning, 
     {onUseServerAnswer && <button type="button" onClick={onUseServerAnswer}>Use saved server answer</button>}
     {onRetry && <button type="button" onClick={onRetry}>Retry saving</button>}
     {onExclude && <button type="button" onClick={onExclude}>Exclude rejected answers</button>}
+    {onReturn && <button type="button" onClick={onReturn}>Return to unsaved session</button>}
+    {onDiscard && <button type="button" onClick={onDiscard}>Discard unsaved answers and open session</button>}
     {onFinish && <button type="button" onClick={onFinish}>Retry finish</button>}
     </div>
   );
