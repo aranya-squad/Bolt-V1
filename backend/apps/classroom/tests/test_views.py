@@ -18,7 +18,6 @@ from rest_framework_simplejwt.tokens import AccessToken
 from apps.classroom.models import Class, Enrollment
 from apps.users.tests.factories import ProfileFactory, TeacherFactory, UserFactory
 
-
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 

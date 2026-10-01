@@ -2,7 +2,7 @@ from rest_framework import serializers
 
 from apps.progress.models import ProgressRecord, QuestionAttempt
 
-from .models import ArenaSession, SessionKind
+from .models import SessionKind
 
 _PRACTICE_KINDS = frozenset([
     SessionKind.FLASH_CARDS,

@@ -1,14 +1,14 @@
 from django.core.cache import cache
 from django.shortcuts import get_object_or_404
 from django.utils.cache import patch_cache_control
-from rest_framework import generics, status
+from rest_framework import generics
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from apps.progress.models import LessonCompletion, LevelCompletion
 
-from .models import Level, Lesson
+from .models import Level
 from .serializers import LevelSerializer
 
 _LEVEL_CONTEXT_TTL = 60  # seconds; invalidated by finalize_session on completion change
@@ -75,7 +75,7 @@ class LessonListView(APIView):
         level = get_object_or_404(Level, pk=level_id)
         lessons = list(level.lessons.order_by("order"))
 
-        lesson_ids = [l.id for l in lessons]
+        lesson_ids = [lesson.id for lesson in lessons]
         completions = LessonCompletion.objects.filter(
             user=request.user,
             lesson_id__in=lesson_ids,

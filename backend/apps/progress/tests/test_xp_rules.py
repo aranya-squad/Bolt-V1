@@ -1,4 +1,3 @@
-import pytest
 
 from apps.progress.xp_rules import (
     FIRST_COMPLETION_BONUS,

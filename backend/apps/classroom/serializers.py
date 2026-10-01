@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Class, Enrollment
+from .models import Class
 
 
 class ClassSerializer(serializers.ModelSerializer):
@@ -58,6 +58,7 @@ class RosterStudentSerializer(serializers.Serializer):
 
     def get_accuracy_pct(self, enrollment):
         from django.db.models import Avg
+
         from apps.progress.models import ProgressRecord
         result = ProgressRecord.objects.filter(user=enrollment.student).aggregate(avg=Avg("accuracy_pct"))
         acc = result["avg"]

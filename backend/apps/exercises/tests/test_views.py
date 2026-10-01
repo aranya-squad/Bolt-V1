@@ -3,14 +3,13 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.users.tests.factories import GuardianFactory
 from apps.exercises.tests.factories import (
     ArenaSessionFactory,
     ExerciseTemplateFactory,
-    LevelFactory,
     LessonFactory,
+    LevelFactory,
 )
-
+from apps.users.tests.factories import GuardianFactory
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -303,8 +302,8 @@ def test_session_detail_no_answers(auth_client, session1):
 @pytest.mark.django_db
 def test_submit_attempt_handles_non_integer_elapsed_ms(auth_client, user):
     """Non-integer elapsed_ms must not cause a 500 (converted to 0 then logged/enforced)."""
-    from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.exercises.models import SessionKind
+    from apps.exercises.tests.factories import ArenaSessionFactory
 
     # Use ZEN so enforcement doesn't block the attempt (0ms is log-only for non-enforce kinds).
     zen_session = ArenaSessionFactory(user=user, kind=SessionKind.ZEN, template=None)
@@ -320,8 +319,8 @@ def test_submit_attempt_handles_non_integer_elapsed_ms(auth_client, user):
 @pytest.mark.django_db
 def test_submit_attempt_handles_negative_elapsed_ms(auth_client, user):
     """Negative elapsed_ms is normalised to 0; non-enforce kinds must not 500."""
-    from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.exercises.models import SessionKind
+    from apps.exercises.tests.factories import ArenaSessionFactory
 
     zen_session = ArenaSessionFactory(user=user, kind=SessionKind.ZEN, template=None)
     url = reverse("session-attempt", kwargs={"session_id": zen_session.id})
@@ -338,8 +337,9 @@ def test_min_answer_ms_logs_warning_for_zen_and_does_not_block(auth_client, user
     """ZEN (non-enforce kind): fast answer must log a warning but proceed normally."""
     import logging
     from unittest.mock import patch
-    from apps.exercises.tests.factories import ArenaSessionFactory
+
     from apps.exercises.models import SessionKind
+    from apps.exercises.tests.factories import ArenaSessionFactory
 
     zen_session = ArenaSessionFactory(user=user, kind=SessionKind.ZEN, template=None)
     url = reverse("session-attempt", kwargs={"session_id": zen_session.id})
@@ -359,6 +359,7 @@ def test_min_answer_ms_rejects_fast_classwork_submission(auth_client, session1):
     """CLASSWORK (enforce kind): fast answer must return 400 and not create an attempt."""
     import logging
     from unittest.mock import patch
+
     from apps.progress.models import QuestionAttempt
 
     url = reverse("session-attempt", kwargs={"session_id": session1.id})
@@ -376,8 +377,8 @@ def test_min_answer_ms_rejects_fast_classwork_submission(auth_client, session1):
 @pytest.mark.django_db
 def test_min_answer_ms_rejects_fast_time_attack_submission(auth_client, user):
     """TIME_ATTACK (enforce kind): fast answer must return 400."""
-    from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.exercises.models import SessionKind
+    from apps.exercises.tests.factories import ArenaSessionFactory
 
     ta_session = ArenaSessionFactory(user=user, kind=SessionKind.TIME_ATTACK, template=None)
     url = reverse("session-attempt", kwargs={"session_id": ta_session.id})
@@ -490,8 +491,8 @@ def test_session_detail_practice_includes_answers(auth_client):
 
 @pytest.fixture
 def practice_session(user):
-    from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.exercises.models import SessionKind
+    from apps.exercises.tests.factories import ArenaSessionFactory
     return ArenaSessionFactory(user=user, kind=SessionKind.TIME_ATTACK, template=None)
 
 
@@ -523,8 +524,8 @@ def test_bulk_submit_records_all_attempts_and_returns_verdicts(auth_client, prac
 @pytest.mark.django_db
 def test_bulk_submit_40_attempts_single_call(auth_client, user):
     """40 attempts in one call → 40 QuestionAttempt rows + correct verdicts."""
-    from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.exercises.models import SessionKind
+    from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.progress.models import QuestionAttempt
 
     questions = [
@@ -643,7 +644,6 @@ def test_bulk_submit_rejects_duplicate_question_index(auth_client, practice_sess
 def test_bulk_submit_rejects_when_attempt_cap_reached(auth_client, practice_session):
     """Once MAX_ATTEMPTS_PER_QUESTION attempts exist for an index, bulk is rejected."""
     from apps.exercises.constants import MAX_ATTEMPTS_PER_QUESTION
-    from apps.exercises.models import ArenaSession
 
     url = reverse("session-attempts-bulk", kwargs={"session_id": practice_session.id})
 

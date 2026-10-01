@@ -1,4 +1,3 @@
-import pytest
 
 from apps.exercises.generators.procedural import ProceduralGenerator
 
