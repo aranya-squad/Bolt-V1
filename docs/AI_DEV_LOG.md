@@ -159,3 +159,11 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - Bootstrap now specifies branch/ref-only inspection and delayed patches/prior reports for cold-start tests. No source-recoverability or setup implementation defect identified. Next: a clean session repeats G, rechecks H and records readiness if it passes.
 - Executed: 18 checker tests, strict/advisory checker (0 errors/warnings), diff check and runtime equality against 6d32de6. No application/hosted/live test claim.
 - Teacher-dashboard reassessment continues as planning only; current screens/active enrollment/query amplification inspected.
+
+## 2026-10-01 — Teacher dashboard scope reassessed
+
+- Verification method/limitations published at c93ecec. Setup remains IN PROGRESS pending a clean G run; no remaining implementation gap identified.
+- Inspected approved recovery plan, W4-PERF-02/W0-PROD-03/prerelease next steps, complete current branch list and teacher/classroom/stats/router/cache source. Historical auth branch is an ancestor; dashboard/tournament branches absent.
+- Published concrete proposal in `docs/teacher-dashboard-assessment-2026-10-01.md`: reuse current screens, active enrollment consistency, grouped roster/class/lesson aggregates, teacher cache identity and measured SQL budgets. Preserve existing metric/history/ownership semantics and choose primary reporting reads explicitly. Implementation is not authorized/started.
+- Prior 29/54 SQL measurements are historical; Django/Postgres/Redis runtime unavailable here, so fresh 5/10/50/150 measurements are the first implementation gate. Auth/image/health/deletion and broad history work remain separate; tournament rules need approval.
+- Rechecked H: strict/advisory checker, diff/runtime equality, router/concrete paths, preserved historical bodies, concise startup and advisory CI boundary. No merge, deployment or live action.

@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: ce544953295b386b5a8cfff532240d1732692131
+current_commit: c93ececacff1ec17991f68d2e5dc5c20f229f07c
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -197,6 +197,26 @@ backlog; the current login source still contains the malformed dummy hash.
 - Setup stays IN PROGRESS; do not restore review readiness from this attempt.
   Teacher-dashboard assessment may proceed as independent planning, without
   implementing that feature or implying setup is closed.
+
+## Dashboard assessment milestone — 2026-10-01
+
+- Published verification-method repair at `c93ececacff1ec17991f68d2e5dc5c20f229f07c`;
+  local candidate tree and reconstructed Git object match GitHub exactly.
+- Completed independent planning in `docs/teacher-dashboard-assessment-2026-10-01.md`.
+  Existing screens, active enrollment discrepancy, per-student/per-class aggregates,
+  optional replica consistency and teacher query identity isolation were inspected.
+- Scope proposes read-side batching/consistent membership and existing UI fixes,
+  with exact files, metric semantics, dependencies, SQL budgets and meaningful
+  tests. Historical roster measurements are labelled historical; no new Django/
+  Postgres/Redis benchmark was available in this environment.
+- Teacher implementation remains unapproved/unstarted; auth/image/health/deletion
+  repairs are separate and tournament rules remain deferred. Setup is not closed.
+- H after corrections: 31 concrete report/startup path references exist (explicit
+  future proposed files excluded); router paths/globs/headings pass checker.
+  Startup word counts: bootstrap 606, brief about 1,160, router 520. Historical
+  architecture/recovery body preservation and runtime equality verified again.
+  Added-file/line credential-pattern scan and scoped diff check pass; not a full
+  repository secret audit. Only documentation changed during this session.
 
 ## Known Risks / Unknowns
 

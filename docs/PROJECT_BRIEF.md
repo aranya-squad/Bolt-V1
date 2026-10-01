@@ -2,7 +2,7 @@
 last_updated: 2026-10-01
 verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
 verified_context_branch: chore/ai-context-system-v2
-verified_context_commit: ce544953295b386b5a8cfff532240d1732692131
+verified_context_commit: c93ececacff1ec17991f68d2e5dc5c20f229f07c
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -97,7 +97,7 @@ One-time implementation specification: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
 3. Verify normal GitHub CI through the appropriate PR/integration path.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
 5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
-6. Reassess `feat/teacher-dashboard` next per the approved recovery plan: existing roster/dashboard correctness and query costs (W4-PERF-02). Define/approve that slice before implementation; tournament rounds still require rules.
+6. Reassess `feat/teacher-dashboard` next per the approved recovery plan: existing roster/dashboard correctness and query costs (W4-PERF-02). Concrete scope/acceptance/base/test proposal: `docs/teacher-dashboard-assessment-2026-10-01.md`. Approve the slice before implementation; tournament rounds still require rules.
 
 ## BLOCKED / HUMAN OR LIVE EVIDENCE NEEDED
 
