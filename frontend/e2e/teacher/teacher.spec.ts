@@ -26,9 +26,10 @@ function inspect(args: string[] = ["--inspect"]): Record<string, unknown> {
   ], { cwd: resolve("../backend"), encoding: "utf8", env: process.env }));
 }
 
-async function loginTeacher(page: Page, index: number) {
+async function loginTeacher(page: Page, index: number, navigate = true) {
   const user = fixtures.teachers[index];
-  await page.goto("/login?role=teacher");
+  if (navigate) await page.goto("/login?role=teacher");
+  else await page.getByRole("button", { name: "Teacher", exact: true }).click();
   await page.getByPlaceholder("Email", { exact: true }).fill(user.email);
   await page.getByPlaceholder("Password", { exact: true }).fill(user.password);
   const response = page.waitForResponse(r => r.url() === `${apiOrigin}/api/v1/auth/login/` && r.request().method() === "POST");
@@ -116,7 +117,8 @@ test("F1 same-browser teacher account switch exposes only B and real API denies 
   await expect(page.getByText(owned.name, { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "LOG OUT", exact: true }).click();
   await expect(page).toHaveURL(/\/login$/);
-  const headers = await loginTeacher(page, 1);
+  // Keep the SPA/QueryClient alive across router logout and B's sign-in.
+  const headers = await loginTeacher(page, 1, false);
   await expect(page.getByText(fixtures.classes.foreign.name, { exact: true })).toBeVisible();
   await expect(page.getByText(owned.name, { exact: true })).toHaveCount(0);
   const roster = await page.request.get(`${apiOrigin}/api/v1/classes/${owned.id}/roster/`, { headers });

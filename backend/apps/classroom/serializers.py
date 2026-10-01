@@ -1,7 +1,7 @@
 from django.core.exceptions import ObjectDoesNotExist
 from rest_framework import serializers
 
-from .models import Class
+from .models import Class, Enrollment
 
 
 class ClassSerializer(serializers.ModelSerializer):
@@ -24,7 +24,7 @@ class ClassSerializer(serializers.ModelSerializer):
         if hasattr(obj, "active_student_count"):
             return obj.active_student_count
         # Single-object create/patch/join responses do not have list annotations.
-        return obj.enrollments.using("default").filter(is_active=True).count()
+        return Enrollment.objects.using("default").filter(class_room_id=obj.id, is_active=True).count()
 
 
 class ClassCreateSerializer(serializers.ModelSerializer):

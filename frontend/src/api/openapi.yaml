@@ -120,7 +120,7 @@ components:
             type: object
             required: [id, name, order]
             properties:
-              id: { type: string, format: uuid }
+              id: { type: string, description: String representation of the integer lesson ID. }
               name: { type: string }
               order: { type: integer }
         classes:
@@ -139,7 +139,7 @@ components:
                   type: object
                   required: [lesson_id, classwork_completed, homework_completed]
                   properties:
-                    lesson_id: { type: string, format: uuid }
+                    lesson_id: { type: string, description: String representation of the integer lesson ID. }
                     classwork_completed: { type: integer, minimum: 0 }
                     homework_completed: { type: integer, minimum: 0 }
 
@@ -360,7 +360,7 @@ paths:
               type: object
               properties:
                 name: { type: string, minLength: 1, maxLength: 128 }
-                live_session_link: { type: string, format: uri }
+                live_session_link: { type: string, description: "A valid URL, or an empty string to clear the link." }
                 is_active: { type: boolean }
       responses:
         200:

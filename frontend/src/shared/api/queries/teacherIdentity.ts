@@ -119,9 +119,18 @@ export function useTeacherMutation<TData, TVariables>(
       const issued = { identity, variables };
       mutation.mutate(issued, guardedOptions(issued, options));
     },
-    mutateAsync: (variables: TVariables, options?: MutateOptions<TData, Error, TVariables, unknown>) => {
+    mutateAsync: async (variables: TVariables, options?: MutateOptions<TData, Error, TVariables, unknown>) => {
       const issued = { identity, variables };
-      return mutation.mutateAsync(issued, guardedOptions(issued, options));
+      try {
+        const data = await mutation.mutateAsync(issued, guardedOptions(issued, options));
+        // onSuccess may await refetches after the HTTP response. Contain the
+        // promise result as well as callbacks if the identity changed meanwhile.
+        assertCurrentTeacher(issued.identity);
+        return data;
+      } catch (error) {
+        assertCurrentTeacher(issued.identity);
+        throw error;
+      }
     },
   };
 }

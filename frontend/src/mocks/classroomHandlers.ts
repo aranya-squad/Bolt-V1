@@ -10,6 +10,7 @@ const batches: Batch[] = [{
   id: firstId, name: "Morning explorers", join_code: "BOLT01", live_session_link: "",
   is_active: true, created_at: "2026-10-01T00:00:00Z", student_count: 2,
 }];
+const assignedLevels = new Map<string, Set<string>>([[firstId, new Set([MOCK_LEVELS[0].id])]]);
 const roster = new Map<string, RosterStudent[]>([[firstId, [
   { id: "20000000-0000-4000-8000-000000000001", call_sign: "Comet", current_level: 1, accuracy_pct: null, enrolled_at: "2026-10-01T00:00:00Z" },
   { id: "20000000-0000-4000-8000-000000000002", call_sign: "Nova", current_level: 2, accuracy_pct: 87.5, enrolled_at: "2026-10-01T00:00:00Z" },
@@ -30,7 +31,7 @@ export const classroomHandlers = [
       name: body.name.trim(), join_code: `BOLT${String(number).padStart(2, "0")}`, live_session_link: "",
       is_active: true, created_at: new Date().toISOString(), student_count: 0,
     };
-    batches.push(batch); roster.set(batch.id, []);
+    batches.push(batch); roster.set(batch.id, []); assignedLevels.set(batch.id, new Set());
     return HttpResponse.json(batch, { status: 201 });
   }),
   http.patch(`${BASE}/classes/:batchId/`, async ({ request, params }) => {
@@ -61,7 +62,7 @@ export const classroomHandlers = [
     const lessons = (MOCK_LESSONS[level.id] ?? []).map(({ id, name, order }) => ({ id, name, order }));
     return HttpResponse.json({
       level: { id: level.id, name: level.name, order: level.order }, lessons,
-      classes: batches.filter(batch => batch.is_active && level.order === 1).map(batch => ({
+      classes: batches.filter(batch => batch.is_active && assignedLevels.get(batch.id)?.has(level.id)).map(batch => ({
         id: batch.id, name: batch.name, total_students: roster.get(batch.id)?.length ?? 0,
         lessons: lessons.map(lesson => ({ lesson_id: lesson.id, classwork_completed: 0, homework_completed: 0 })),
       })),

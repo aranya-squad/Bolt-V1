@@ -62,10 +62,17 @@ jobs:
               conn.execute('CREATE DATABASE bolt_teacher_stale_replica')
           PY
       - name: Execute backend suite with genuine separate replica alias
-        run: pytest --tb=short -q
+        run: pytest --tb=short -q --junitxml=../teacher-backend-tests.xml
         env:
           DJANGO_SETTINGS_MODULE: apps.classroom.tests.verification_settings
           CLASSROOM_TEST_REPLICA_DATABASE_URL: postgres://bolt:bolt@localhost:5432/bolt_teacher_stale_replica
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: teacher-backend-tests-${{ github.event.pull_request.head.sha }}
+          path: teacher-backend-tests.xml
+          if-no-files-found: error
+          retention-days: 30
       - run: python manage.py migrate --noinput
       - name: Measure named head with rolled-back synthetic fixtures
         run: python -m apps.classroom.tests.benchmark_reporting ../teacher-reporting.json "${{ github.event.pull_request.head.sha }}"

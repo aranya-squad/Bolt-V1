@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
-from apps.courses.models import Level
+from apps.courses.models import Lesson, Level
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
 from apps.users.permissions import IsTeacher
 
@@ -88,8 +88,8 @@ class RosterView(APIView):
         except Class.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
         enrollments = list(
-            cls.enrollments.using("default")
-            .filter(is_active=True)
+            Enrollment.objects.using("default")
+            .filter(class_room_id=cls.id, is_active=True)
             .select_related("student", "student__profile")
         )
         student_ids = [enrollment.student_id for enrollment in enrollments]
@@ -156,7 +156,7 @@ class TeacherLevelDashboardView(APIView):
 
     def get(self, request, level_id):
         level = get_object_or_404(Level.objects.using("default"), pk=level_id)
-        lessons = list(level.lessons.using("default").order_by("order"))
+        lessons = list(Lesson.objects.using("default").filter(level_id=level.id).order_by("order"))
 
         # All active classes taught by this teacher with this level assigned.
         classes = list(

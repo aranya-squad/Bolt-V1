@@ -147,4 +147,22 @@ describe("teacher queries (mocked HTTP, not real API integration)", () => {
     expect(post).not.toHaveBeenCalled();
     expect(success).not.toHaveBeenCalled();
   });
+
+  it("mutateAsync rejects A data if identity switches during awaited owner invalidation", async () => {
+    vi.spyOn(apiClient, "post").mockResolvedValue({ data: batch });
+    const refetch = deferred<void>();
+    const { client, wrapper: provider } = wrapper();
+    const invalidate = vi.spyOn(client, "invalidateQueries").mockImplementation(() => refetch.promise);
+    const view = renderHook(useCreateBatch, { wrapper: provider });
+    const success = vi.fn();
+    const error = vi.fn();
+    let caller!: Promise<void>;
+    act(() => { caller = view.result.current.mutateAsync("A created").then(success, error); });
+    await waitFor(() => expect(invalidate).toHaveBeenCalled());
+    act(() => useAuthStore.setState({ user: teacherB, accessToken: "synthetic-b" }));
+    await act(async () => { refetch.resolve(); await caller; });
+    expect(success).not.toHaveBeenCalled();
+    expect(error).toHaveBeenCalledTimes(1);
+    expect(view.result.current.data).toBeUndefined();
+  });
 });
