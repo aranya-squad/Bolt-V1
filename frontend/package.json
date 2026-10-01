@@ -12,6 +12,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
+    "e2e:recovery": "playwright test --config playwright.integration.config.ts",
     "e2e:ui": "playwright test --ui"
   },
   "dependencies": {

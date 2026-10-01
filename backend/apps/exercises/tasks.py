@@ -31,7 +31,11 @@ def abandon_stale_sessions():
         if now > cutoff:
             to_abandon.append(session.id)
 
+    abandoned = 0
     if to_abandon:
-        ArenaSession.objects.filter(id__in=to_abandon).update(abandoned_at=now)
+        # Recheck after the scan: finalization may have committed in the meantime.
+        abandoned = ArenaSession.objects.filter(
+            id__in=to_abandon, submitted_at__isnull=True, abandoned_at__isnull=True
+        ).update(abandoned_at=now)
 
-    return {"abandoned": len(to_abandon)}
+    return {"abandoned": abandoned}

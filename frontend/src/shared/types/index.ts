@@ -50,6 +50,7 @@ export interface Exercise {
 }
 
 export interface ProgressRecord {
+  contract_version?: 2;
   id: string;
   session_id: string;
   score_correct: number;
@@ -84,7 +85,35 @@ export interface SessionQuestion {
   answer?: number;
 }
 
+export interface AttemptIdentity {
+  question_index: number;
+  attempt_number: number;
+}
+
+export interface AcceptedReceipt extends AttemptVerdict, AttemptIdentity {
+  contract_version: 2;
+  accepted: true;
+  submitted_answer: number;
+  elapsed_ms: number;
+  is_skip: boolean;
+}
+
+export interface QuestionState {
+  question_index: number;
+  max_attempt_number: number;
+  attempt_count: number;
+  terminal: boolean;
+  latest_receipt: AcceptedReceipt | null;
+}
+
 export interface SessionMeta {
+  attempt_contract_version?: number;
+  state?: "active" | "submitted" | "abandoned";
+  started_at?: string;
+  server_now?: string;
+  lesson_id?: string | null;
+  level_id?: string | null;
+  question_states?: QuestionState[];
   session_id: string;
   kind: SessionKind;
   is_test_mode: boolean;
@@ -110,7 +139,7 @@ export interface QuestionAttempt {
   elapsed_ms: number;
 }
 
-export type QuestionVerdict = "correct" | "wrong" | "fixed" | "skipped";
+export type QuestionVerdict = "correct" | "wrong" | "fixed" | "skipped" | "unanswered";
 
 export interface SessionReport {
   progress: ProgressRecord;
@@ -127,6 +156,9 @@ export interface Batch {
   is_active: boolean;
   created_at: string;
   student_count: number;
+  // Optional only for compatibility with an older backend: absent means the
+  // assignment editor is unavailable, rather than an empty saved selection.
+  assigned_level_ids?: string[];
 }
 
 export interface RosterStudent {

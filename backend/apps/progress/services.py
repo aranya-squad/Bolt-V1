@@ -4,12 +4,20 @@ No other code should call .save() on ProgressRecord, QuestionAttempt, or XPEvent
 """
 
 from django.core.cache import cache
-from django.db import transaction
+from django.db import DEFAULT_DB_ALIAS, transaction
 from django.utils import timezone
 
+from apps.exercises.attempt_contract import question_verdicts
 from apps.exercises.models import ArenaSession
 
-from .models import LessonCompletion, LevelCompletion, ProgressRecord, QuestionAttempt, XPEvent, XPEventType
+from .models import (
+    LessonCompletion,
+    LevelCompletion,
+    ProgressRecord,
+    QuestionAttempt,
+    XPEvent,
+    XPEventType,
+)
 from .xp_rules import compute_session_xp
 
 
@@ -25,7 +33,7 @@ def record_attempt(
 ) -> QuestionAttempt:
     """Write a single question attempt. Raises IntegrityError on duplicate (index, attempt_number)."""
     is_correct = (not is_skip) and (submitted_answer == expected_answer)
-    return QuestionAttempt.objects.create(
+    return QuestionAttempt.objects.using(session._state.db or DEFAULT_DB_ALIAS).create(
         session=session,
         question_index=question_index,
         attempt_number=attempt_number,
@@ -54,12 +62,22 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     Idempotent: raises ValueError if session already finalized.
     """
     # Lock the row to serialize concurrent finalize attempts from different requests/workers.
-    session = ArenaSession.objects.select_for_update().get(pk=session.pk)
+    session = (
+        ArenaSession.objects.using(DEFAULT_DB_ALIAS)
+        .select_for_update(of=("self",))
+        .select_related("template__lesson__level")
+        .get(pk=session.pk)
+    )
+    database = session._state.db
     if session.submitted_at is not None:
         raise ValueError(f"Session {session.id} is already finalized")
 
-    attempts = list(session.attempts.all())
-    score_correct = sum(1 for a in attempts if a.is_correct)
+    if session.abandoned_at is not None:
+        raise ValueError(f"Session {session.id} is abandoned")
+
+    attempts = list(session.attempts.db_manager(database).all())
+    verdicts = question_verdicts(attempts, len(session.questions_json))
+    score_correct = sum(v in {"correct", "fixed"} for v in verdicts.values())
     # Use total questions in session, not submitted attempts — partial sessions
     # (e.g. timer expired) should show "8/30", not "8/8".
     score_total = len(session.questions_json)
@@ -78,8 +96,9 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
         lesson = session.template.lesson
         level = lesson.level
         level_completion = (
-            LevelCompletion.objects
-            .select_for_update()
+            LevelCompletion.objects.using(database)
+            .select_for_update(of=("self",))
+            .select_related("best_progress_record")
             .filter(user=session.user, level=level, kind=session.kind)
             .first()
         )
@@ -87,8 +106,9 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
         # Retake is lesson-granular: a lesson+kind that already has a completion.
         # (is_first is level-granular and only controls the first-completion bonus.)
         lesson_completion = (
-            LessonCompletion.objects
-            .select_for_update()
+            LessonCompletion.objects.using(database)
+            .select_for_update(of=("self",))
+            .select_related("best_progress_record")
             .filter(user=session.user, lesson=lesson, kind=session.kind)
             .first()
         )
@@ -100,7 +120,7 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
 
     xp = compute_session_xp(score_correct, score_total, is_first, is_retake)
 
-    record = ProgressRecord.objects.create(
+    record = ProgressRecord.objects.using(database).create(
         session=session,
         user=session.user,
         score_correct=score_correct,
@@ -110,7 +130,7 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
         xp_earned=xp,
     )
 
-    XPEvent.objects.create(
+    XPEvent.objects.using(database).create(
         user=session.user,
         event_type=XPEventType.SESSION_COMPLETE,
         delta=xp,
@@ -120,7 +140,7 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
     if session.template is not None:
         # Level-granular completion (lock already held above)
         if level_completion is None:
-            LevelCompletion.objects.create(
+            LevelCompletion.objects.using(database).create(
                 user=session.user,
                 level=level,
                 kind=session.kind,
@@ -128,12 +148,12 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
             )
         elif _is_better_record(record, level_completion.best_progress_record):
             level_completion.best_progress_record = record
-            level_completion.save(update_fields=["best_progress_record"])
+            level_completion.save(using=database, update_fields=["best_progress_record"])
 
         # Lesson-granular completion (drives PathOfConquest accordion status chips).
         # Reuses the lesson_completion row locked above.
         if lesson_completion is None:
-            LessonCompletion.objects.create(
+            LessonCompletion.objects.using(database).create(
                 user=session.user,
                 lesson=lesson,
                 kind=session.kind,
@@ -143,15 +163,16 @@ def finalize_session(session: ArenaSession) -> ProgressRecord:
         elif _is_better_record(record, lesson_completion.best_progress_record):
             lesson_completion.best_accuracy_pct = record.accuracy_pct
             lesson_completion.best_progress_record = record
-            lesson_completion.save(update_fields=["best_accuracy_pct", "best_progress_record"])
+            lesson_completion.save(using=database, update_fields=["best_accuracy_pct", "best_progress_record"])
 
     # Invalidate after commit so no request can repopulate the cache with
     # pre-commit state between our delete and the transaction COMMIT.
     user_id = session.user_id
-    transaction.on_commit(lambda: cache.delete(f"user_stats:{user_id}"))
-    transaction.on_commit(lambda: cache.delete(f"level_context:{user_id}"))
+    transaction.on_commit(lambda: cache.delete(f"user_stats:{user_id}"), using=database)
+    transaction.on_commit(lambda: cache.delete(f"level_context:{user_id}"), using=database)
 
     session.submitted_at = timezone.now()
-    session.save(update_fields=["submitted_at"])
+    session.config_json = {**session.config_json, "scoring_version": 2}
+    session.save(using=database, update_fields=["submitted_at", "config_json"])
 
     return record

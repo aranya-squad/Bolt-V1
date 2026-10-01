@@ -1,3 +1,5 @@
+import type { SessionKind, SessionMeta } from "@/shared/types";
+
 // Stable mock data — used by MSW handlers in dev mode.
 
 export const MOCK_USER = {
@@ -38,9 +40,9 @@ export const MOCK_LEVELS = [
   { id: "8", order: 8, name: "DIVISION BASICS",      description: "Core division skills",          xp_threshold: 21000, is_advanced: false, is_locked: true,  is_completed: false },
   { id: "9", order: 9, name: "ADVANCED OPERATIONS",  description: "Multi-step problems",           xp_threshold: 27500, is_advanced: false, is_locked: true,  is_completed: false },
   { id: "10",order: 10, name: "MASTER CLASS",        description: "Full operation mastery",        xp_threshold: 35000, is_advanced: false, is_locked: true,  is_completed: false },
-];
+].map(level => ({ ...level, id: `30000000-0000-4000-8000-${String(level.order).padStart(12, "0")}` }));
 
-export const MOCK_LESSONS: Record<string, import("@/shared/types").LessonWithCompletion[]> = {
+const lessonsByOrder: Record<string, import("@/shared/types").LessonWithCompletion[]> = {
   "1": [
     { id: "l1-1", order: 1, name: "Class 1 — Counting Up",    description: "Add 1 and 2 on abacus",      classwork_completed: true,  classwork_accuracy_pct: 93,   homework_completed: true,  is_locked: false },
     { id: "l1-2", order: 2, name: "Class 2 — Counting Down",  description: "Subtract 1 and 2",            classwork_completed: true,  classwork_accuracy_pct: 88,   homework_completed: true,  is_locked: false },
@@ -61,6 +63,8 @@ export const MOCK_LESSONS: Record<string, import("@/shared/types").LessonWithCom
   ],
 };
 
+export const MOCK_LESSONS = Object.fromEntries(MOCK_LEVELS.map(level => [level.id, lessonsByOrder[String(level.order)] ?? []]));
+
 // Generates a simple arithmetic question text
 function makeQuestion(index: number): { text: string; expected: number } {
   const pairs = [
@@ -78,16 +82,26 @@ function makeQuestion(index: number): { text: string; expected: number } {
   return pairs[index % pairs.length];
 }
 
-export function makeMockSession(sessionId: string, kind: string, count = 10) {
+export function makeMockSession(sessionId: string, kind: SessionKind, count = 10): SessionMeta {
   return {
     session_id: sessionId,
     kind,
+    attempt_contract_version: 2,
+    state: "active",
+    started_at: new Date().toISOString(),
+    server_now: new Date().toISOString(),
+    lesson_id: null,
+    level_id: null,
+    is_test_mode: false,
+    flash_speed_ms: kind === "FLASH_CARDS" ? 2000 : null,
+    question_states: Array.from({ length: count }, (_, question_index) => ({ question_index, max_attempt_number: 0, attempt_count: 0, terminal: false, latest_receipt: null })),
     questions: Array.from({ length: count }, (_, i) => ({
       index: i,
       text: makeQuestion(i).text,
       operation: "ADD",
+      ...(!["CLASSWORK", "HOMEWORK"].includes(kind) ? { answer: makeQuestion(i).expected } : {}),
     })),
-    time_limit_sec: 600,
+    time_limit_sec: ["ZEN", "FLASH_CARDS"].includes(kind) ? 0 : 600,
   };
 }
 

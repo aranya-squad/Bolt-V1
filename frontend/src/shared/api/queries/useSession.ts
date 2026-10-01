@@ -1,65 +1,47 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/shared/api/client";
-import type { AttemptVerdict, ProgressRecord, SessionMeta } from "@/shared/types";
+import { matchesReceipt, validateBulk } from "@/shared/store/answerRecovery";
+import type { PendingAttempt } from "@/shared/store/answerRecovery";
+import type { AcceptedReceipt, AttemptIdentity, ProgressRecord, SessionMeta } from "@/shared/types";
 
-export interface BulkAttemptItem {
-  question_index: number;
-  answer: number;
-  elapsed_ms: number;
-  attempt_number?: number;
-  is_skip?: boolean;
-}
+export const SESSION_REQUEST_TIMEOUT_MS = 10000;
 
-export interface BulkVerdict {
-  question_index: number;
-  is_correct: boolean;
-  xp_delta: number;
-}
+export type BulkAttemptItem = PendingAttempt;
+export type BulkVerdict = AcceptedReceipt;
 
 export function useSession(sessionId: string) {
   return useQuery<SessionMeta>({
     queryKey: ["sessions", sessionId],
-    queryFn: async () => {
-      const { data } = await apiClient.get<SessionMeta>(`/sessions/${sessionId}/`);
-      return data;
-    },
-    staleTime: Infinity, // session data doesn't change while active
+    queryFn: async () => (await apiClient.get<SessionMeta>(`/sessions/${sessionId}/`, { timeout: SESSION_REQUEST_TIMEOUT_MS })).data,
+    enabled: !!sessionId,
+    staleTime: 0,
+    refetchOnReconnect: true,
   });
 }
 
+export async function submitBulk(sessionId: string, attempts: PendingAttempt[]) {
+  const { data } = await apiClient.post<unknown>(`/sessions/${sessionId}/attempts/bulk/`, { contract_version: 2, attempts }, { timeout: SESSION_REQUEST_TIMEOUT_MS });
+  return validateBulk(data, attempts);
+}
+export async function finalize(sessionId: string, expected_attempts: AttemptIdentity[]): Promise<ProgressRecord> {
+  const { data } = await apiClient.post<ProgressRecord>(`/sessions/${sessionId}/submit/`, { contract_version: 2, expected_attempts }, { timeout: SESSION_REQUEST_TIMEOUT_MS });
+  if (data.contract_version !== 2 || data.session_id !== sessionId || typeof data.id !== "string" || typeof data.created_at !== "string" || !Number.isFinite(Date.parse(data.created_at)) || !Number.isInteger(data.score_correct) || !Number.isInteger(data.score_total) || data.score_correct < 0 || data.score_correct > data.score_total || ![data.score_correct, data.score_total, data.accuracy_pct, data.time_taken_sec, data.xp_earned].every(n => typeof n === "number" && Number.isFinite(n))) throw new Error("Final result is incompatible. Your required answers remain recoverable; retry after the API is upgraded.");
+  return data;
+}
 export function useSubmitAttempt(sessionId: string) {
-  return useMutation<
-    AttemptVerdict,
-    Error,
-    { question_index: number; answer: number; elapsed_ms: number }
-  >({
-    mutationFn: async (payload) => {
-      const { data } = await apiClient.post<AttemptVerdict>(
-        `/sessions/${sessionId}/attempts/`,
-        payload
-      );
+  return useMutation<AcceptedReceipt, Error, PendingAttempt>({
+    mutationFn: async payload => {
+      const { data } = await apiClient.post<unknown>(`/sessions/${sessionId}/attempts/`, { contract_version: 2, ...payload }, { timeout: SESSION_REQUEST_TIMEOUT_MS });
+      if (!matchesReceipt(payload, data)) throw new Error("API acknowledgment is incompatible; the answer remains pending.");
       return data;
     },
   });
 }
-
 export function useFinalizeSession(sessionId: string) {
-  return useMutation<ProgressRecord, Error>({
-    mutationFn: async () => {
-      const { data } = await apiClient.post<ProgressRecord>(`/sessions/${sessionId}/submit/`);
-      return data;
-    },
-  });
+  return useMutation<ProgressRecord, Error, AttemptIdentity[]>({ mutationFn: manifest => finalize(sessionId, manifest) });
 }
-
 export function useBulkSubmit(sessionId: string) {
-  return useMutation<{ verdicts: BulkVerdict[] }, Error, { attempts: BulkAttemptItem[] }>({
-    mutationFn: async (payload) => {
-      const { data } = await apiClient.post<{ verdicts: BulkVerdict[] }>(
-        `/sessions/${sessionId}/attempts/bulk/`,
-        payload
-      );
-      return data;
-    },
+  return useMutation<{ contract_version: 2; verdicts: AcceptedReceipt[] }, Error, { attempts: PendingAttempt[] }>({
+    mutationFn: async payload => ({ contract_version: 2, verdicts: await submitBulk(sessionId, payload.attempts) }),
   });
 }

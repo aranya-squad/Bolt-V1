@@ -4,21 +4,30 @@ import random
 import re
 
 import openpyxl
-from django.db.models import Count
+from django.db import DEFAULT_DB_ALIAS, transaction
+from django.db.models import Count, Max
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.courses.models import Level, Lesson
-from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_ATTEMPTS_PER_QUESTION, MAX_SESSION_SECONDS, MIN_ANSWER_MS, SKIP_ANSWER_SENTINEL
+from apps.courses.models import Lesson, Level
+from apps.exercises.constants import (
+    ANTICHEAT_ENFORCE_KINDS,
+    MAX_ATTEMPTS_PER_QUESTION,
+    MAX_SESSION_SECONDS,
+    MIN_ANSWER_MS,
+    SKIP_ANSWER_SENTINEL,
+)
 from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
 from apps.progress.services import finalize_session, record_attempt
 from apps.users.permissions import IsAdmin
 
+from .attempt_contract import ContractError, accept_batch, is_v2, validate_manifest
+from .attempt_contract import question_verdicts as reduce_question_verdicts
 from .models import ArenaSession, CuratedQuestion, ExerciseTemplate, SessionKind
 from .serializers import AttemptSerializer, ProgressRecordSerializer, SessionMetaSerializer
 
@@ -68,7 +77,7 @@ class StartClassworkView(APIView):
             user=request.user,
             kind=SessionKind.CLASSWORK,
             template=template,
-            config_json=template.config_json,
+            config_json={**template.config_json, "time_limit_sec": template.time_limit_sec},
             seed=seed,
             questions_json=[q.to_dict() for q in questions],
             is_test_mode=is_test_mode,
@@ -124,7 +133,7 @@ class StartLessonClassworkView(APIView):
             user=request.user,
             kind=SessionKind.CLASSWORK,
             template=template,
-            config_json=template.config_json,
+            config_json={**template.config_json, "time_limit_sec": template.time_limit_sec},
             seed=seed,
             questions_json=[q.to_dict() for q in questions],
             is_test_mode=is_test_mode,
@@ -255,15 +264,23 @@ class SessionDetailView(APIView):
 class SubmitAttemptView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, session_id):
         # select_for_update serializes concurrent submissions for the same session,
-        # making count()+1 for attempt_number atomic within ATOMIC_REQUESTS transaction.
+        # including maximum-based legacy identity allocation within this transaction.
         session = get_object_or_404(
-            ArenaSession.objects.select_for_update(),
+            ArenaSession.objects.using(DEFAULT_DB_ALIAS).select_for_update(),
             pk=session_id,
             user=request.user,
         )
 
+        if is_v2(request.data):
+            return Response(accept_batch(session, [request.data])[0])
+
+        return self._submit_legacy(request, session)
+
+    def _submit_legacy(self, request, session):
+        """Absent-version compatibility adapter; client identities are not receipts."""
         if not session.is_active:
             return Response({"detail": "Session is not active."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -316,19 +333,24 @@ class SubmitAttemptView(APIView):
         from apps.progress.models import QuestionAttempt
 
         attempt_number = (
-            QuestionAttempt.objects.filter(
+            QuestionAttempt.objects.using(session._state.db or DEFAULT_DB_ALIAS).filter(
                 session=session, question_index=question_index
-            ).count()
-            + 1
-        )
+            ).aggregate(maximum=Max("attempt_number"))["maximum"] or 0
+        ) + 1
+        # Legacy wire identities (including zero-based numbers) are deliberately ignored.
 
+        accepted_count = QuestionAttempt.objects.using(session._state.db or DEFAULT_DB_ALIAS).filter(session=session, question_index=question_index).count()
+        if attempt_number > 32767:
+            return Response({"detail": "Attempt identity limit reached."}, status=400)
+        if session.kind in {SessionKind.CLASSWORK, SessionKind.HOMEWORK} and accepted_count >= MAX_ATTEMPTS_PER_QUESTION:
+            return Response({"detail": "Maximum attempts reached."}, status=400)
         if session.is_test_mode:
             if is_skip:
                 return Response(
                     {"detail": "Skipping is not allowed in Test Mode."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
-            if attempt_number > 1:
+            if accepted_count >= 1:
                 return Response(
                     {"detail": "Only one attempt per question in Test Mode."},
                     status=status.HTTP_400_BAD_REQUEST,
@@ -360,19 +382,29 @@ class BulkSubmitAttemptView(APIView):
       - Practice: client-side grading sessions submitting all answers at once.
       - Classwork: debounced background flushes to protect against data loss.
 
-    Idempotent on (session, question_index, attempt_number): if an attempt for the
-    computed attempt_number already exists, its verdict is returned without a new row.
+    V2 explicitly identifies accepted attempts and validates batches atomically.
+    Absent-version requests retain legacy response/partial-fast-item behavior;
+    their client identity is ignored and transport retries are not replay-safe.
     """
 
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, session_id):
         session = get_object_or_404(
-            ArenaSession.objects.select_for_update(),
+            ArenaSession.objects.using(DEFAULT_DB_ALIAS).select_for_update(),
             pk=session_id,
             user=request.user,
         )
 
+        if is_v2(request.data):
+            verdicts = accept_batch(session, request.data.get("attempts"))
+            return Response({"contract_version": 2, "verdicts": verdicts})
+
+        return self._submit_legacy(request, session)
+
+    def _submit_legacy(self, request, session):
+        """Absent-version compatibility adapter; client identities are not receipts."""
         if not session.is_active:
             return Response({"detail": "Session is not active."}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -411,15 +443,16 @@ class BulkSubmitAttemptView(APIView):
         # before the loop so the entire batch is rejected rather than partially applied.
         existing_counts = {
             row["question_index"]: row["cnt"]
-            for row in QuestionAttempt.objects.filter(
+            for row in QuestionAttempt.objects.using(session._state.db or DEFAULT_DB_ALIAS).filter(
                 session=session,
                 question_index__in=seen_indices,
             ).values("question_index").annotate(cnt=Count("id"))
         }
+        cap = 1 if session.is_test_mode else MAX_ATTEMPTS_PER_QUESTION
         for idx in seen_indices:
-            if existing_counts.get(idx, 0) >= MAX_ATTEMPTS_PER_QUESTION:
+            if existing_counts.get(idx, 0) >= cap:
                 return Response(
-                    {"detail": f"question_index {idx} has reached the maximum of {MAX_ATTEMPTS_PER_QUESTION} attempts."},
+                    {"detail": f"question_index {idx} has reached the maximum of {cap} attempts."},
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -438,6 +471,8 @@ class BulkSubmitAttemptView(APIView):
             elapsed_ms = max(0, elapsed_ms)
 
             is_skip = answer == SKIP_ANSWER_SENTINEL
+            if session.is_test_mode and is_skip:
+                return Response({"detail": "Skipping is not allowed in Test Mode."}, status=400)
 
             if not is_skip and elapsed_ms < MIN_ANSWER_MS:
                 _log.warning(
@@ -463,14 +498,15 @@ class BulkSubmitAttemptView(APIView):
                     continue
 
             attempt_number = (
-                QuestionAttempt.objects.filter(
+                QuestionAttempt.objects.using(session._state.db or DEFAULT_DB_ALIAS).filter(
                     session=session, question_index=question_index
-                ).count()
-                + 1
-            )
+                ).aggregate(maximum=Max("attempt_number"))["maximum"] or 0
+            ) + 1
 
+            if attempt_number > 32767:
+                return Response({"detail": "Attempt identity limit reached."}, status=400)
             q = session.questions_json[question_index]
-            existing = QuestionAttempt.objects.filter(
+            existing = QuestionAttempt.objects.using(session._state.db or DEFAULT_DB_ALIAS).filter(
                 session=session,
                 question_index=question_index,
                 attempt_number=attempt_number,
@@ -502,32 +538,25 @@ class BulkSubmitAttemptView(APIView):
 class FinalizeSessionView(APIView):
     permission_classes = [IsAuthenticated]
 
+    @transaction.atomic
     def post(self, request, session_id):
         session = get_object_or_404(
-            ArenaSession.objects.select_related("template__lesson__level"),
-            pk=session_id,
-            user=request.user,
+            ArenaSession.objects.using(DEFAULT_DB_ALIAS).select_for_update(of=("self",)).select_related("template__lesson__level"),
+            pk=session_id, user=request.user,
         )
-
+        upgraded = is_v2(request.data)
+        if upgraded:
+            validate_manifest(session, request.data.get("expected_attempts"))
         try:
-            record = session.progress_record
-            return Response(ProgressRecordSerializer(record).data)
+            record = ProgressRecord.objects.using(session._state.db or DEFAULT_DB_ALIAS).get(session=session)
         except ProgressRecord.DoesNotExist:
-            pass
-
-        try:
+            if not session.is_active:
+                raise ContractError("session_closed", "Session is closed.", 409) from None
             record = finalize_session(session)
-        except ValueError as e:
-            if "already finalized" not in str(e):
-                raise  # unexpected — surface with traceback rather than swallow
-            # Race: another request finalized between our check and our call.
-            session.refresh_from_db()
-            try:
-                record = session.progress_record
-            except ProgressRecord.DoesNotExist:
-                return Response({"detail": "Session finalization failed."}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-
-        return Response(ProgressRecordSerializer(record).data)
+        data = ProgressRecordSerializer(record).data
+        if upgraded:
+            data["contract_version"] = 2
+        return Response(data)
 
 
 class SessionReportView(APIView):
@@ -541,14 +570,14 @@ class SessionReportView(APIView):
         )
 
         try:
-            record = session.progress_record
+            record = ProgressRecord.objects.using(session._state.db or DEFAULT_DB_ALIAS).get(session=session)
         except ProgressRecord.DoesNotExist:
             return Response(
                 {"detail": "Session not yet finalized."},
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        attempts = list(session.attempts.order_by("question_index", "attempt_number"))
+        attempts = list(session.attempts.db_manager(session._state.db or DEFAULT_DB_ALIAS).order_by("question_index", "attempt_number"))
         lesson_id = str(session.template.lesson.id) if session.template else None
 
         # Group attempts by question_index to derive per-question verdict.
@@ -564,6 +593,9 @@ class SessionReportView(APIView):
                 question_verdicts[q_idx] = "fixed" if not group[0].is_correct else "correct"
             else:
                 question_verdicts[q_idx] = "wrong"
+
+        if session.config_json.get("scoring_version") == 2:
+            question_verdicts = reduce_question_verdicts(attempts, len(session.questions_json))
 
         return Response({
             "progress": ProgressRecordSerializer(record).data,
@@ -633,7 +665,7 @@ class ImportQuestionsView(APIView):
                 row_index, topic_name, question, operator, answer = (list(row) + [None] * 5)[:5]
 
                 # Detect Excel date serials: openpyxl returns datetime objects for date-formatted cells.
-                if isinstance(question, (datetime.date, datetime.datetime)):
+                if isinstance(question, datetime.date | datetime.datetime):
                     msg = f"{sheet_name} row {row_index}: question column is a date serial — skipped"
                     skipped.append(msg)
                     _import_log.warning(msg)

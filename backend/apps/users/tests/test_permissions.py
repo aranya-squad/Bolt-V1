@@ -1,5 +1,6 @@
-import pytest
 from unittest.mock import MagicMock
+
+import pytest
 
 from apps.users.models import Guardianship
 from apps.users.permissions import IsGuardian, IsGuardianOfStudent, IsStudent, IsTeacher
@@ -55,6 +56,7 @@ def test_is_teacher_true_for_teacher_role():
 @pytest.mark.django_db
 def test_is_guardian_of_student_true_when_guardianship_exists(client):
     from django.utils import timezone
+
     from apps.users.models import ConsentRecord
 
     guardian = GuardianFactory()

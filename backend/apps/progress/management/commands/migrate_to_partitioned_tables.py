@@ -139,57 +139,56 @@ class Command(BaseCommand):
 
         # Each table gets its own transaction so a failure on the second table
         # doesn't leave the first in an ambiguous half-migrated state.
-        with transaction.atomic():
-            with connection.cursor() as cursor:
-                # Step 1: rename existing table
-                cursor.execute(f"ALTER TABLE {table} RENAME TO {table}_legacy")
+        with transaction.atomic(), connection.cursor() as cursor:
+            # Step 1: rename existing table
+            cursor.execute(f"ALTER TABLE {table} RENAME TO {table}_legacy")
 
-                # Step 2: create partitioned table — columns and defaults only,
-                # NOT constraints (unique constraints require partition key inclusion).
+            # Step 2: create partitioned table — columns and defaults only,
+            # NOT constraints (unique constraints require partition key inclusion).
+            cursor.execute(
+                f"CREATE TABLE {table} "
+                f"(LIKE {table}_legacy INCLUDING DEFAULTS INCLUDING STORAGE) "
+                f"PARTITION BY RANGE ({partition_col})"
+            )
+
+            # Step 3: add constraints compatible with partitioning
+            if spec["legacy_unique"]:
+                cols = spec["legacy_unique"] + [partition_col]
                 cursor.execute(
-                    f"CREATE TABLE {table} "
-                    f"(LIKE {table}_legacy INCLUDING DEFAULTS INCLUDING STORAGE) "
-                    f"PARTITION BY RANGE ({partition_col})"
+                    f"ALTER TABLE {table} ADD CONSTRAINT {table}_unique "
+                    f"UNIQUE ({', '.join(cols)})"
+                )
+            if spec["pk_is_composite"]:
+                cursor.execute(
+                    f"ALTER TABLE {table} ADD PRIMARY KEY "
+                    f"({spec['legacy_pk']}, {partition_col})"
+                )
+            else:
+                cursor.execute(
+                    f"ALTER TABLE {table} ADD PRIMARY KEY ({spec['legacy_pk']})"
                 )
 
-                # Step 3: add constraints compatible with partitioning
-                if spec["legacy_unique"]:
-                    cols = spec["legacy_unique"] + [partition_col]
-                    cursor.execute(
-                        f"ALTER TABLE {table} ADD CONSTRAINT {table}_unique "
-                        f"UNIQUE ({', '.join(cols)})"
-                    )
-                if spec["pk_is_composite"]:
-                    cursor.execute(
-                        f"ALTER TABLE {table} ADD PRIMARY KEY "
-                        f"({spec['legacy_pk']}, {partition_col})"
-                    )
-                else:
-                    cursor.execute(
-                        f"ALTER TABLE {table} ADD PRIMARY KEY ({spec['legacy_pk']})"
-                    )
+            # Step 4: create monthly child partitions
+            self._create_monthly_partitions(cursor, table, partition_col)
 
-                # Step 4: create monthly child partitions
-                self._create_monthly_partitions(cursor, table, partition_col)
+            # Step 5: copy data
+            self.stdout.write("  Copying data (may be slow for large tables)...")
+            cursor.execute(f"INSERT INTO {table} SELECT * FROM {table}_legacy")
 
-                # Step 5: copy data
-                self.stdout.write(f"  Copying data (may be slow for large tables)...")
-                cursor.execute(f"INSERT INTO {table} SELECT * FROM {table}_legacy")
+            # Step 6: verify row counts before dropping legacy
+            cursor.execute(f"SELECT COUNT(*) FROM {table}_legacy")
+            old_count = cursor.fetchone()[0]
+            cursor.execute(f"SELECT COUNT(*) FROM {table}")
+            new_count = cursor.fetchone()[0]
+            if old_count != new_count:
+                raise CommandError(
+                    f"Row count mismatch for {table}: "
+                    f"legacy={old_count} partitioned={new_count}. "
+                    "Transaction rolled back — no data was lost."
+                )
 
-                # Step 6: verify row counts before dropping legacy
-                cursor.execute(f"SELECT COUNT(*) FROM {table}_legacy")
-                old_count = cursor.fetchone()[0]
-                cursor.execute(f"SELECT COUNT(*) FROM {table}")
-                new_count = cursor.fetchone()[0]
-                if old_count != new_count:
-                    raise CommandError(
-                        f"Row count mismatch for {table}: "
-                        f"legacy={old_count} partitioned={new_count}. "
-                        "Transaction rolled back — no data was lost."
-                    )
-
-                # Step 7: drop legacy
-                cursor.execute(f"DROP TABLE {table}_legacy")
+            # Step 7: drop legacy
+            cursor.execute(f"DROP TABLE {table}_legacy")
 
         self.stdout.write(self.style.SUCCESS(f"  {table} done ({old_count:,} rows)."))
 

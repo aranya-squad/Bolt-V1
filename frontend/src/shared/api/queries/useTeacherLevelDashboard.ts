@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { apiClient } from "@/shared/api/client";
+import { teacherKeys, teacherQueryDefaults, teacherRequest, useTeacherIdentity } from "./teacherIdentity";
 
 export interface TeacherLevelLesson {
   id: string;
@@ -27,14 +28,16 @@ export interface TeacherLevelDashboard {
 }
 
 export function useTeacherLevelDashboard(levelId: string) {
+  const identity = useTeacherIdentity();
   return useQuery<TeacherLevelDashboard>({
-    queryKey: ["teacher-level-dashboard", levelId],
-    queryFn: async () => {
+    queryKey: teacherKeys.matrix(identity, levelId),
+    queryFn: ({ signal }) => teacherRequest(identity, async requestSignal => {
       const { data } = await apiClient.get<TeacherLevelDashboard>(
-        `/classes/levels/${levelId}/dashboard/`
+        `/classes/levels/${levelId}/dashboard/`, { signal: requestSignal }
       );
       return data;
-    },
-    staleTime: 1000 * 60 * 2,
+    }, signal),
+    enabled: !!identity && !!levelId,
+    ...teacherQueryDefaults,
   });
 }

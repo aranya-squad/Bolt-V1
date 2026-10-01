@@ -1,14 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuthStore } from "@/shared/store/authStore";
 import { useBatches, usePatchBatch, useRotateJoinCode } from "@/shared/api/queries/useBatches";
-import { useLevels } from "@/shared/api/queries/useLevels";
+import { useTeacherCatalogue } from "@/shared/api/queries/useTeacherCatalogue";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Page } from "@/shared/ui/Page";
 import type { Batch } from "@/shared/types";
 import { CreateBatchModal } from "./CreateBatchModal";
+import { useTeacherIdentity } from "@/shared/api/queries/teacherIdentity";
+import type { TeacherIdentity } from "@/shared/api/queries/teacherIdentity";
 
 // ── Batch card ────────────────────────────────────────────────────────────────
 
@@ -20,6 +22,9 @@ function BatchCard({ batch }: { batch: Batch }) {
   const [liveLink, setLiveLink] = useState(batch.live_session_link);
   const [liveLinkDirty, setLiveLinkDirty] = useState(false);
   const [copied, setCopied] = useState(false);
+  useEffect(() => {
+    if (!liveLinkDirty) setLiveLink(batch.live_session_link);
+  }, [batch.live_session_link, liveLinkDirty]);
 
   function copyCode() {
     navigator.clipboard.writeText(batch.join_code).then(() => {
@@ -127,13 +132,13 @@ function BatchCard({ batch }: { batch: Batch }) {
 
 export default function TeacherDashboardPage() {
   const navigate = useNavigate();
-  const { data: batches, isLoading, isError } = useBatches();
-  const { data: levels } = useLevels();
-  const [showCreate, setShowCreate] = useState(false);
+  const { data: batches, isLoading, isError, isFetching, refetch } = useBatches();
+  const identity = useTeacherIdentity();
+  const { data: levels } = useTeacherCatalogue();
+  const [createFor, setCreateFor] = useState<TeacherIdentity | null>(null);
 
   function handleLogout() {
-    useAuthStore.getState().logout();
-    navigate("/login");
+    if (useAuthStore.getState().logout()) navigate("/login");
   }
 
   return (
@@ -155,7 +160,10 @@ export default function TeacherDashboardPage() {
             INSTRUCTOR COMMAND
           </h1>
           <div style={{ display: "flex", gap: "var(--s-sm)" }}>
-            <BoltButton variant="primary" size="md" onClick={() => setShowCreate(true)}>
+            <BoltButton variant="ghost" size="md" disabled={!identity || isFetching} onClick={() => { void refetch(); }}>
+              {isFetching ? "REFRESHING…" : "REFRESH"}
+            </BoltButton>
+            <BoltButton variant="primary" size="md" onClick={() => setCreateFor(identity)}>
               + CREATE BATCH
             </BoltButton>
             <BoltButton variant="ghost" size="md" onClick={handleLogout}>
@@ -166,10 +174,11 @@ export default function TeacherDashboardPage() {
 
         {/* States */}
         {isLoading && <p className="t-body" style={{ color: "var(--fg-muted)" }}>Loading…</p>}
+        {!isLoading && isFetching && <p role="status" style={{ color: "var(--fg-muted)" }}>Refreshing batches…</p>}
 
         {isError && (
-          <p className="t-body" style={{ color: "var(--err)" }}>
-            Failed to load batches.
+          <p role="alert" className="t-body" style={{ color: "var(--err)" }}>
+            {batches ? "Failed to refresh batches. Showing previously loaded data; try Refresh again." : "Failed to load batches. Try Refresh again."}
           </p>
         )}
 
@@ -181,7 +190,7 @@ export default function TeacherDashboardPage() {
             <p className="t-body-md" style={{ color: "var(--fg-muted)", marginBottom: "var(--s-lg)" }}>
               Create your first batch and share the join code with your students.
             </p>
-            <BoltButton variant="primary" size="md" onClick={() => setShowCreate(true)}>
+            <BoltButton variant="primary" size="md" onClick={() => setCreateFor(identity)}>
               CREATE BATCH
             </BoltButton>
           </GlassCard>
@@ -190,7 +199,7 @@ export default function TeacherDashboardPage() {
         {batches && batches.length > 0 && (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(340px, 1fr))", gap: "var(--s-lg)" }}>
             {batches.map((b) => (
-              <BatchCard key={b.id} batch={b} />
+              <BatchCard key={`${identity?.epoch}:${b.id}`} batch={b} />
             ))}
           </div>
         )}
@@ -213,7 +222,7 @@ export default function TeacherDashboardPage() {
         )}
       </Page>
 
-      {showCreate && <CreateBatchModal onClose={() => setShowCreate(false)} />}
+      {createFor && createFor === identity && <CreateBatchModal onClose={() => setCreateFor(null)} />}
     </>
   );
 }
