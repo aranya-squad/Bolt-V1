@@ -88,7 +88,7 @@ test("classwork cannot advance on an uncertain save and resumes the same session
   expect(meta.questions).toHaveLength(3);
   expect(meta.questions.every(q => q.answer === undefined)).toBe(true);
   let blocked = true;
-  const url = `${apiOrigin}/api/v1/sessions/${meta.session_id}/attempts/`;
+  const url = `${apiOrigin}/api/v1/sessions/${meta.session_id}/attempts/bulk/`;
   await page.route(url, async route => { if (blocked) await route.abort("failed"); else await route.continue(); });
   await page.getByRole("button", { name: /^(SKIP|Skip question)$/ }).click();
   await expect(page.getByRole("status")).toContainText("Save failed");
@@ -123,4 +123,40 @@ test("real JWT requests enforce the configured user throttle", async ({ page }) 
     expect(response.status()).toBe(200);
   }
   expect(Number(retryAfter)).toBeGreaterThan(0);
+});
+
+test("expired authentication retains a finish queue for same-learner sign-in", async ({ page }) => {
+  const headers = await login(page, 3);
+  const start = await page.request.post(`${apiOrigin}/api/v1/practice/start/`, {
+    headers, data: { mode: "ZEN", operation: "ADD", digits: 1, rows: 2, question_count: 1, time_limit_sec: 0 },
+  });
+  expect(start.status()).toBe(201);
+  const meta: SessionMeta = await start.json();
+  let blocked = true;
+  await page.route(`${apiOrigin}/api/v1/sessions/${meta.session_id}/attempts/bulk/`, async route => {
+    if (blocked) await route.abort("failed"); else await route.continue();
+  });
+  const pendingState = () => page.evaluate(sessionId => {
+    const key = Object.keys(sessionStorage).find(k => k.startsWith("bolt-recovery:") && k.endsWith(`:${sessionId}`));
+    if (!key) return null;
+    const saved = JSON.parse(sessionStorage.getItem(key)!);
+    return { pending: saved.pending, manifest: saved.manifest };
+  }, meta.session_id);
+  await page.goto(`/practice/session/${meta.session_id}`);
+  await page.getByPlaceholder("Answer").fill(String(meta.questions[0].answer));
+  await page.getByRole("button", { name: "SUBMIT", exact: true }).click();
+  await expect.poll(async () => (await pendingState())?.manifest?.length).toBe(1);
+  const beforeExpiry = await pendingState();
+  expect(inspect(meta.session_id)).toMatchObject({ attempt_count: 0, result_count: 0, xp_count: 0 });
+
+  // Reload drops the in-memory access token; removing the cookie causes a real refresh 401.
+  await page.context().clearCookies();
+  await page.reload();
+  await expect(page).toHaveURL(/\/login/);
+  expect(await pendingState()).toEqual(beforeExpiry);
+  blocked = false;
+  await login(page, 3);
+  await page.goto(`/practice/session/${meta.session_id}`);
+  await expect(page).toHaveURL(new RegExp(`/practice/victory/${meta.session_id}$`));
+  expect(inspect(meta.session_id)).toMatchObject({ attempt_count: 1, result_count: 1, xp_count: 1, score_correct: 1, score_total: 1 });
 });
