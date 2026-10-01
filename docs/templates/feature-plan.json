@@ -1,0 +1,63 @@
+{
+  "schema_version": 1,
+  "feature_id": "replace-me",
+  "applicability": {"ai_sdlc_v1": true, "prospective": true},
+  "context": {
+    "remote_refs_checked": false,
+    "existing_behavior_inspected": false,
+    "dependencies_recorded": false
+  },
+  "scope": {
+    "path": "docs/features/replace-me.scope.md",
+    "version": "1.0",
+    "sha256": "replace-with-lowercase-64-char-sha256",
+    "base_commit": "replace-with-full-40-char-commit-sha"
+  },
+  "plan_scope_sha256": "copy-exact-scope-sha256-here",
+  "review_route": {
+    "mandatory": [
+      {"role": "product_manager", "reviewer": "agent-id", "decision": "BLOCKED", "scope_sha256": "copy-exact-scope-sha256-here"},
+      {"role": "senior_tech_manager_cto", "reviewer": "agent-id", "decision": "BLOCKED", "scope_sha256": "copy-exact-scope-sha256-here"},
+      {"role": "head_qa", "reviewer": "agent-id", "decision": "BLOCKED", "scope_sha256": "copy-exact-scope-sha256-here"}
+    ],
+    "specialists": [
+      {"role": "security", "required": false, "decision": "NOT_REQUIRED", "reason": "Document routing reason"}
+    ]
+  },
+  "acceptance": [
+    {"id": "AC-01", "need_id": "N-01", "verification": "Observable expected outcome and planned evidence", "status": "PENDING"}
+  ],
+  "waves": [
+    {
+      "id": "W1",
+      "name": "Contract and implementation",
+      "categories": [
+        {
+          "id": "backend",
+          "stories": [
+            {
+              "id": "US-01",
+              "title": "Observable user outcome",
+              "acceptance": ["AC-01"],
+              "tasks": [
+                {
+                  "id": "T-01",
+                  "title": "Small bounded implementation task",
+                  "acceptance": ["AC-01"],
+                  "model_class": "worker",
+                  "writable_paths": ["backend/apps/example/"],
+                  "depends_on": [],
+                  "checks": ["focused test command"],
+                  "status": "PENDING"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "blocking_findings": [],
+  "final_review": {"code_review": "PENDING", "qa": "PENDING", "security": "NOT_REQUIRED"},
+  "handoff": {"branch": "feat/replace-me", "head_commit": "", "pushed": false, "ready_for_human_review": false}
+}
