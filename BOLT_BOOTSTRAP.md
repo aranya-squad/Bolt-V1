@@ -58,6 +58,10 @@ Use `CODE`, `LIVE`, `CI`, `TEST`, `HUMAN`, `PROPOSAL`, and `UNKNOWN` when the di
 - Checkpoint meaningful milestones with a durable commit and feature handoff.
 - Update `docs/PROJECT_BRIEF.md` only when global project state actually changes.
 - Active feature state belongs in `docs/features/<feature>.md`, not a duplicate global task file.
+- In the owner's Cloud dev - Bolt v1 Project/account Work sessions, every new
+  feature needs PM, Senior Tech Manager/CTO and Head QA agent signoff of one exact
+  scope before coding. Follow the environment-specific gate in AGENTS and
+  `docs/agent-workflow.md`; preserve its limited applicability.
 
 ## Task completion
 

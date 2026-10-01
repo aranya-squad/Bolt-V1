@@ -1,8 +1,8 @@
 ---
-status: IN PROGRESS
+status: READY FOR HUMAN REVIEW
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: c93ececacff1ec17991f68d2e5dc5c20f229f07c
+current_commit: b5c39ead35457948d4513e97cc3ee7b03f8943ff
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -47,15 +47,15 @@ warning-only CI. No application changes, merge, deployment or live mutation.
 
 ## In Progress
 
-G validation gap identified during the requested completeness review: a new
-session with no prior Bolt context must run the cold-start exercise. The existing
-same-session exercise is useful but cannot prove fresh-session recoverability.
+None. Setup implementation/validation work is closed under the owner's explicit
+acceptance of G on 2026-10-01. Human integration/hosted CI/live-evidence gates remain.
 
 ## Remaining
 
-No implementation changes identified by this review. Complete G in a fresh
-session, then restore READY FOR HUMAN REVIEW. Hosted PR CI and human integration
-follow; live verification belongs to a separately authorized operational task.
+No setup implementation remains. G is DONE by HUMAN acceptance of the existing
+answers/source trace and documented method limitation; no fresh-session PASS is
+claimed. Hosted PR CI and human dependency-order integration follow; release/live
+verification require separately authorized operational evidence.
 
 ## Verification
 
@@ -218,6 +218,20 @@ backlog; the current login source still contains the malformed dummy hash.
   Added-file/line credential-pattern scan and scoped diff check pass; not a full
   repository secret audit. Only documentation changed during this session.
 
+## Closure decision — 2026-10-01
+
+HUMAN: owner explicitly instructed "Mark G as done" and proceed with 2–3 new
+features. G is DONE by this acceptance; the previously recorded contaminated
+verification attempt is preserved unchanged as historical evidence. This does
+not convert that attempt into an independently observed fresh-session PASS.
+A–F/H local evidence and complete source recovery remain the basis for readiness.
+Setup is READY FOR HUMAN REVIEW, with no remaining setup implementation.
+
+The same instruction establishes environment-scoped PM, CTO and Head QA signoff
+before any new feature coding; recorded in ADR 0004/AGENTS/agent-workflow/template.
+Final closure checks re-run: checker tests, strict/advisory modes, diff/path/runtime
+preservation. Hosted CI and live systems remain unverified; no merge/deploy.
+
 ## Known Risks / Unknowns
 
 - LIVE: AWS/Vercel revision, infrastructure, logs and health remain UNKNOWN;
@@ -232,24 +246,16 @@ None for this approved setup. Human review/integration/release remain later gate
 
 ## Next Exact Action
 
-Run a new session starting only from repository identity/ref plus BOLT_BOOTSTRAP,
-PROJECT_BRIEF and CONTEXT_INDEX. Answer the 12 G questions, follow selective routes
-and trace UI → API → persistence; publish its actual result/limitations here and
-recheck H. Do not infer a new-session pass from this transcript.
+Human reviewers inspect context-only `c8675e6..chore/ai-context-system-v2` and the
+full-main comparison including unmerged prerequisites. Integrate frozen baseline
+→ workflow foundation → answer recovery → continuous context → context V2 under
+human control; verify normal PR CI and keep the context job advisory. No agent
+merge/deploy is authorized. G is done by owner acceptance; a clean cold-start
+exercise remains optional additional evidence, not remaining setup implementation.
 
-Use branch/ref endpoints only until the startup answers and source trace are
-recorded. Avoid `fetch_commit` at this stage: it returns patches that can expose
-prior answers. Do not read `docs/context-verification-2026-10-01.md` before the
-new run's answers/trace. A passing clean G run is the exact remaining setup gate.
-
-Then human reviewers inspect the context-only range
-`c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35..chore/ai-context-system-v2`, then
-review the full main comparison including unmerged prerequisites. Follow the
-baseline → workflow foundation → recovery → continuous context → context V2
-lineage for integration; verify normal PR CI before deciding merge. Keep the
-context job advisory. No agent merge/deploy is authorized. Optionally adopt the
-compact Project instructions from AI_CONTEXT_SYSTEM_SETUP and add only the final
-bootstrap as a Project Source; this task did not change the Project settings.
+New feature work proceeds through the mandatory PM/CTO/Head QA scope signoff gate
+in AGENTS for this owner's Bolt Work Project/account environment. Features remain
+on separate authorized task branches and preserve integration/release boundaries.
 
 ## Checkpoint convention
 

@@ -10,5 +10,6 @@ an accepted policy needs investigation, not silent policy replacement.
 | [0001](adr/0001-git-context-ownership.md) | Git checkpoints + per-feature handoff; compact startup; operational map separate from historical design | Accepted HUMAN workflow |
 | [0002](adr/0002-learning-persistence-recovery.md) | Existing progress service owns durable writes; versioned server-authoritative same-tab recovery | Accepted HUMAN contract + CODE/recorded TEST |
 | [0003](adr/0003-human-integration-production-boundary.md) | Autonomous authorized branch work; human merge/release/live mutation | Accepted HUMAN boundary |
+| [0004](adr/0004-work-feature-planning-gate.md) | PM/CTO/Head QA scope signoff before new features in the owner's Bolt Work Project/account sessions | Accepted HUMAN, limited environment applicability |
 
 Authoring/status/supersession convention: `docs/adr/README.md`.

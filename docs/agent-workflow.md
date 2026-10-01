@@ -8,6 +8,34 @@ Record the feature, affected roles, expected behavior, acceptance tests, base co
 
 Keep a short plan and progress record in `docs/features/<feature>.md` on that feature's branch. Avoid a central file edited by every parallel worker; it creates merge collisions. The coordinator owns the feature plan and final handoff.
 
+### Three-role pre-development signoff in the owner's Bolt Work sessions
+
+For the environment/project/account identified in AGENTS, this gate is mandatory
+for each new feature. It does not retroactively reopen completed feature work or
+apply to other accounts/projects/tools. Planning and source/test investigation
+may proceed before signoff; implementation changes may not.
+
+1. PM authors one categorized scope using `docs/templates/feature-scope.md`:
+   problem/outcome, existing behavior, needs/wants/deferred, actors/ownership,
+   exact UX/API/data behavior, acceptance IDs, exclusions and unresolved decisions.
+2. A distinct CTO agent checks source/architecture, contracts, concurrency,
+   dependencies/base, rollout and file ownership. A distinct Head QA agent checks
+   observable acceptance tests, fixtures, error/security edges and execution gates.
+3. Resolve findings; freeze the scope version and SHA-256. Each of the three
+   records APPROVED or BLOCKED against that identical digest. Missing, stale or
+   conditional signoff with unresolved blockers means implementation stays blocked.
+4. Coordinator copies scope and review evidence into the owning branch, checks
+   digest/approvals and records the implementation start checkpoint. Feature
+   branches remain isolated; shared-file ownership is sequenced explicitly.
+5. A material change to finalized behavior/contract/acceptance criteria returns
+   to all three reviewers before affected implementation. Track wants separately
+   rather than slipping them into the coding scope. Ordinary implementation
+   choices within the signed scope do not require repeated human permission.
+
+Signoff means a sound, bounded plan. Executed QA/CI, independent code review,
+human integration and release remain separate gates. Agent review cannot decide
+unresolved human product rules, consent/security policy or production mutation.
+
 ## Branches and worktrees
 
 One integration branch per reviewable feature, e.g. `feat/answer-recovery`. Use helper branches such as `task/answer-recovery-api` and `task/answer-recovery-ui` only for delegated writes. These are not independent product features; the coordinator brings their commits into the feature branch.

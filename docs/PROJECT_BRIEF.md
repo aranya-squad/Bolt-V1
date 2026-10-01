@@ -2,7 +2,7 @@
 last_updated: 2026-10-01
 verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
 verified_context_branch: chore/ai-context-system-v2
-verified_context_commit: c93ececacff1ec17991f68d2e5dc5c20f229f07c
+verified_context_commit: b5c39ead35457948d4513e97cc3ee7b03f8943ff
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -68,36 +68,33 @@ Not proven by this evidence: GitHub CI, production deployment, live AWS capacity
 
 A branch/worktree/handoff workflow exists in `AGENTS.md` and `docs/agent-workflow.md`. Human integration/release remains the default boundary.
 
-## IN PROGRESS
+## READY FOR HUMAN REVIEW
 
 ### AI context system V2
 
-Branch: `chore/ai-context-system-v2`
+Branch: `chore/ai-context-system-v2`. A–F/H implementation/local checks complete;
+G marked DONE by explicit owner acceptance on 2026-10-01. Its earlier method
+limitation is preserved; no independent fresh-session PASS is claimed. No setup
+implementation remains. Hosted CI/integration and live release evidence remain.
+Owning status/continuation: `docs/features/ai-context-system-v2.md`.
 
-Goal: make fresh AI sessions load one fast brief, route to task-specific deep context, verify against actual code/live evidence, operate autonomously inside scope and keep context fresh without repeated human explanation.
+## IN PROGRESS
 
-Implementation and local A–F/H checks are complete: canonical docs/ADRs,
-migrated startup, checker (18 tests), advisory CI and final consistency review.
-Completeness review found G evidence limited to a same-session exercise. A fresh
-session must validate the 12 questions/source trace before final readiness.
-Hosted CI and live systems have not been verified.
-
-The subsequent verification attempt recovered the topics/source trace but was
-contaminated by a commit-detail response exposing prior answers. It cannot close
-G. Bootstrap now specifies ref-only inspection and delayed patches for this test.
-No setup implementation gap was identified; clean-session validation remains.
-
-Active setup status and next exact action: `docs/features/ai-context-system-v2.md`.
-One-time implementation specification: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
+Two teacher workstreams are being scoped before coding: dashboard/roster
+correctness and existing batch level assignment. In this owner's Cloud dev -
+Bolt v1 Project/account Work sessions, PM, Senior Tech Manager/CTO and Head QA
+agents must sign the same finalized scope first (AGENTS / ADR 0004). User direction
+plus those signoffs authorizes routine implementation; real product ambiguity,
+human integration and live-production boundaries remain.
 
 ## NEXT
 
-1. Complete context V2 G validation in a new session, then human-review the branch; exact evidence/continuation are in its tracker.
+1. Human-review context V2; G is DONE by owner acceptance. Exact evidence/continuation are in its tracker.
 2. Human-review/integrate the baseline, workflow foundation, answer recovery and context branches in their documented dependency order.
 3. Verify normal GitHub CI through the appropriate PR/integration path.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
 5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
-6. Reassess `feat/teacher-dashboard` next per the approved recovery plan: existing roster/dashboard correctness and query costs (W4-PERF-02). Concrete scope/acceptance/base/test proposal: `docs/teacher-dashboard-assessment-2026-10-01.md`. Approve the slice before implementation; tournament rounds still require rules.
+6. Finalize/sign teacher dashboard and batch-level-assignment scopes through the three-agent planning gate, then develop them on task branches. Historical assessment: `docs/teacher-dashboard-assessment-2026-10-01.md`; current finalized scope will live with each feature handoff. Tournament rounds still require rules.
 
 ## BLOCKED / HUMAN OR LIVE EVIDENCE NEEDED
 

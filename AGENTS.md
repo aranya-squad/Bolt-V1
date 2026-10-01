@@ -25,6 +25,32 @@ hosting source/revision before production release. CI builds `frontend/` here.
 
 ## Recommended six-step delivery
 
+### Mandatory planning gate for the owner's Bolt Work environment
+
+HUMAN decision, 2026-10-01: for new feature requests from the account that issued
+this rule, in ChatGPT Work/cloud sessions within the **Cloud dev - Bolt v1**
+Project, do not start feature implementation before three distinct agents sign
+off the same finalized scope: **Product Manager**, **Senior Tech Manager/CTO**,
+and **Head QA**. This is an environment/project/account-scoped requirement, not
+a new universal requirement for other accounts, projects or developer tools.
+Use the supplied session context to identify applicability; no account identifier
+was inspected or inferred. Never claim this rule is enforced by account detection.
+
+The PM defines categorized needs, wants and exclusions, existing versus proposed
+behavior, roles, acceptance criteria and unresolved product decisions. CTO
+verifies architecture, contracts, dependencies, rollout and implementation limits;
+QA verifies testability, edge cases and required evidence. Record reviewer agent
+identities, exact scope version/SHA-256, APPROVED/BLOCKED decisions and resolutions
+in the owning feature handoff before assigning implementation. Revisions affecting
+behavior, contract or acceptance criteria require all three to re-sign the revised
+scope. Planning approval is not evidence of passing tests or human merge/release
+approval. If a role is unavailable, keep implementation blocked and say why.
+
+User direction plus the three signoffs authorizes routine coding within that
+scope; do not add an extra generic human scope-confirmation gate. Escalate genuine
+unresolved product decisions/material expansions under the shared boundaries.
+See `docs/agent-workflow.md` and `docs/templates/feature-scope.md` for the record.
+
 1. Define the behavior, roles, acceptance criteria, dependencies and permitted code areas. Reproduce a reported defect before fixing it. Request approval when the task owner requires a planning gate.
 2. Create one integration branch/worktree per reviewable feature from a recorded base. If foundations are unmerged, document prerequisites, merge order and feature-only/full comparison ranges. Integration PRs target `main` and remain drafts while prerequisites are pending; helper branches integrate locally into the feature branch.
 3. Delegate bounded independent tasks when authorized and supported. Give each writing agent its own worktree/branch, an agreed contract and exclusive file ownership. A single developer can follow the same process sequentially.

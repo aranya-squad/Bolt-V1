@@ -167,3 +167,9 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - Published concrete proposal in `docs/teacher-dashboard-assessment-2026-10-01.md`: reuse current screens, active enrollment consistency, grouped roster/class/lesson aggregates, teacher cache identity and measured SQL budgets. Preserve existing metric/history/ownership semantics and choose primary reporting reads explicitly. Implementation is not authorized/started.
 - Prior 29/54 SQL measurements are historical; Django/Postgres/Redis runtime unavailable here, so fresh 5/10/50/150 measurements are the first implementation gate. Auth/image/health/deletion and broad history work remain separate; tournament rules need approval.
 - Rechecked H: strict/advisory checker, diff/runtime equality, router/concrete paths, preserved historical bodies, concise startup and advisory CI boundary. No merge, deployment or live action.
+
+## 2026-10-01 — Owner accepts G and closes context setup
+
+- HUMAN: owner says "Mark G as done" and requests 2–3 new features with mandatory PM/CTO/Head QA scope signoff in this Project/account Work environment. G is DONE by human acceptance; preserved prior evidence limitation, without asserting an independent fresh-session PASS.
+- Context setup is READY FOR HUMAN REVIEW; no setup implementation remains. Human dependency-order integration, hosted PR CI and actual live release evidence remain separate. No merge/deploy/live mutation.
+- Durable conditional planning rule added to AGENTS/bootstrap/agent-workflow, categorized template and ADR 0004. Distinct named agents define and verify two existing teacher workstreams before any coding. Routine implementation needs no extra generic human approval after unanimous scope signoff.
