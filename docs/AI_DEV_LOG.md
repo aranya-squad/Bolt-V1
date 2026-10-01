@@ -186,3 +186,11 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - PM/CTO/HeadQA independently accepted namedsource8652480; full records persisted. All signed F1needs satisfied using existing screens; scope1.2 hash unchanged.
 - Native exact-head run36862766356:273backend tests zero skips,144measurements1/4/4, two built-SPA/realPBKDF2API F1cases pass. NormalCI36862766238 and coordinatorNode20lint/type/94Vitest/build pass. Corrected routing/lifecycle/schema/mock findings and domain-specific browser minimum-time fixture without weakening guards.
 - F1 READY FOR HUMAN REVIEW; no implementation remains. F2 is separately in progress on stackedbranch from8652480. Human integration/revisionCI/live release gates remain. No merge/deploy/live mutation.
+
+## 2026-10-01 — F2 assignment complete; both teacher features ready
+
+- Exact reviewed application: `feat/batch-level-assignment@3ee301a6bfe6c401da931da001a613c8a5d1c68d`, stacked on F1source8652480. Frozen scope1.2 SHA25619697b1a3061d588b8b0ed2ebd78b3c9d375830e68469ef5951f183974d51ff8 unchanged; all three planning signoffs preceded coding and PM/CTO/Head QA final acceptances are persisted.
+- Existing BatchDetail/M2M reused for owner atomic replacement, strict UUID validation/foreign404, primary canonical responses and full-page teacher catalogue. Genuine concurrent lock/rollback tests, nonempty finalized history/access preservation, truthful older-server handling and mock/schema contracts pass. No progress/auth writer, migration or learning policy changes.
+- Exact native run36864981450:304backend tests zero skips,144measurements with correct values at2/4/4, three realAPI built-SPA Chromium cases pass. NormalCI36864981375 and localNode20lint/types/136Vitest/build pass. Final artifact hashes/provenance/timing limits recorded.
+- F1/F2 READY FOR HUMAN REVIEW; no remaining setup or teacher feature implementation. Draft PR#2/#3 retain dependency integration, exact integrated-revision CI, backend-first rollout and production source/revision/topology/health/log/backup gates. Tournament rules and separate reliability repairs remain outside scope.
+- Fresh refs found independent newer setup c75c1f7b4e67bb71c668c4370a59918aef045ab5 and ongoing feat-Sagar work; neither was modified. Prospective AI-SDLC explicitly grandfathers F1/F2. Main remains cec94ea. No merge/deploy/live mutation.

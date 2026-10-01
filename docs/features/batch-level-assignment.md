@@ -1,8 +1,8 @@
 ---
-status: IN PROGRESS
+status: READY FOR HUMAN REVIEW
 branch: feat/batch-level-assignment
 base_commit: 865248002b95599715261be077620256e8101e8a
-current_commit: 865248002b95599715261be077620256e8101e8a
+current_commit: 3ee301a6bfe6c401da931da001a613c8a5d1c68d
 last_checkpoint: 2026-10-01
 owner: coordinator
 planning_gate: bolt-work-three-role-v1
@@ -30,24 +30,44 @@ responses, narrow teacher catalogue hook, accessible Save/Cancel editor with
 dirty/error/old-backend handling. Assignment affects reporting only, preserving
 student access, history and enrollment. No migration/new endpoint/dependency.
 
-## Completed / in progress
+## Completed
 
-F1 source integrated and checked at8652480:273native backend tests with no
-skips,94Node20 frontend tests/lint/types/build,144candidate measurements meet
-1/4/4data-query budgets. F1 corrected real-browser rerun remains pending; F1
-readiness is not presumed. F2 now uses separate integration/backend/frontend
-worktrees with exclusive ownership and the already approved scope.
+F1 is independently READY FOR HUMAN REVIEW: source8652480, published handoff
+00038d7043ffa2db8bd62a45d3d82c1573083683, draft PR#2. F2 is complete at named
+source3ee301a6bfe6c401da931da001a613c8a5d1c68d. No setup or feature implementation
+remains in these two signed slices. Final PM/CTO/Head QA implementation decisions
+are recorded in `docs/reviews/batch-level-assignment-final-2026-10-01.md`.
+
+Backend owner PATCH locks the primary Class row before validation and atomically
+commits scalar fields, full assignment replacement and response. Canonical class
+responses use batched primary assignment reads. BatchDetail reuses its existing
+screen for Save/Cancel; teacher-scoped catalogue reads all pages, preserves dirty
+drafts and handles errors, account changes and older backend capability honestly.
+Type/schema/synthetic mock contracts agree. Existing student access, enrollment,
+finalized history and recovery services are unchanged.
 
 ## Acceptance / verification
 
-F2-AC01..06 and BOTH-AC01 in the frozen scope govern completion. Required:
-string-only UUID normalization/duplicate/type/unknown validation, POST denial,
-foreign404 before validation, actual roles, atomic scalar+M2M rollback, owner row
-locking and two-connection replacements with ATOMIC_REQUESTS disabled, preserved
-progress/access/enrollment, canonical API/types/schema/mocks, frontend dirty/
-Cancel/retry/capability/catalogue/account behavior, full backend suite, Node20
-lint/types/Vitest/build and built-SPA realAPI all three teacher tests. Integrated
-list query budget becomes2; roster4/matrix<=5 still hold.
+F2-AC01..06 and BOTH-AC01 PASS against frozen scope1.2. Native exact-head
+[Teacher verification36864981450](https://github.com/aranya-squad/Bolt-V1/actions/runs/36864981450)
+passes both jobs:304 backend tests, zero failures/errors/skips;24fixtures /
+144requests with correct values and data-query counts2/4/4 (list/roster/matrix);
+three built-SPA/realAPI Chromium cases. Assignment tests include actual roles,
+foreign404 before validation, POST rejection, normalized UUID/type/unknown/duplicate
+validation, rollback, separate-connection row-lock serialization with
+ATOMIC_REQUESTS disabled, nonempty durable history and direct lesson start/resume
+preservation. Available divergent database alias tests exercise primary routing.
+
+[Normal CI36864981375](https://github.com/aranya-squad/Bolt-V1/actions/runs/36864981375)
+passes Ruff/backend, Node20 lint/types/**136Vitest**/build. Normal CI tests a generated
+PR merge ref; the specialized suite checks out exact3ee. Coordinator full local
+Node20 checks also pass. Eleven MSW route cases are mock contract evidence only;
+real persistence/ownership/concurrency evidence comes from the API/PG tests.
+Full measurement provenance/timings/plans/limits are in
+`docs/verification/teacher-reporting-2026-10-01.md`.
+Final documentation validation:18checker regressions pass; strict/default and
+advisory freshness modes each report zero errors/warnings; diff/path checks pass.
+These structural checks do not independently certify G freshness or live behavior.
 
 ## Ownership / dependencies
 
@@ -61,13 +81,28 @@ rollout. Code rollback preserves existing relation; no data clearing/migration.
 
 ## Risks / blockers / deferred
 
-No unresolved product decision in signed slice. Missing executed runtime evidence
-keeps status IN PROGRESS. Human integration and actual live release evidence are
-separate. Tournament rounds, historical auth/recovery recreation, enrollment/
-consent/admin policy and prerelease reliability repairs remain separate.
+No unresolved product decision or source/verification blocker remains in the
+signed slice. Measurements are overlapping synthetic rosters with one timing
+sample per condition; Redis cold cache does not reset PostgreSQL buffers. Divergent
+alias tests simulate lag, not streaming replication. Catalogue pages/report reads
+do not promise one concurrent snapshot. An incompatible PATCH acknowledgement
+requires page reload after backend update; missing initial GET capability can
+recover on Refresh. These limits meet the signed requirements.
+
+Human dependency integration, exact integrated-revision CI and live release
+evidence remain. Backend capability must precede editor rollout. Separate reliability
+repairs: real-hasher login dummy path, account-deletion/audit integrity, clean
+non-root image, HTTP health/HTTPS alignment, broader auth refresh races, artifact/
+source ownership, live logs/backups/topology and isolated load/cost evidence.
+Tournament rounds remain deferred until rules are approved. No merge/deploy or
+live mutation occurred. Newer independent setup work at c75c1f7b4e67bb71c668c4370a59918aef045ab5
+was observed and preserved; its prospective AI-SDLC explicitly grandfathers F1/F2.
 
 ## Next Exact Action
 
-Integrate exclusive F2 backend/frontend commits, execute native full-suite/
-concurrency/query/router and real built-SPA API checks, obtain named code reviews
-and publish review readiness only after required evidence passes. No merge/deploy.
+Human-review draft PR#3 and the signed final reviews. Recheck current refs, then
+integrate foundational branches → F1 → F2 in documented order, preserving newer
+governance work. Run required CI on the actual selected integration revision.
+Before release verify production frontend source/deployed revision, backend
+topology/health/logs/backups and rollout compatibility. Rollback code without
+clearing Class.assigned_levels. No further feature coding is needed for this slice.

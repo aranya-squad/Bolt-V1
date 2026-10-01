@@ -1,6 +1,6 @@
 ---
 last_updated: 2026-10-01
-verified_application_commit: 865248002b95599715261be077620256e8101e8a
+verified_application_commit: 3ee301a6bfe6c401da931da001a613c8a5d1c68d
 evidence: CODE+TEST
 operational_canonical: true
 ---
@@ -305,7 +305,8 @@ groups lesson/kind completions across owned active assigned classes. Explicit
 primary model querysets cover courses/progress/classroom without changing the
 global optional-replica router. Fixed committed-state membership agrees; separate
 requests do not promise one concurrent transactional snapshot. Measured data SQL
-is1/4/4 for list/roster/matrix in synthetic PostgreSQL16/Redis7 fixtures.
+is1/4/4 at F1; integrated F2source3ee301a is2/4/4 because list responses add one
+batched canonical assignment SELECT, in synthetic PostgreSQL16/Redis7 fixtures.
 
 Frontend `teacherIdentity.ts` supplies hydrated-TEACHER request/session epoch keys,
 abort and pre/post-settlement guards. Teacher hooks refetch on mount and existing
@@ -313,6 +314,18 @@ screens expose Refresh/error states; matrix cells match lesson_id. Lesson IDs in
 these report payloads are integer-backed decimal strings, while Level/Class/User
 IDs are UUIDs. PostgreSQL completion/history stays authoritative; this reporting
 feature makes no durable progress writer or student-learning-rule change.
+
+F2 owner assignment path: `BatchDetailPage` → `AssignedLevelsEditor` →
+`usePatchBatch` → `ClassDetailView.patch` → `ClassPatchSerializer.validate_assigned_level_ids`
+→ existing `Class.assigned_levels` M2M → `ClassSerializer` response → confirmed
+editor selection/account-scoped report invalidation. PATCH owns an explicit primary
+transaction and Class row lock across validation, scalar/M2M save and response.
+Only complete validated UUID-string sets replace; omitted preserves, empty clears.
+Foreign owner404 occurs before field validation. POST stays name-only. Persisted
+IDs are canonical Level.order, with primary batched prefetch on class list.
+`useTeacherCatalogue` projects ID/order/name from all existing `/levels/` pages;
+student unlock/completion fields do not govern choices. Assignments affect report
+membership, not learning access/enrollment/history. No migration/new endpoint.
 
 The enrollment consent path is teacher/school-attested and append-only. Historical guardian models remain in the schema but are not the current primary flow.
 

@@ -126,3 +126,99 @@ Same cell convention/fixture/cache limitations as baseline.
 At150students/20classes/longhistory, cold list/roster/matrix measured6.811/23.481/113.176ms versus baseline93.820/830.894/218.249ms. These are single observations, not statistically established latency improvements. Deterministic query growth is eliminated within measured fixture sizes. Candidate matrix aggregates the full joined dataset in one SELECT; further capacity/index decisions remain outside scope. No production/load claim.
 
 Final named8652480 Teacher verification36862766356 passes both jobs:273backend tests zero skips, all144measurements1/4/4 and two real-browser F1 cases. Final measurement archive11162666520 SHA256 `fc15b3d154899b48370e7d215b21fa7dad19f292a6411c9175f787a17034f191`; JSON SHA256 `df6ea8a5517213a70de7c21b99757a127cc8fac06759ebdb9099f55576d9a692`. Exact source was independently accepted by PM/CTO/QA. Browser respects existing200ms minimum real answer interval and asserts accepted receipts; no runtime guard/clock was weakened. F2 case remains intentionally reserved for its owning branch.
+
+
+## F2 integrated final candidate — executed
+
+Named exact source `3ee301a6bfe6c401da931da001a613c8a5d1c68d`,
+[Teacher verification36864981450](https://github.com/aranya-squad/Bolt-V1/actions/runs/36864981450),
+PostgreSQL16.15/Redis7.4.11/Python3.12. Both jobs SUCCESS: **304backend tests, zero
+failures/errors/skips** and **three built-SPA realAPI Chromium cases**. Assignment
+replacement, actual two-connection lock waiting with ATOMIC_REQUESTS disabled,
+rollback after M2M change, available divergent primary-routing tests and exact
+populated history/student-access preservation all execute.
+
+Raw measurement ZIP artifact11163184894, retained until2026-10-31; SHA256
+`3a4ce0d7439e0b8d0daea0fc9a15b3b80e31c608a5f29247d73cc72e57b56c3e`.
+Extracted JSON SHA256
+`f3137acd16fc23db714e1d0263fb38e5900a610908c2432ee6f29a180528a0fc`.
+JUnit artifact11163460373 ZIP SHA256
+`2a57efbd53e1ea441a6a689507215c5ea4a588bf14e8fc6e0445ded7b650135f`, XML SHA256
+`cdb2282733070c46e5c3edf0142bee46eb0f155d2521988f3202719ca2b5bcef`.
+All three reviewers independently downloaded/inspected final artifacts and browser
+logs; final acceptance is in `docs/reviews/batch-level-assignment-final-2026-10-01.md`.
+
+All24fixtures/144requests have correct returned values and **list2 / roster4 /
+matrix4** data SELECTs, separately **one JWT auth SELECT and two savepoint queries**.
+One additive batched canonical assignment prefetch raises F1 list1 to the signed
+integrated budget2. Roster/matrix remain fixed. Same cell convention and fixture/
+cache/measurement limitations as baseline.
+
+| Active students | Classes | History | Cache | List: data; ms | Roster: data; ms | Matrix: data; ms |
+|---:|---:|---|---|---|---|---|
+| 5 | 1 | short | cold | 2; 2.917 / 11.227 / 14.144 | 4; 4.398 / 7.634 / 12.031 | 4; 5.154 / 6.480 / 11.634 |
+| 5 | 1 | short | warm | 2; 1.675 / 4.293 / 5.968 | 4; 2.342 / 5.844 / 8.186 | 4; 2.675 / 5.332 / 8.007 |
+| 5 | 1 | long | cold | 2; 1.784 / 4.852 / 6.636 | 4; 2.555 / 5.399 / 7.954 | 4; 2.808 / 5.401 / 8.209 |
+| 5 | 1 | long | warm | 2; 1.463 / 3.927 / 5.390 | 4; 2.195 / 5.021 / 7.216 | 4; 2.538 / 5.193 / 7.732 |
+| 5 | 5 | short | cold | 2; 2.175 / 5.165 / 7.340 | 4; 2.652 / 5.410 / 8.062 | 4; 2.996 / 5.736 / 8.733 |
+| 5 | 5 | short | warm | 2; 1.639 / 4.390 / 6.029 | 4; 2.306 / 5.069 / 7.375 | 4; 2.637 / 5.607 / 8.244 |
+| 5 | 5 | long | cold | 2; 2.032 / 5.142 / 7.175 | 4; 2.695 / 5.368 / 8.063 | 4; 3.448 / 6.494 / 9.942 |
+| 5 | 5 | long | warm | 2; 1.619 / 4.831 / 6.450 | 4; 2.215 / 5.659 / 7.875 | 4; 3.190 / 5.986 / 9.175 |
+| 5 | 20 | short | cold | 2; 2.251 / 6.142 / 8.393 | 4; 2.660 / 5.271 / 7.931 | 4; 3.520 / 6.279 / 9.799 |
+| 5 | 20 | short | warm | 2; 1.782 / 5.629 / 7.410 | 4; 2.194 / 5.179 / 7.373 | 4; 3.035 / 6.472 / 9.507 |
+| 5 | 20 | long | cold | 2; 2.298 / 6.467 / 8.765 | 4; 2.807 / 5.302 / 8.109 | 4; 5.802 / 7.950 / 13.752 |
+| 5 | 20 | long | warm | 2; 1.789 / 5.682 / 7.471 | 4; 2.381 / 5.241 / 7.622 | 4; 5.557 / 8.332 / 13.889 |
+| 10 | 1 | short | cold | 2; 2.309 / 4.548 / 6.857 | 4; 3.089 / 5.968 / 9.057 | 4; 2.982 / 5.107 / 8.089 |
+| 10 | 1 | short | warm | 2; 1.687 / 3.938 / 5.625 | 4; 2.495 / 5.667 / 8.162 | 4; 2.760 / 5.267 / 8.027 |
+| 10 | 1 | long | cold | 2; 1.855 / 4.932 / 6.787 | 4; 2.671 / 5.910 / 8.580 | 4; 3.079 / 5.312 / 8.391 |
+| 10 | 1 | long | warm | 2; 1.626 / 4.056 / 5.682 | 4; 2.308 / 5.730 / 8.038 | 4; 2.669 / 5.301 / 7.971 |
+| 10 | 5 | short | cold | 2; 2.164 / 5.217 / 7.381 | 4; 2.761 / 5.709 / 8.470 | 4; 2.969 / 5.802 / 8.771 |
+| 10 | 5 | short | warm | 2; 1.754 / 4.846 / 6.601 | 4; 2.466 / 5.949 / 8.415 | 4; 2.860 / 5.859 / 8.720 |
+| 10 | 5 | long | cold | 2; 1.965 / 5.289 / 7.255 | 4; 2.922 / 5.459 / 8.381 | 4; 4.357 / 6.124 / 10.481 |
+| 10 | 5 | long | warm | 2; 1.557 / 4.487 / 6.044 | 4; 2.489 / 5.895 / 8.384 | 4; 3.873 / 5.907 / 9.780 |
+| 10 | 20 | short | cold | 2; 2.513 / 6.499 / 9.012 | 4; 2.978 / 5.810 / 8.788 | 4; 3.715 / 6.258 / 9.973 |
+| 10 | 20 | short | warm | 2; 2.015 / 5.737 / 7.752 | 4; 2.582 / 5.562 / 8.144 | 4; 3.512 / 6.936 / 10.449 |
+| 10 | 20 | long | cold | 2; 2.321 / 6.645 / 8.966 | 4; 2.844 / 5.784 / 8.628 | 4; 8.127 / 8.426 / 16.553 |
+| 10 | 20 | long | warm | 2; 1.934 / 5.588 / 7.522 | 4; 2.430 / 5.524 / 7.954 | 4; 8.096 / 9.955 / 18.051 |
+| 50 | 1 | short | cold | 2; 2.169 / 4.827 / 6.995 | 4; 3.975 / 10.118 / 14.094 | 4; 2.911 / 5.745 / 8.656 |
+| 50 | 1 | short | warm | 2; 1.591 / 4.094 / 5.686 | 4; 3.276 / 9.561 / 12.837 | 4; 2.766 / 5.379 / 8.145 |
+| 50 | 1 | long | cold | 2; 1.987 / 4.757 / 6.744 | 4; 4.114 / 9.299 / 13.413 | 4; 4.546 / 5.515 / 10.061 |
+| 50 | 1 | long | warm | 2; 1.588 / 3.974 / 5.562 | 4; 3.724 / 9.106 / 12.830 | 4; 4.161 / 5.769 / 9.931 |
+| 50 | 5 | short | cold | 2; 2.413 / 5.238 / 7.652 | 4; 3.811 / 9.287 / 13.098 | 4; 3.992 / 5.424 / 9.417 |
+| 50 | 5 | short | warm | 2; 1.860 / 4.773 / 6.633 | 4; 3.302 / 9.256 / 12.558 | 4; 3.394 / 5.054 / 8.447 |
+| 50 | 5 | long | cold | 2; 2.141 / 4.834 / 6.976 | 4; 4.044 / 8.835 / 12.879 | 4; 10.320 / 6.986 / 17.305 |
+| 50 | 5 | long | warm | 2; 1.711 / 4.348 / 6.060 | 4; 3.318 / 9.120 / 12.438 | 4; 10.500 / 7.251 / 17.751 |
+| 50 | 20 | short | cold | 2; 2.849 / 6.868 / 9.717 | 4; 3.606 / 9.318 / 12.923 | 4; 6.395 / 6.623 / 13.017 |
+| 50 | 20 | short | warm | 2; 2.092 / 5.804 / 7.897 | 4; 3.278 / 9.707 / 12.985 | 4; 6.290 / 7.106 / 13.396 |
+| 50 | 20 | long | cold | 2; 2.670 / 6.265 / 8.935 | 4; 4.161 / 8.821 / 12.982 | 4; 32.628 / 10.259 / 42.887 |
+| 50 | 20 | long | warm | 2; 2.258 / 5.642 / 7.900 | 4; 3.762 / 9.539 / 13.301 | 4; 32.649 / 9.494 / 42.142 |
+| 150 | 1 | short | cold | 2; 2.308 / 4.528 / 6.836 | 4; 6.160 / 18.539 / 24.699 | 4; 3.777 / 5.696 / 9.473 |
+| 150 | 1 | short | warm | 2; 1.635 / 4.004 / 5.638 | 4; 5.387 / 18.851 / 24.238 | 4; 3.337 / 5.649 / 8.986 |
+| 150 | 1 | long | cold | 2; 2.183 / 4.481 / 6.664 | 4; 6.823 / 17.574 / 24.397 | 4; 7.817 / 5.541 / 13.358 |
+| 150 | 1 | long | warm | 2; 1.617 / 4.047 / 5.664 | 4; 6.769 / 73.312 / 80.081 | 4; 7.318 / 5.492 / 12.810 |
+| 150 | 5 | short | cold | 2; 2.626 / 5.257 / 7.883 | 4; 6.070 / 18.229 / 24.299 | 4; 5.891 / 5.508 / 11.399 |
+| 150 | 5 | short | warm | 2; 2.041 / 4.674 / 6.716 | 4; 5.641 / 19.940 / 25.581 | 4; 5.893 / 5.692 / 11.585 |
+| 150 | 5 | long | cold | 2; 2.507 / 4.835 / 7.343 | 4; 7.351 / 17.595 / 24.946 | 4; 26.891 / 6.717 / 33.609 |
+| 150 | 5 | long | warm | 2; 2.143 / 4.118 / 6.261 | 4; 6.516 / 19.090 / 25.606 | 4; 26.200 / 6.939 / 33.139 |
+| 150 | 20 | short | cold | 2; 3.416 / 6.070 / 9.486 | 4; 6.909 / 58.318 / 65.228 | 4; 14.285 / 6.277 / 20.562 |
+| 150 | 20 | short | warm | 2; 2.756 / 5.419 / 8.175 | 4; 5.112 / 17.628 / 22.740 | 4; 14.227 / 6.993 / 21.220 |
+| 150 | 20 | long | cold | 2; 3.406 / 6.098 / 9.504 | 4; 6.785 / 17.516 / 24.301 | 4; 113.765 / 8.952 / 122.716 |
+| 150 | 20 | long | warm | 2; 2.877 / 5.543 / 8.421 | 4; 6.550 / 19.743 / 26.293 | 4; 111.416 / 8.673 / 120.089 |
+
+At150active students/20classes/longhistory, analyzed cold SELECT plans return20
+class aggregates plus60assigned-level rows; roster reads150active profiles and
+150grouped completion/accuracy rows; matrix returns20class rows and560grouped
+lesson/kind/class completion rows. These are bounded grouped reads with actual
+active denominators and primary routing, not per-student/class query growth.
+No new index/capacity claim follows from one timing sample.
+
+Normal CI36864981375 passes backend/context/frontend/build with **136Vitest** tests.
+It checks out generated PR merge29b69789c71c47105446bd0da8a3367804ccb723; the
+specialized runtime jobs above explicitly check out exact3ee. The browser uses
+real PBKDF2 login and no MSW: student finalization/Refresh, same-SPA teacher switch/
+foreign denial, owner assignment Save/reload/report add-remove/history preservation.
+The earlier F2 candidates are not substituted for final exact-source execution.
+Controlled divergent aliases simulate lag, not streaming replication; single
+observations/overlapping synthetic rosters/rolled-back measurement transactions/
+Redis-only cold cache do not establish production load, statistical latency
+improvement or AWS sizing. Human integration-revision CI/live evidence remain.

@@ -1,8 +1,8 @@
 ---
 last_updated: 2026-10-01
-verified_application_commit: 865248002b95599715261be077620256e8101e8a
-verified_context_branch: feat/teacher-dashboard
-verified_context_commit: 865248002b95599715261be077620256e8101e8a
+verified_application_commit: 3ee301a6bfe6c401da931da001a613c8a5d1c68d
+verified_context_branch: feat/batch-level-assignment
+verified_context_commit: 3ee301a6bfe6c401da931da001a613c8a5d1c68d
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -35,6 +35,8 @@ Bolt Abacus is a React/Django learning platform for abacus students and teachers
 - Answer-recovery implementation reviewed at: `6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1`
 - Answer-recovery branch current head observed 2026-10-01: `88cfff2791c9adc3648a39cf39a21a73c97e1697` (documentation-only final handoff after reviewed code)
 - AI context V2 setup branch: `chore/ai-context-system-v2`
+- Setup implementation closure: `ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0`.
+- Newer independent setup head observed 2026-10-01: `c75c1f7b4e67bb71c668c4370a59918aef045ab5`; prospective AI-SDLC workflow, preserving/grandfathering current F1/F2. It is not integrated on this feature branch.
 
 Verify current refs before acting; these are observations, not permanent constants.
 
@@ -88,14 +90,22 @@ two built-SPA realAPI cases pass. Normal PR CI passes. Owner tracker:
 `docs/features/teacher-dashboard.md`. PR#2 remains draft pending human dependency
 integration; no production capacity/live deployment claim.
 
+### Batch assigned-level management — F2
+
+`feat/batch-level-assignment` source3ee301a is READY FOR HUMAN REVIEW, stacked on
+F1source8652480. Existing BatchDetail supports atomic owner assignment replacement
+through the existing Class M2M, with canonical class IDs, all-page teacher catalogue,
+dirty/Cancel/error/capability handling. Assignment controls reporting membership;
+student access, enrollment and finalized history remain intact. PM/CTO/Head QA
+planning approval preceded coding and final acceptance is recorded.304native
+backend tests without skips,136frontend tests/lint/types/build,144measurements
+2/4/4 and all three built-SPA realAPI cases pass. Normal PR CI passes. Owner state:
+`docs/features/batch-level-assignment.md`; draft PR#3 awaits human integration.
+
 ## IN PROGRESS
 
-F2 assigned-level management is being implemented on owning stacked branch
-`feat/batch-level-assignment`, based on checked F1source8652480. Its active tracker
-is `docs/features/batch-level-assignment.md` on that branch; retrieve that branch
-selectively for current implementation state. Same frozen scope1.2/three-role
-planning approval precedes its coding. User direction plus those approvals
-authorizes routine work; human integration and release remain separate.
+No implementation remains in the signed F1/F2 scope. Integration/release gates
+are human-owned. Historical assessments remain proposals/history, not active state.
 
 ## NEXT
 
@@ -104,7 +114,8 @@ authorizes routine work; human integration and release remain separate.
 3. Normal F1 PR CI is verified; rerun required checks on the exact human-selected integration revision.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
 5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
-6. Human-review F1 teacher reporting; finish and verify stacked F2 assignment under frozen `docs/scopes/teacher-workflows-v1.2.md` and its three role approvals. Active state is owned by each feature tracker. Historical assessment: `docs/teacher-dashboard-assessment-2026-10-01.md`. Tournament rounds still require rules.
+6. Human-review F1 reporting then stacked F2 assignment under frozen `docs/scopes/teacher-workflows-v1.2.md`; both are complete and have three final agent acceptances. Backend assignment contract precedes editor rollout. Active state is owned by each feature tracker. Tournament rounds still require approved rules; separate prerelease reliability repairs are listed in the scope/tracker.
+7. Preserve the newer setup governance work during human integration; its prospective workflow applies to the next new feature, explicitly grandfathering these already-scoped features. Add its Project Instructions routing rule as described on the owning setup branch.
 
 ## BLOCKED / HUMAN OR LIVE EVIDENCE NEEDED
 

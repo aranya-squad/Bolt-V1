@@ -91,6 +91,7 @@ task_routes:
     read:
       - docs/SYSTEM_MAP.md#classroom-and-teacher-flow
       - docs/features/teacher-dashboard.md
+      - docs/features/batch-level-assignment.md
       - docs/scopes/teacher-workflows-v1.2.md
     inspect:
       - backend/apps/classroom
@@ -100,6 +101,7 @@ task_routes:
       - frontend/src/shared/api/queries/useRoster.ts
       - frontend/src/shared/api/queries/useTeacherLevelDashboard.ts
       - frontend/src/shared/api/queries/teacherIdentity.ts
+      - frontend/src/shared/api/queries/useTeacherCatalogue.ts
 
   ci_build:
     read:
