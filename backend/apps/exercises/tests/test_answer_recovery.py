@@ -12,6 +12,7 @@ from unittest.mock import patch
 
 import pytest
 from django.db import close_old_connections, connection, transaction
+from django.test import override_settings
 from django.urls import reverse
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -25,9 +26,10 @@ from apps.exercises.tests.factories import (
     LessonFactory,
     LevelFactory,
 )
-from apps.progress.models import ProgressRecord, XPEvent
+from apps.progress.models import ProgressRecord, QuestionAttempt, XPEvent
 from apps.progress.services import record_attempt
 from apps.users.tests.factories import GuardianFactory
+from config.dbrouter import PrimaryReplicaRouter
 
 
 @pytest.fixture
@@ -721,3 +723,75 @@ def test_api09_legacy_correct_then_wrong_latest_receipt_remains_terminal(client,
     assert session.attempts.count() == 2
     assert finish(client, session).json()["score_correct"] == 1
     assert client.get(url(session, "session-report")).json()["question_verdicts"]["0"] == "correct"
+
+
+class StaleProgressReplicaRouter(PrimaryReplicaRouter):
+    """Any unpinned authoritative read fails instead of accidentally passing on primary."""
+
+    def db_for_read(self, model, **hints):
+        if model._meta.app_label in {"progress", "courses"}:
+            return "unavailable_stale_replica"
+        return super().db_for_read(model, **hints)
+
+
+@pytest.mark.django_db
+def test_replica_router_recovery_receipts_manifest_score_and_legacy_are_primary(client, session):
+    router = StaleProgressReplicaRouter()
+    assert router.db_for_read(QuestionAttempt) == "unavailable_stale_replica"
+    assert router.db_for_read(ProgressRecord) == "unavailable_stale_replica"
+    historical = ArenaSessionFactory(user=session.user, kind=SessionKind.ZEN, template=None)
+    record_attempt(historical, 0, None, "1+1", 2, 99, 500)
+    with override_settings(DATABASE_ROUTERS=[router]):
+        accepted = single(client, session, item(number=20))
+        assert accepted.status_code == 200
+        assert single(client, session, item(number=20)).json() == accepted.json()
+        legacy = client.post(
+            url(session, "session-attempts-bulk"), {"attempts": [item(number=0)]}, format="json"
+        )
+        assert legacy.status_code == 200
+        legacy = client.post(url(session), item(number=0), format="json")
+        assert legacy.status_code == 200
+        corrected = bulk(client, session, [item(number=23, answer=2)])
+        assert corrected.status_code == 200
+        metadata = client.get(url(session, "session-detail")).json()
+        assert metadata["question_states"][0]["attempt_count"] == 4
+        assert metadata["question_states"][0]["latest_receipt"] == corrected.json()["verdicts"][0]
+        assert metadata["attempt_contract_version"] == 2
+        assert client.get(url(historical, "session-detail")).json()["attempt_contract_version"] == 1
+        assert single(client, historical, item()).json()["code"] == "unsupported_contract"
+        manifest = [{"question_index": 0, "attempt_number": 23}]
+        response = finish(client, session, manifest)
+        assert response.status_code == 200
+        result = response.json()
+        assert result["score_correct"] == 1 and result["time_taken_sec"] == 2
+        assert finish(client, session, manifest).json() == result
+        assert (
+            finish(client, session, [{"question_index": 1, "attempt_number": 1}]).json()["code"]
+            == "pending_attempts"
+        )
+        assert single(client, session, item(number=20)).json() == accepted.json()
+        report = client.get(url(session, "session-report"))
+        assert report.status_code == 200
+        assert report.json()["progress"]["id"] == result["id"]
+        assert report.json()["question_verdicts"]["0"] == "fixed"
+    assert session.attempts.count() == 4
+    assert XPEvent.objects.filter(source_session=session).count() == 1
+
+
+@pytest.mark.django_db
+def test_replica_router_legacy_finalize_and_retake_best_record_use_primary(client, session):
+    curated = ArenaSessionFactory(user=session.user)
+    retake = ArenaSessionFactory(user=session.user, template=curated.template)
+    with override_settings(DATABASE_ROUTERS=[StaleProgressReplicaRouter()]):
+        metadata = client.get(url(curated, "session-detail"))
+        assert metadata.status_code == 200
+        assert metadata.json()["level_id"] == str(curated.template.lesson.level_id)
+        first = client.post(url(curated, "session-submit"), format="json")
+        assert first.status_code == 200 and first.json()["score_correct"] == 0
+        assert single(client, retake, item(answer=2)).status_code == 200
+        second = client.post(url(retake, "session-submit"), format="json")
+        assert second.status_code == 200
+        assert second.json()["score_correct"] == 1 and second.json()["xp_earned"] == 0
+        assert client.post(url(curated, "session-submit"), format="json").json() == first.json()
+        assert client.post(url(retake, "session-submit"), format="json").json() == second.json()
+    assert XPEvent.objects.filter(source_session__in=[curated, retake]).count() == 2

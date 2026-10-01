@@ -3,6 +3,7 @@
 import logging
 from dataclasses import dataclass
 
+from django.db import DEFAULT_DB_ALIAS
 from django.db.models import Count, Q
 from rest_framework.exceptions import APIException
 
@@ -133,6 +134,7 @@ def validate_manifest(session, items):
         raise ContractError(
             "invalid_attempt", "expected_attempts must be a list of at most 200 identities."
         )
+    attempts = session.attempts.db_manager(session._state.db or DEFAULT_DB_ALIAS)
     identities = set()
     for index, item in enumerate(items):
         try:
@@ -147,7 +149,7 @@ def validate_manifest(session, items):
     selectors = Q(pk__in=[])
     for q, number in identities:
         selectors |= Q(question_index=q, attempt_number=number)
-    stored = set(session.attempts.filter(selectors).values_list("question_index", "attempt_number"))
+    stored = set(attempts.filter(selectors).values_list("question_index", "attempt_number"))
     missing = sorted(identities - stored)
     if missing:
         raise ContractError(
@@ -164,7 +166,9 @@ def accept_batch(session, items):
 
     if not isinstance(items, list) or len(items) > 100:
         raise ContractError("invalid_attempt", "attempts must be a list of at most 100 items.")
-    if session.attempts.filter(attempt_number__isnull=True).exists():
+    # Explicit manager alias keeps replica routing out of authoritative recovery reads.
+    attempts = session.attempts.db_manager(session._state.db or DEFAULT_DB_ALIAS)
+    if attempts.filter(attempt_number__isnull=True).exists():
         raise ContractError(
             "unsupported_contract", "Historical attempts lack recoverable identities."
         )
@@ -206,12 +210,12 @@ def accept_batch(session, items):
     selectors = Q(pk__in=[])
     for q, number in seen:
         selectors |= Q(question_index=q, attempt_number=number)
-    stored = session.attempts.filter(selectors)
+    stored = attempts.filter(selectors)
     by_identity = {(a.question_index, a.attempt_number): a for a in stored}
     # Counts and terminal flags are bounded by question count, even after many retries.
     states = {
         row["question_index"]: [row["count"], row["has_terminal"]]
-        for row in session.attempts.filter(question_index__in={q for q, _ in seen})
+        for row in attempts.filter(question_index__in={q for q, _ in seen})
         .values("question_index")
         .annotate(
             count=Count("id"), has_terminal=Count("id", filter=Q(is_correct=True) | Q(is_skip=True))

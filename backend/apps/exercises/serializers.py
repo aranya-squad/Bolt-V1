@@ -1,7 +1,9 @@
+from django.db import DEFAULT_DB_ALIAS
 from django.db.models import Count, Max, Q
 from django.utils import timezone
 from rest_framework import serializers
 
+from apps.courses.models import Lesson
 from apps.progress.models import ProgressRecord, QuestionAttempt
 
 from .attempt_contract import receipt, terminal
@@ -31,7 +33,8 @@ class SessionMetaSerializer(serializers.Serializer):
     question_states = serializers.SerializerMethodField()
 
     def get_attempt_contract_version(self, session):
-        return 1 if session.attempts.filter(attempt_number__isnull=True).exists() else 2
+        attempts = session.attempts.db_manager(session._state.db or DEFAULT_DB_ALIAS)
+        return 1 if attempts.filter(attempt_number__isnull=True).exists() else 2
 
     def get_state(self, session):
         return "submitted" if session.submitted_at else "abandoned" if session.abandoned_at else "active"
@@ -43,17 +46,24 @@ class SessionMetaSerializer(serializers.Serializer):
         return str(session.template.lesson_id) if session.template else None
 
     def get_level_id(self, session):
-        return str(session.template.lesson.level_id) if session.template else None
+        if session.template is None:
+            return None
+        # Recovery context must not depend on the optional replica catching up.
+        level_id = Lesson.objects.using(session._state.db or DEFAULT_DB_ALIAS).values_list(
+            "level_id", flat=True
+        ).get(pk=session.template.lesson_id)
+        return str(level_id)
 
     def get_question_states(self, session):
+        attempts = session.attempts.db_manager(session._state.db or DEFAULT_DB_ALIAS)
         groups = {
             row["question_index"]: row
-            for row in session.attempts.values("question_index").annotate(
+            for row in attempts.values("question_index").annotate(
                 count=Count("id"), maximum=Max("attempt_number"), latest=Max("id"),
                 has_terminal=Count("id", filter=Q(is_correct=True) | Q(is_skip=True)),
             )
         }
-        latest = {a.pk: a for a in session.attempts.filter(pk__in=[g["latest"] for g in groups.values()])}
+        latest = {a.pk: a for a in attempts.filter(pk__in=[g["latest"] for g in groups.values()])}
         states = []
         for index in range(len(session.questions_json)):
             group = groups.get(index, {})
