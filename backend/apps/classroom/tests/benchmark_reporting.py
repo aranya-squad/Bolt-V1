@@ -25,7 +25,7 @@ def main():
 
     from django.conf import settings
     from django.core.cache import cache
-    from django.db import connection, transaction
+    from django.db import connection, reset_queries, transaction
     from django.test import override_settings
     from django.test.utils import CaptureQueriesContext
     from django.urls import reverse
@@ -139,6 +139,8 @@ def main():
 
     def run_request(client, url, endpoint):
         durations = []
+        # Django's bounded cumulative query ring otherwise truncates later scenarios.
+        reset_queries()
 
         def timed_execute(execute, sql, params, many, context):
             started = perf_counter()
@@ -154,6 +156,8 @@ def main():
         if response.status_code != 200:
             raise RuntimeError(f"Unexpected endpoint failure: {response.status_code}")
         queries = list(captured.captured_queries)
+        if len(queries) != len(durations):
+            raise RuntimeError("Incomplete query capture; refusing truncated measurement")
         auth = [
             q for q in queries
             if q["sql"].startswith("SELECT") and 'FROM "users_user" WHERE' in q["sql"]
