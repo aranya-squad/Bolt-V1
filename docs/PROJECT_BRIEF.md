@@ -2,7 +2,7 @@
 last_updated: 2026-10-01
 verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
 verified_context_branch: chore/ai-context-system-v2
-verified_context_commit: pending-finalization
+verified_context_commit: 95aeb06eff2ea98b0f35c5b9c0f5eee5b1408b87
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -40,7 +40,7 @@ Verify current refs before acting; these are observations, not permanent constan
 
 ## DONE / verified locally
 
-### Answer recovery [TEST + CODE]
+### Answer recovery [recorded TEST + verified CODE]
 
 The reviewed implementation at `6d32de6` adds:
 
@@ -76,7 +76,8 @@ Branch: `chore/ai-context-system-v2`
 
 Goal: make fresh AI sessions load one fast brief, route to task-specific deep context, verify against actual code/live evidence, operate autonomously inside scope and keep context fresh without repeated human explanation.
 
-Canonical implementation plan: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
+Active setup status and next exact action: `docs/features/ai-context-system-v2.md`.
+One-time implementation specification: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
 
 ## NEXT
 
@@ -84,7 +85,7 @@ Canonical implementation plan: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
 2. Human-review/integrate the workflow foundation and answer-recovery work in the documented dependency order.
 3. Verify normal GitHub CI through the appropriate PR/integration path.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
-5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence.
+5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
 6. Choose the next product feature from current human direction + relevant backlog/next-step evidence after integration state is verified.
 
 ## BLOCKED / HUMAN OR LIVE EVIDENCE NEEDED
@@ -128,6 +129,11 @@ Canonical implementation plan: `docs/AI_CONTEXT_SYSTEM_SETUP.md`.
 - **AWS/deploy/outage/logs:** `docs/RUNBOOK.md` + actual deploy config/scripts + live provider/log evidence when authorized.
 - **Architecture decision:** `docs/DECISIONS.md` / ADRs + SYSTEM_MAP + affected code.
 - **Feature continuation:** active `docs/features/<feature>.md`, especially its `Next Exact Action`.
+
+## Freshness metadata
+
+Verification commits name exact inspected checkpoints, not necessarily this file's containing commit. Documentation-only descendants do not invalidate application
+verification. Check relevant source changes and remote refs at task start.
 
 ## Source-of-truth note
 

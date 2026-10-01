@@ -157,7 +157,8 @@ Caddy publishes ports 80/443. Web port 8000 is not published by the current prod
 
 ## Frontend hosting config [CODE]
 
-Both root and `frontend/vercel.json` contain Vercel build/rewrite configuration.
+Root `vercel.json` defines build/output and API/SPA rewrites;
+`frontend/vercel.json` defines API/SPA rewrites only.
 
 `frontend/vercel.json` rewrites:
 - `/api/*` -> `https://api.boltabacus.com/api/*`

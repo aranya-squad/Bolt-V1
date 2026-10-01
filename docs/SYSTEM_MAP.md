@@ -232,7 +232,7 @@ Authoritative answer/recovery/finalization operations explicitly require primary
 - Django cache
 - user/level context caches
 - Celery broker/result backend
-- JWT-related/cache-backed behavior as configured by the application
+- DRF cache-backed throttles; SimpleJWT blacklist records use the database
 
 Do not assume live Redis topology or authentication from source alone.
 

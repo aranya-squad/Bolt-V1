@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: chore/ai-context-system-v2
 base_commit: c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35
-current_commit: 638dd5c126189ff555e61daf305ea63ca2201341
+current_commit: 95aeb06eff2ea98b0f35c5b9c0f5eee5b1408b87
 last_checkpoint: 2026-10-01
 owner: ai
 ---
@@ -22,15 +22,19 @@ warning-only CI. No application changes, merge, deployment or live mutation.
 - Full repository handoff and required startup docs read; local clone acquired.
 - Remote refs verified: main `cec94ea`, continuous context `c8675e6`,
   answer recovery `88cfff2`, context V2 `638dd5c`; no unexpected movement.
-- Created this durable tracker before implementing remaining setup.
+- Created/published tracker at `95aeb06`.
+- A complete: runtime trees match reviewed code; checked routing/auth/recovery,
+  primary writes/scoring, CI/Compose/Caddy/Gunicorn/health/logging and AWS scripts.
+  Corrected Vercel build-vs-rewrite scope and Redis throttle-vs-JWT-blacklist
+  ownership. Brief metadata now names an existing checkpoint; retained unique
+  100–150-user historical target as planning evidence, not a capacity guarantee.
 
 ## In Progress
 
-- A: audit canonical docs against code/config and normalize ownership.
+- B: record durable decisions, then migrate entry points and feature metadata (C–D).
 
 ## Remaining
 
-- A: finish source audit and corrections.
 - B: decisions index and a small ADR layer.
 - C: migrate old startup/current-state documents; retain history.
 - D: answer-recovery metadata without changing its detailed delivery record.
@@ -61,9 +65,9 @@ None for this approved setup. Human review/integration/release remain later gate
 
 ## Next Exact Action
 
-Complete A: audit bootstrap/brief/router/map/runbook against current source;
-fix stale claims and route active setup state to this tracker. Commit/push that
-milestone, then continue B–D.
+Create DECISIONS/ADR index and three scoped records; migrate AGENTS,
+CURRENT_STATE, CLOUD_DEV_HANDOFF and historical architecture banner; add current
+answer-recovery metadata without changing its detailed body (B–D).
 
 ## Checkpoint convention
 
