@@ -105,4 +105,11 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Validate release shell syntax
-        run: bash -n aws-resume-deploy.sh backend/deploy.sh scripts/verify-backend-docker-context.sh
+        run: bash -n aws-deploy.sh aws-resume-deploy.sh backend/deploy.sh scripts/verify-backend-docker-context.sh
+      - name: Validate immutable Compose image wiring
+        run: |
+          touch .env.production
+          IMAGE_REF="example.invalid/bolt-abacus-api@sha256:0000000000000000000000000000000000000000000000000000000000000000" \
+          API_DOMAIN="api.example.invalid" ACME_EMAIL="ops@example.invalid" \
+          docker compose -f docker-compose.prod.yml config >/dev/null
+          rm -f .env.production
