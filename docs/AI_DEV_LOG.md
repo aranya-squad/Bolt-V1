@@ -180,3 +180,9 @@ This is the durable cross-session development journal for ChatGPT Project work, 
 - Native PostgreSQL16.15/Redis7.4.11 baseline run36861089263 at82fd045 completed24fixtures/144requests before runtime edits. Rejected prior truncated capture; corrected per-request reset/completeness assertion. Detailed count/timing/plan/limits in verification report.
 - F1 grouped primary reporting, active enrollment agreement, isolated teacher request/cache lifecycle and existing-screen Refresh/lesson-ID behavior integrated. Backend source reviewed by CTO/QA; frontend agent's Node20 lint/types/93Vitest/build pass. Native candidate DB/stale-alias/browser checks pending.
 - Setup remains closed under owner G acceptance at ec74cf3; no merge, deploy or live infrastructure action. F2 assignment scope already approved but coding awaits integrated F1 checkpoint.
+
+## 2026-10-01 — F1 teacher reporting complete for human review
+
+- PM/CTO/HeadQA independently accepted namedsource8652480; full records persisted. All signed F1needs satisfied using existing screens; scope1.2 hash unchanged.
+- Native exact-head run36862766356:273backend tests zero skips,144measurements1/4/4, two built-SPA/realPBKDF2API F1cases pass. NormalCI36862766238 and coordinatorNode20lint/type/94Vitest/build pass. Corrected routing/lifecycle/schema/mock findings and domain-specific browser minimum-time fixture without weakening guards.
+- F1 READY FOR HUMAN REVIEW; no implementation remains. F2 is separately in progress on stackedbranch from8652480. Human integration/revisionCI/live release gates remain. No merge/deploy/live mutation.

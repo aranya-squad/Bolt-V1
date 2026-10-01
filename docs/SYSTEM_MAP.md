@@ -1,6 +1,6 @@
 ---
 last_updated: 2026-10-01
-verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
+verified_application_commit: 865248002b95599715261be077620256e8101e8a
 evidence: CODE+TEST
 operational_canonical: true
 ---
@@ -297,6 +297,22 @@ Enrollment + EnrollmentConsent
   ↓
 Roster / teacher level dashboard
 ```
+
+Teacher reporting at reviewed8652480: `ClassListCreateView.get` annotates active
+student counts; `RosterView.get` reads active profiles and separate grouped
+CLASSWORK level counts / arithmetic progress accuracy; `TeacherLevelDashboardView.get`
+groups lesson/kind completions across owned active assigned classes. Explicit
+primary model querysets cover courses/progress/classroom without changing the
+global optional-replica router. Fixed committed-state membership agrees; separate
+requests do not promise one concurrent transactional snapshot. Measured data SQL
+is1/4/4 for list/roster/matrix in synthetic PostgreSQL16/Redis7 fixtures.
+
+Frontend `teacherIdentity.ts` supplies hydrated-TEACHER request/session epoch keys,
+abort and pre/post-settlement guards. Teacher hooks refetch on mount and existing
+screens expose Refresh/error states; matrix cells match lesson_id. Lesson IDs in
+these report payloads are integer-backed decimal strings, while Level/Class/User
+IDs are UUIDs. PostgreSQL completion/history stays authoritative; this reporting
+feature makes no durable progress writer or student-learning-rule change.
 
 The enrollment consent path is teacher/school-attested and append-only. Historical guardian models remain in the schema but are not the current primary flow.
 
