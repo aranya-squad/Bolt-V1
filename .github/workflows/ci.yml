@@ -99,3 +99,10 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - name: Verify backend Docker context excludes secrets
         run: bash scripts/verify-backend-docker-context.sh
+
+  release-scripts:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+      - name: Validate release shell syntax
+        run: bash -n aws-resume-deploy.sh backend/deploy.sh scripts/verify-backend-docker-context.sh
