@@ -2,7 +2,7 @@ import { create } from "zustand";
 import axios from "axios";
 import { apiClient } from "@/shared/api/client";
 import { finalize, SESSION_REQUEST_TIMEOUT_MS, submitBulk } from "@/shared/api/queries/useSession";
-import type { ProgressRecord, SessionMeta } from "@/shared/types";
+import type { AcceptedReceipt, ProgressRecord, SessionMeta } from "@/shared/types";
 import { acknowledge, createRecovery, identityKey, isIdentity, isReceipt, loadRecovery, MAX_BYTES, MAX_PENDING, reconcile, saveRecovery, SKIP_ANSWER, storageKey } from "./answerRecovery";
 import type { PendingAttempt, RecoveryState, StorageStatus } from "./answerRecovery";
 
@@ -15,6 +15,7 @@ interface SessionState {
   status: SaveStatus;
   message: string;
   retryAt: number | null;
+  conflict: AcceptedReceipt | null;
   initialize: (userId: string, meta: SessionMeta, context: string) => void;
   update: (patch: Partial<Pick<RecoveryState, "index" | "input" | "feedback" | "retried" | "questionStartedAt" | "feedbackUntil" | "flashDeadline">>) => void;
   enqueue: (answer: number, isSkip: boolean, feedback?: RecoveryState["feedback"]) => PendingAttempt | null;
@@ -22,6 +23,7 @@ interface SessionState {
   flush: () => Promise<boolean>;
   finish: () => Promise<ProgressRecord | null>;
   excludeRejected: () => void;
+  useServerAnswer: () => Promise<void>;
   suspend: () => void;
   clearSession: () => void;
 }
@@ -30,7 +32,7 @@ let finishInFlight: Promise<ProgressRecord | null> | null = null;
 let generation = 0;
 let retryCount = 0;
 let rateLimitedUntil = 0;
-const INITIAL = { recovery: null, meta: null, storage: "available" as StorageStatus, verified: false, status: "accepted" as SaveStatus, message: "", retryAt: null };
+const INITIAL = { recovery: null, meta: null, storage: "available" as StorageStatus, verified: false, status: "accepted" as SaveStatus, message: "", retryAt: null, conflict: null };
 function capability(meta: SessionMeta) {
   if (!Array.isArray(meta.questions) || !Array.isArray(meta.question_states) || meta.question_states.length !== meta.questions.length) return false;
   if (!meta.question_states.every(q => q && Number.isInteger(q.question_index) && q.question_index >= 0 && q.question_index < meta.questions.length &&
@@ -54,6 +56,15 @@ function failure(error: unknown, snapshot: PendingAttempt[] = []) {
     const body = typeof data === "object" && data !== null ? data as Record<string, unknown> : {};
     const detail = typeof body.detail === "string" ? body.detail : "Answers could not be saved.";
     if (status === 401) { store.suspend(); return; }
+    if (status === 409 && body.code === "identity_conflict") {
+      const receipt = body.receipt;
+      if (!isReceipt(receipt) || !snapshot.some(a => identityKey(a) === identityKey(receipt))) {
+        useSessionStore.setState({ status: "unsupported", message: "Conflict receipt is incompatible. Pending answers are retained.", retryAt: null, conflict: null });
+        return;
+      }
+      useSessionStore.setState({ status: "error", message: "A different answer is already saved for this identity. Your local answer remains pending until you choose the saved server answer.", retryAt: null, conflict: receipt });
+      return;
+    }
     if (status === 400 || status === 409 || status === 404) {
       const rejected = status === 400 && Array.isArray(body.items) ? body.items.flatMap((item: unknown) => {
         if (isIdentity(item)) return [item];
@@ -84,7 +95,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
     const previous = get();
     const old = previous.recovery;
     const same = old?.userId === userId && old.sessionId === meta.session_id && old.context === context;
-    if (!same) { generation++; retryCount = 0; rateLimitedUntil = 0; }
+    if (!same) { generation++; retryCount = 0; rateLimitedUntil = 0; set({ conflict: null }); }
     const loaded = same ? { state: old, storage: get().storage } : loadRecovery(userId, meta.session_id, context);
     const state = loaded.state ?? createRecovery(userId, meta, context);
     set({ meta, recovery: state, storage: loaded.storage, verified: false });
@@ -94,8 +105,9 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
     try {
       const next = reconcile(state, meta);
       persist(next);
-      const retainError = same && previous.status === "error" && next.pending.length > 0;
-      set({ verified: true, status: retainError ? "error" : next.pending.length ? "pending" : "accepted",
+      const conflict = same && previous.conflict && next.pending.some(a => identityKey(a) === identityKey(previous.conflict!)) ? previous.conflict : null;
+      const retainError = same && previous.status !== "saving" && (previous.status === "error" || !!conflict) && next.pending.length > 0;
+      set({ verified: true, conflict, status: retainError ? "error" : next.pending.length ? "pending" : "accepted",
         message: meta.state === "abandoned" ? "This session was abandoned. Unresolved answers are retained; new input is paused." : retainError ? previous.message : "",
         retryAt: retainError ? previous.retryAt : null });
     } catch (error) { failure(error); }
@@ -103,7 +115,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   update: patch => { const r = get().recovery; if (r) persist({ ...r, ...patch }); },
   enqueue: (answer, isSkip, feedback) => {
     const { recovery: r, meta, status, verified } = get();
-    if (!r || !meta || !verified || meta.state !== "active" || r.manifest || ["unsupported", "suspended"].includes(status)) return null;
+    if (!r || !meta || !verified || meta.state !== "active" || r.manifest || get().conflict || ["unsupported", "suspended"].includes(status)) return null;
     if (meta.question_states?.find(q => q.question_index === r.index)?.terminal) {
       set({ message: "This question is already complete on the server. Continue from its accepted outcome." });
       return null;
@@ -127,7 +139,7 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
   flush: () => {
     if (flushInFlight) return flushInFlight;
     const { recovery: r, status, verified } = get();
-    if (!r || !verified || ["unsupported", "suspended"].includes(status) || r.rejected.length || rateLimitedUntil > Date.now()) return Promise.resolve(false);
+    if (!r || !verified || ["unsupported", "suspended"].includes(status) || r.rejected.length || get().conflict || rateLimitedUntil > Date.now()) return Promise.resolve(false);
     const token = generation;
     const flight = (async () => {
       set({ status: "saving", message: "", retryAt: null });
@@ -177,6 +189,37 @@ export const useSessionStore = create<SessionState>()((set, get) => ({
     })().finally(() => { if (finishInFlight === flight) finishInFlight = null; });
     finishInFlight = flight;
     return flight;
+  },
+  useServerAnswer: async () => {
+    const { recovery: r, conflict, status } = get();
+    if (!r || !conflict || !get().verified || status === "saving") return;
+    const token = generation;
+    set({ status: "saving", retryAt: null });
+    try {
+      // Refresh mutable mode/terminal state before adopting the validated own-session receipt.
+      const { data: meta } = await apiClient.get<SessionMeta>(`/sessions/${r.sessionId}/`, { timeout: SESSION_REQUEST_TIMEOUT_MS });
+      if (token !== generation) return;
+      get().initialize(r.userId, meta, r.context);
+      if (!get().verified) return;
+      const latest = get().recovery;
+      const question = meta.question_states?.find(q => q.question_index === conflict.question_index);
+      if (!latest || !question || question.max_attempt_number < conflict.attempt_number || question.attempt_count < 1) {
+        set({ status: "unsupported", message: "Server state does not confirm the conflict receipt. Pending answers are retained." });
+        return;
+      }
+      const current = latest.index === conflict.question_index;
+      const practice = !["CLASSWORK", "HOMEWORK"].includes(meta.kind);
+      persist({ ...latest,
+        // This is an explicit discard of the differing local payload, not an acknowledgment.
+        pending: latest.pending.filter(a => identityKey(a) !== identityKey(conflict)),
+        feedback: current ? { isCorrect: conflict.is_correct, wasSkip: conflict.is_skip, accepted: true } : latest.feedback,
+        feedbackUntil: current && practice ? Date.now() + 600 : latest.feedbackUntil,
+        input: current ? "" : latest.input,
+        retried: current && !practice ? latest.retried || question.attempt_count >= 2 : latest.retried,
+      });
+      retryCount = 0;
+      set({ conflict: null, status: get().recovery?.pending.length ? "pending" : "accepted", message: "Local conflicting answer explicitly discarded. Showing the saved server outcome." });
+    } catch (error) { if (token === generation) failure(error); }
   },
   excludeRejected: () => {
     const r = get().recovery;

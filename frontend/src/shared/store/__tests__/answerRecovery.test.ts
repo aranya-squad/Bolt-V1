@@ -164,6 +164,44 @@ describe("answer recovery API/storage boundary", () => {
     post.mockRejectedValueOnce(fail(409, { code: "identity_conflict", detail: "Identity conflict." }));
     expect(await store().flush()).toBe(false); expect(store().recovery?.pending).toEqual([valid]); expect(store().retryAt).toBeNull();
   });
+  it("a transient save error can retry through metadata reconciliation and drain normally", async () => {
+    const meta = setup(); const item = store().enqueue(2, false)!;
+    const post = vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(503)).mockResolvedValueOnce({ data: { contract_version: 2, verdicts: [receipt(item)] } });
+    expect(await store().flush()).toBe(false);
+    store().initialize(user.id, meta, context); // External refresh preserves the actionable error.
+    expect(store().status).toBe("error");
+    expect(await store().flush()).toBe(true); // Explicit retry enters saving before initialize.
+    expect(post).toHaveBeenCalledTimes(2); expect(store().status).toBe("accepted");
+    expect(store().recovery?.pending).toEqual([]);
+  });
+  it("validated identity conflict retains differing payload until explicit server choice; manifest/neighbors survive", async () => {
+    const meta = setup(); const local = store().enqueue(2, false)!;
+    store().advance(); const neighbor = store().enqueue(4, false)!;
+    const actual = { ...receipt(local), submitted_answer: 1, is_correct: false, elapsed_ms: 500 };
+    const post = vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(409, { code: "identity_conflict", receipt: actual }));
+    expect(await store().finish()).toBeNull();
+    expect(store().recovery?.pending).toEqual([local, neighbor]); expect(store().conflict).toEqual(actual);
+    expect(await store().flush()).toBe(false); expect(post).toHaveBeenCalledTimes(1);
+    meta.question_states![0] = { question_index: 0, max_attempt_number: 1, attempt_count: 1, terminal: false, latest_receipt: actual };
+    await store().useServerAnswer();
+    expect(store().recovery?.pending).toEqual([neighbor]); expect(store().conflict).toBeNull();
+    expect(store().recovery?.manifest).toEqual([{ question_index: 0, attempt_number: 1 }, { question_index: 1, attempt_number: 1 }]);
+    expect(store().recovery?.issued[0]).toBe(1);
+    post.mockResolvedValueOnce({ data: { contract_version: 2, verdicts: [receipt(neighbor)] } }).mockResolvedValueOnce({ data: {
+      contract_version: 2, id: "conflict-result", session_id: meta.session_id, created_at: new Date().toISOString(), score_correct: 1, score_total: 2, accuracy_pct: 50, time_taken_sec: 10, xp_earned: 1,
+    } });
+    expect(await store().finish()).toMatchObject({ id: "conflict-result" });
+    expect(post.mock.calls[1][1]).toEqual({ contract_version: 2, attempts: [neighbor] });
+  });
+  it.each(["version", "identity", "accepted"])("invalid conflict %s never enables discard or drains the queued identity", async field => {
+    setup(); const local = store().enqueue(2, false)!;
+    const actual = { ...receipt(local), submitted_answer: 1 };
+    const invalid = field === "version" ? { ...actual, contract_version: 1 } : field === "identity" ? { ...actual, attempt_number: 2 } : { ...actual, accepted: false };
+    vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(409, { code: "identity_conflict", receipt: invalid }));
+    expect(await store().flush()).toBe(false); await store().useServerAnswer();
+    expect(store().conflict).toBeNull(); expect(store().status).toBe("unsupported");
+    expect(store().recovery?.pending).toEqual([local]);
+  });
   it("UI-05: honors 429 Retry-After and bounds 5xx retry; 401/404 remain explicit", async () => {
     setup(); store().enqueue(2, false);
     const post = vi.spyOn(apiClient, "post").mockRejectedValueOnce(fail(429, {}, "12"));

@@ -65,6 +65,25 @@ describe("observable recovery in existing gameplay pages", () => {
     expect(screen.getByText(/Q 2 \/ 2/)).toBeInTheDocument();
     expect(post).toHaveBeenCalledTimes(1); // StrictMode did not create a second write/start.
   });
+  it("UI-05: classwork displays a validated conflicting server answer and adopts it only after explicit choice", async () => {
+    const m = meta("CLASSWORK"); useSessionStore.getState().initialize(USER.id, m, "learn:l1:");
+    vi.spyOn(apiClient, "get").mockResolvedValue({ data: m });
+    const actual = accepted({ question_index: 0, attempt_number: 1, answer: 2, elapsed_ms: 500, is_skip: false });
+    const post = vi.spyOn(apiClient, "post").mockRejectedValue(new AxiosError("conflict", "ERR_BAD_RESPONSE", undefined, undefined, {
+      status: 409, statusText: "conflict", data: { code: "identity_conflict", receipt: actual }, headers: new AxiosHeaders(), config: { headers: new AxiosHeaders() },
+    }));
+    page(true); await tick(); await tick(250);
+    fireEvent.click(screen.getByRole("button", { name: "Skip question" })); await tick();
+    expect(screen.getByRole("status")).toHaveTextContent("Server saved Q1, attempt 1: answer 2, correct, 500ms");
+    expect(useSessionStore.getState().recovery!.pending).toHaveLength(1);
+    expect(screen.queryByText("CORRECT!")).not.toBeInTheDocument();
+    m.question_states![0] = { question_index: 0, max_attempt_number: 1, attempt_count: 1, terminal: true, latest_receipt: actual };
+    fireEvent.click(screen.getByRole("button", { name: "Use saved server answer" })); await tick();
+    expect(useSessionStore.getState().recovery!.pending).toHaveLength(0);
+    expect(screen.getByText("CORRECT!")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "NEXT" })); expect(screen.getByText(/Q 2 \/ 2/)).toBeInTheDocument();
+    expect(post).toHaveBeenCalledTimes(1);
+  });
   it("UI-02: practice keeps immediate wrong feedback and replay-safe wrong/correct buffer while offline", async () => {
     const m = meta(); vi.spyOn(apiClient, "get").mockResolvedValue({ data: m });
     vi.spyOn(apiClient, "post").mockRejectedValue(unavailable());

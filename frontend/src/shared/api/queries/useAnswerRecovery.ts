@@ -53,7 +53,7 @@ export function useAnswerRecovery(meta: SessionMeta | undefined, context: string
     if (expired && recovery && !recovery.manifest && status !== "unsupported" && status !== "suspended") void complete();
   }, [expired, recovery, status, complete]);
   const timeLeft = recovery?.deadline == null ? null : Math.max(0, Math.ceil((recovery.deadline - now) / 1000));
-  const blocked = !store.verified || !recovery || !token || hydrating || meta?.state !== "active" || ["unsupported", "suspended"].includes(status) || !!recovery.manifest || expired || recovery.pending.length >= 200 || recovery.rejected.length > 0;
+  const blocked = !store.verified || !recovery || !token || hydrating || meta?.state !== "active" || ["unsupported", "suspended"].includes(status) || !!recovery.manifest || expired || recovery.pending.length >= 200 || recovery.rejected.length > 0 || !!store.conflict;
   const message = recovery && recovery.pending.length >= 200
     ? "Recovery capacity reached (200 pending answers). Save pending work before continuing."
     : store.message;

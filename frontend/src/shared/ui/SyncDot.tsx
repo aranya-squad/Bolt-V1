@@ -1,3 +1,5 @@
+import type { AcceptedReceipt } from "@/shared/types";
+
 // Bolt Abacus Design System — SyncDot
 type SyncState = "idle" | "sending" | "queued" | "offline" | "error" | "unsupported" | "suspended";
 
@@ -9,6 +11,8 @@ interface SyncDotProps {
   onRetry?: () => void;
   onExclude?: () => void;
   onFinish?: () => void;
+  conflict?: AcceptedReceipt | null;
+  onUseServerAnswer?: () => void;
 }
 
 const STATES: Record<SyncState, { color: string; label: string; pulse: boolean }> = {
@@ -21,7 +25,7 @@ const STATES: Record<SyncState, { color: string; label: string; pulse: boolean }
   suspended: { color: "var(--err)", label: "Sign in to recover", pulse: false },
 };
 
-export function SyncDot({ state = "idle", pending = 0, message, storageWarning, onRetry, onExclude, onFinish }: SyncDotProps) {
+export function SyncDot({ state = "idle", pending = 0, message, storageWarning, onRetry, onExclude, onFinish, conflict, onUseServerAnswer }: SyncDotProps) {
   const s = STATES[state];
   return (
     <div role="status" aria-live="polite" style={{ maxWidth: 480 }}>
@@ -58,6 +62,10 @@ export function SyncDot({ state = "idle", pending = 0, message, storageWarning, 
     </div>
     {message && <p>{message}</p>}
     {storageWarning && <p>{storageWarning}</p>}
+    {conflict && <p>
+      Server saved Q{conflict.question_index + 1}, attempt {conflict.attempt_number}: {conflict.is_skip ? "skipped" : `answer ${conflict.submitted_answer}, ${conflict.is_correct ? "correct" : "wrong"}`}, {conflict.elapsed_ms}ms.
+    </p>}
+    {onUseServerAnswer && <button type="button" onClick={onUseServerAnswer}>Use saved server answer</button>}
     {onRetry && <button type="button" onClick={onRetry}>Retry saving</button>}
     {onExclude && <button type="button" onClick={onExclude}>Exclude rejected answers</button>}
     {onFinish && <button type="button" onClick={onFinish}>Retry finish</button>}

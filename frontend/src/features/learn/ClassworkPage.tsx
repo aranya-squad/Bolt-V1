@@ -185,6 +185,8 @@ export default function ClassworkPage() {
         pending={saved?.pending.length} message={recovery.message}
         storageWarning={recovery.storage !== "available" ? "Reload recovery is unavailable or damaged. Answers are held in memory only in this tab." : undefined}
         onRetry={recovery.status === "error" ? () => { void recovery.retry(); } : undefined}
+        conflict={recovery.conflict}
+        onUseServerAnswer={recovery.conflict && recovery.verified && recovery.status !== "saving" ? () => { void recovery.useServerAnswer(); } : undefined}
         onExclude={saved?.rejected.length ? recovery.excludeRejected : undefined}
         onFinish={saved?.manifest && recovery.status !== "saving" ? () => { void recovery.complete(); } : undefined} />
       {/* Timer bar */}
