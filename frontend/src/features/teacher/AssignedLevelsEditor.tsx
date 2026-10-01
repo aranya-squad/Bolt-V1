@@ -79,7 +79,7 @@ export function AssignedLevelsEditor({ batch, batchUnavailable }: { batch: Batch
       <fieldset aria-label="Assigned levels" style={{ padding: 0, margin: 0, border: 0 }}>
         <legend className="t-h2" style={{ color: "var(--fg-bone)", marginBottom: "var(--s-sm)" }}>Assigned levels</legend>
         <p className="t-body-sm" style={{ color: "var(--fg-muted)" }}>Choose the levels shown in this batch&apos;s completion reports.</p>
-        {unavailable && <p role="status" style={{ color: "var(--fg-muted)" }}>Assigned-level editing is unavailable with the current server version. Refresh after the server is updated.</p>}
+        {unavailable && <p role="status" style={{ color: "var(--fg-muted)" }}>Assigned-level editing is unavailable with the current server version. {form.incompatible ? "Reload this page after the server is updated." : "Refresh after the server is updated."}</p>}
         {!unavailable && catalogue.isPending && <p role="status">Loading levels…</p>}
         {!unavailable && catalogue.isError && <p role="alert" style={{ color: "var(--err)" }}>Failed to load levels. Retry before saving.</p>}
         {!unavailable && missingSaved && <p role="alert" style={{ color: "var(--err)" }}>A saved level is missing from the catalogue. Refresh levels before saving.</p>}

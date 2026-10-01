@@ -115,6 +115,7 @@ describe("assigned level editor in existing BatchDetail (mocked HTTP)", () => {
   it("missing backend capability disables saving and never infers []", async () => {
     const test = setup(batch);
     await screen.findByText(/Assigned-level editing is unavailable/);
+    expect(screen.getByRole("status")).toHaveTextContent("Refresh after the server is updated.");
     expect(saveButton()).toBeDisabled(); expect(screen.queryByRole("checkbox")).not.toBeInTheDocument();
     expect(test.patch).not.toHaveBeenCalled();
   });
@@ -124,6 +125,7 @@ describe("assigned level editor in existing BatchDetail (mocked HTTP)", () => {
     test.patch.mockResolvedValueOnce({ data: batch });
     fireEvent.click(checkbox(3)); fireEvent.click(saveButton());
     await screen.findByText(/Assigned-level editing is unavailable/);
+    expect(screen.getByRole("status")).toHaveTextContent("Reload this page after the server is updated.");
     expect(screen.queryByText("Assigned levels saved.")).not.toBeInTheDocument();
     expect(saveButton()).toBeDisabled();
   });
