@@ -20,7 +20,7 @@ The highest unlocked level and earliest supported unlocked lesson use existing p
 
 The first successfully assigned mission pins a valid profile timezone, falling back to UTC. Server local midnight controls daily reset, including 23/25-hour DST dates. Later timezone changes do not grant another mission. Missing a day causes no XP loss, erased history or backfill. Started older missions remain resumable; the Hub exposes the latest earlier unfinished mission.
 
-A mission binds one existing ZEN/test-mode session, five questions, no timer/skip/retry/curriculum rewards. Duplicate starts return the same session. Finalization validates five distinct persisted answers and records result, existing XP event and mission completion atomically. Lost responses, reloads and pending-answer recovery use existing durable session handling. Unfinished mission sessions are excluded from stale auto-submission.
+A mission binds one existing ZEN/test-mode session, five questions, no timer/skip/retry/curriculum rewards. Duplicate starts return the same session. Finalization validates five distinct persisted answers and records result, existing XP event and mission completion atomically. Lost responses, reloads and pending-answer recovery use existing durable session handling. Unfinished mission sessions are excluded from stale automatic abandonment.
 
 NEEDS are implemented. WANTS (themes, adaptive choice, history screens, reminders, reports and bonus rewards) remain deferred. Hero cosmetics and curriculum changes are excluded. Details and AC-01–AC-10 are in the frozen scope; task ownership and votes are in the plan.
 
