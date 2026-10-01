@@ -1,4 +1,4 @@
-from django.db.models import Count
+from django.db.models import Avg, Count, Q
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
@@ -7,7 +7,7 @@ from rest_framework.throttling import ScopedRateThrottle
 from rest_framework.views import APIView
 
 from apps.courses.models import Level
-from apps.progress.models import LessonCompletion
+from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
 from apps.users.permissions import IsTeacher
 
 from .models import Class, Enrollment
@@ -26,7 +26,13 @@ class ClassListCreateView(APIView):
     permission_classes = [IsAuthenticated, IsTeacher]
 
     def get(self, request):
-        qs = Class.objects.filter(teacher=request.user).prefetch_related("enrollments")
+        qs = (
+            Class.objects.using("default")
+            .filter(teacher=request.user)
+            .annotate(
+                active_student_count=Count("enrollments", filter=Q(enrollments__is_active=True))
+            )
+        )
         return Response(ClassSerializer(qs, many=True).data)
 
     def post(self, request):
@@ -78,13 +84,38 @@ class RosterView(APIView):
 
     def get(self, request, pk):
         try:
-            cls = Class.objects.get(pk=pk, teacher=request.user)
+            cls = Class.objects.using("default").get(pk=pk, teacher=request.user)
         except Class.DoesNotExist:
             return Response({"detail": "Not found."}, status=status.HTTP_404_NOT_FOUND)
-        enrollments = cls.enrollments.filter(is_active=True).select_related(
-            "student", "student__profile"
+        enrollments = list(
+            cls.enrollments.using("default")
+            .filter(is_active=True)
+            .select_related("student", "student__profile")
         )
-        return Response(RosterStudentSerializer(enrollments, many=True).data)
+        student_ids = [enrollment.student_id for enrollment in enrollments]
+        # Keep the two aggregates separate: joining unrelated completion/history
+        # tables would multiply both counts and accuracy samples.
+        level_counts = {
+            row["user_id"]: row["count"]
+            for row in LevelCompletion.objects.using("default")
+            .filter(user_id__in=student_ids, kind="CLASSWORK")
+            .values("user_id")
+            .annotate(count=Count("id"))
+        }
+        accuracy = {
+            row["user_id"]: row["average"]
+            for row in ProgressRecord.objects.using("default")
+            .filter(user_id__in=student_ids)
+            .values("user_id")
+            .annotate(average=Avg("accuracy_pct"))
+        }
+        return Response(
+            RosterStudentSerializer(
+                enrollments,
+                many=True,
+                context={"level_counts": level_counts, "accuracy": accuracy},
+            ).data
+        )
 
 
 class JoinClassView(APIView):
@@ -124,57 +155,73 @@ class TeacherLevelDashboardView(APIView):
     permission_classes = [IsAuthenticated, IsTeacher]
 
     def get(self, request, level_id):
-        level = get_object_or_404(Level, pk=level_id)
-        lessons = list(level.lessons.order_by("order"))
+        level = get_object_or_404(Level.objects.using("default"), pk=level_id)
+        lessons = list(level.lessons.using("default").order_by("order"))
 
         # All active classes taught by this teacher with this level assigned.
-        classes = (
-            Class.objects.filter(
+        classes = list(
+            Class.objects.using("default")
+            .filter(
                 teacher=request.user,
                 assigned_levels=level,
                 is_active=True,
             )
-            .prefetch_related("enrollments")
+            .annotate(
+                active_student_count=Count(
+                    "enrollments",
+                    filter=Q(enrollments__is_active=True),
+                    distinct=True,
+                )
+            )
             .order_by("name")
         )
 
+        completion_counts = {}
+        # A shared student's completion belongs once to each active class. Group
+        # across all classes in one primary read instead of scanning history for
+        # each class; inactive enrollment cannot contribute to the numerator.
+        rows = (
+            LessonCompletion.objects.using("default")
+            .filter(
+                user__enrollments__class_room_id__in=[cls.id for cls in classes],
+                user__enrollments__is_active=True,
+                lesson_id__in=[lesson.id for lesson in lessons],
+            )
+            .values("user__enrollments__class_room_id", "lesson_id", "kind")
+            .annotate(count=Count("user_id", distinct=True))
+        )
+        for row in rows:
+            key = (row["user__enrollments__class_room_id"], row["lesson_id"], row["kind"])
+            completion_counts[key] = row["count"]
+
         classes_data = []
         for cls in classes:
-            student_ids = list(cls.enrollments.values_list("student_id", flat=True))
-            total = len(student_ids)
-
-            # Count completions per (lesson, kind) for enrolled students.
-            completion_counts: dict[str, dict[str, int]] = {}
-            if student_ids:
-                rows = (
-                    LessonCompletion.objects.filter(
-                        user_id__in=student_ids,
-                        lesson__in=lessons,
-                    )
-                    .values("lesson_id", "kind")
-                    .annotate(n=Count("id"))
-                )
-                for row in rows:
-                    lid = str(row["lesson_id"])
-                    completion_counts.setdefault(lid, {})[row["kind"]] = row["n"]
-
             lesson_stats = [
                 {
                     "lesson_id": str(lesson.id),
-                    "classwork_completed": completion_counts.get(str(lesson.id), {}).get("CLASSWORK", 0),
-                    "homework_completed": completion_counts.get(str(lesson.id), {}).get("HOMEWORK", 0),
+                    "classwork_completed": completion_counts.get(
+                        (cls.id, lesson.id, "CLASSWORK"), 0
+                    ),
+                    "homework_completed": completion_counts.get((cls.id, lesson.id, "HOMEWORK"), 0),
                 }
                 for lesson in lessons
             ]
-            classes_data.append({
-                "id": str(cls.id),
-                "name": cls.name,
-                "total_students": total,
-                "lessons": lesson_stats,
-            })
+            classes_data.append(
+                {
+                    "id": str(cls.id),
+                    "name": cls.name,
+                    "total_students": cls.active_student_count,
+                    "lessons": lesson_stats,
+                }
+            )
 
-        return Response({
-            "level": {"id": str(level.id), "name": level.name, "order": level.order},
-            "lessons": [{"id": str(lesson.id), "name": lesson.name, "order": lesson.order} for lesson in lessons],
-            "classes": classes_data,
-        })
+        return Response(
+            {
+                "level": {"id": str(level.id), "name": level.name, "order": level.order},
+                "lessons": [
+                    {"id": str(lesson.id), "name": lesson.name, "order": lesson.order}
+                    for lesson in lessons
+                ],
+                "classes": classes_data,
+            }
+        )

@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: feat/teacher-dashboard
 base_commit: ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0
-current_commit: ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0
+current_commit: 82fd04592da3abec8ff933923252825ef07d59b3
 last_checkpoint: 2026-10-01
 owner: coordinator
 planning_gate: bolt-work-three-role-v1
@@ -11,7 +11,7 @@ scope_sha256: 19697b1a3061d588b8b0ed2ebd78b3c9d375830e68469ef5951f183974d51ff8
 pm_signoff: APPROVED
 cto_signoff: APPROVED
 qa_signoff: APPROVED
-implementation_started: false
+implementation_started: true
 ---
 
 # Teacher dashboard and roster correctness — F1
@@ -34,15 +34,16 @@ F2 will have its own stacked branch/tracker after F1 integration.
 - Rechecked remote refs; no existing dashboard/assignment branch or newer setup.
 - Setup closed at ec74cf3 under owner G acceptance; historical evidence retained.
 - Frozen categorized PM scope and CTO/QA signoffs copied with matching digest.
-- Source evidence/runtime prior lineage preserved; no feature code started.
+- Source evidence/runtime prior lineage preserved; baseline measured before feature code.
+- Baseline run36861089263 at82fd045: all24fixtures/144requests complete; list3–22, roster cold27–752/warm7–152, matrix6–44 data queries. Detailed values/timings/plans/limits: `docs/verification/teacher-reporting-2026-10-01.md`.
+- Three-role signoff plus completed measurement released source writers for F1.
 - Local Python3.12/Django5.0.6 dependencies and Node20.19.5/frontend lockfile
   dependencies provisioned; baseline TypeScript and 73 Vitest tests pass.
-  PostgreSQL16/Redis7 provisioning is underway, not yet available.
+  Native PostgreSQL16.15/Redis7.4.11 ran in isolated CI; local root cannot run PostgreSQL and no identity shim was used.
 
 ## In Progress
 
-Record measured PostgreSQL baseline before feature edits. Then allocate exclusive
-backend/frontend writers on isolated worktrees and integrate named task commits.
+Backend/frontend writers implement F1 in isolated worktrees with exclusive file ownership; coordinator integrates and runs genuine replica/built-SPA API CI checks.
 
 ## Verification / acceptance
 
@@ -72,6 +73,6 @@ image/health/deletion/auth repairs are excluded. F2 is separately tracked.
 
 ## Next Exact Action
 
-Finish isolated PostgreSQL16/Redis7 setup, capture F1 baseline queries/values,
-record implementation-start checkpoint and begin approved backend/frontend tasks.
+Integrate F1 backend/frontend task commits, run candidate SQL/replica/browser CI,
+record named review and create F2 stacked branch after F1 checkpoint.
 Do not mark READY until required implemented/tested outcomes and named review pass.
