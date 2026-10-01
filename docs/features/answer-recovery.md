@@ -1,6 +1,6 @@
 # Answer recovery: approved plan and delivery record
 
-Status: approved by the task owner on 01 October 2026. AR-01/02 foundation is published at b03d167. AR-03 wire contract is agreed for implementation; coding assignments follow this commit. Main and feat-Sagar remain frozen. No AWS deployment is authorized.
+Status: approved by the task owner on 01 October 2026. AR-01/02 foundation is published at b03d167. AR-04/05/06 are integrated; AR-07 real API/browser checks and AR-08 independent review are in progress. Main and feat-Sagar remain frozen. No AWS deployment is authorized.
 
 Second-pass revision: 01 October 2026, Asia/Kolkata. The task owner approved this contract, branch policy, limits, guidelines and bounded agent delegation, and requested a small implementation suited to a 3–4 developer indie team.
 
@@ -236,7 +236,7 @@ Implement these exact field names in addition to the frozen behavioral contract 
 | Surface | Fields / behavior |
 |---|---|
 | Session GET/start metadata | `attempt_contract_version: 2`, `state: active/submitted/abandoned`, `started_at`, `server_now`, nullable `lesson_id`/`level_id`, existing effective `time_limit_sec`/`flash_speed_ms`/`is_test_mode`, `question_states` |
-| Each question state | `question_index`, `max_attempt_number` (0 when none), `attempt_count`, `terminal`, nullable `latest_receipt`; bounded by question count, not lifetime retries |
+| Each question state | `question_index`, `max_attempt_number` (0 when none), `attempt_count`, `terminal`, nullable `latest_receipt`; bounded by question count, not lifetime retries; latest follows accepted chronology and may be lower than maximum identity |
 | Accepted receipt | `contract_version: 2`, `question_index`, `attempt_number`, `accepted: true`, canonical `submitted_answer`, original `elapsed_ms`, `is_skip`, `is_correct`, `xp_delta: 0` |
 | Single/bulk | Single body adds version/identity; bulk envelope adds version and keeps `attempts`. Bulk returns `{contract_version: 2, verdicts: receipts}`. Each receipt includes its version; HTTP success alone is not acceptance. |
 | Finalize | `{contract_version: 2, expected_attempts: identities}`; result retains ProgressRecord keys and adds `contract_version: 2`. Validate required identities even for an existing result. |
@@ -249,3 +249,23 @@ The API worker owns backend implementation/tests only; frontend worker owns runt
 Local implementation resources: PostgreSQL 16 at loopback port 5544, Redis 7 at loopback port 6385. API worker uses `bolt_recovery_api` and Redis DB 4; integration uses `bolt_recovery_integration` and Redis DB 5; reviewer uses `bolt_recovery_review` and Redis DB 6. API/frontend integration ports are 8011/4181. Each DB test run creates its own prefixed test DB. Private connection/environment configuration is outside Git. Use test settings explicitly for unit tests; the built-SPA integration runner uses real hashing/JWT/throttles and synthetic users.
 
 Gate status: G0 approved, G1 passed locally, G2 contract/schema committed with disjoint ownership. Historical-null fixtures must verify the safe capability fallback; no production data scan/migration is authorized. G3–G5 are pending. GitHub draft-PR creation returned API Forbidden; native foundation push succeeded, and GitHub CI remains unverified.
+
+### Integration setup (local only)
+
+1. Use isolated local PostgreSQL 16 and Redis 7 instances; create `bolt_recovery_integration`. Configure private `DJANGO_SECRET_KEY`, `DATABASE_URL` (loopback / that database), `REDIS_URL` (loopback / isolated DB or namespace). Never point this runner at a shared/live DB. Match Python 3.12 and Node 20 from CI where available.
+2. Set `PYTHONPATH` to the checkout's `backend` and `frontend/e2e/recovery` directories and `DJANGO_SETTINGS_MODULE=api_settings`. From the repository root run `python frontend/e2e/recovery/fixtures.py`; it applies local migrations/seeds four synthetic users with PIN 2468, requires the normal password hasher, and prints fixture IDs/call-signs in its final JSON line. Save that line to a private file and set `RECOVERY_FIXTURE_FILE` to its absolute path. Each seed run uses new users; it never deletes result history or flushes shared cache.
+3. From `backend/`, start `python manage.py runserver 127.0.0.1:8011 --noreload` with those settings. Confirm `/api/v1/health/` reports DB/Redis healthy.
+4. From `frontend/`, run `npm ci` and `npm run e2e:recovery`. Supply `RECOVERY_PYTHON` if the Django environment's Python is not on PATH; inherited PYTHONPATH/DB/cache/private key are used by synthetic-only database assertions. Install Playwright's Chromium through its normal verified installer, or set `RECOVERY_CHROMIUM_PATH` to an available trusted Chromium executable.
+5. The runner builds the SPA with `VITE_API_BASE_URL` pinned to `RECOVERY_API_ORIGIN` (default `http://127.0.0.1:8011`) and starts preview at `RECOVERY_PREVIEW_ORIGIN` (default `http://127.0.0.1:4181`). Both origins must be HTTP loopback with no credentials/path/query. The API settings permit only that explicit local preview; production settings/CORS remain unchanged. Stop only the local services started for this run.
+
+The targeted runner does not run or weaken the older mock-only smoke suite. Fault tests forward accepted requests to the real API before dropping responses and use direct synthetic DB counts to verify duplicate protection; separate tests exercise real PIN/JWT and configured user throttles. Local traces/results are kept under ignored node_modules cache; they are not release artifacts or real-user exports.
+
+### Backend integration checkpoint
+
+Backend task commits `b4ac308` and `637b683` were reviewed and cherry-picked as `73b41f0` and `6e135e9`. Integrated Ruff and all 249 backend tests passed on PostgreSQL 16.15 / Redis 7; 104 added cases cover recovery contracts/transactions/data preservation. The two misleading legacy replay tests now describe their actual limitations without changing assertions. No migrations or dependencies were added.
+
+Foundation checks also passed using Node 20.20.2 / npm 10.8.2 in a local Docker runtime (lint, types, 25 tests, build), superseding the earlier Node-20-outstanding checkpoint. GitHub CI remains unverified; local Docker is test tooling, not added deployment infrastructure.
+
+### Frontend integration checkpoint
+
+UI task `7f71de3` was cherry-picked as `ade2f8c`. The worker reports ESLint/TypeScript/Vite build and 53 Vitest tests passing (28 added). The integrated Node-20/browser reruns are in progress, not yet claimed passed. Shared recovery uses a small pure module, the existing Zustand store and a focused hook; gameplay pages shed duplicated save logic. No dependency, database model or new infrastructure service was introduced. UI and server agree that latest accepted receipt may have an identity below maximum and newly finalized reports may contain unanswered questions.

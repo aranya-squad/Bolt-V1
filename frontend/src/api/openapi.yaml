@@ -134,6 +134,26 @@ components:
             elapsed_ms: { type: integer, minimum: 0, maximum: 2147483647 }
             is_skip: { type: boolean }
 
+    LegacyAttemptInput:
+      type: object
+      description: Absent-version compatibility payload; legacy identities are server allocated.
+      required: [question_index, answer, elapsed_ms]
+      not: { required: [contract_version] }
+      properties:
+        question_index: { type: integer }
+        answer: { type: integer }
+        elapsed_ms: { type: integer }
+        attempt_number: { type: integer, description: "Old practice may send zero-based counters; these are not v2 identities." }
+        is_skip: { type: boolean }
+
+    SingleAttemptRequestV2:
+      allOf:
+        - { $ref: "#/components/schemas/AttemptInputV2" }
+        - type: object
+          required: [contract_version]
+          properties:
+            contract_version: { type: integer, enum: [2] }
+
     AttemptReceipt:
       allOf:
         - $ref: "#/components/schemas/AttemptVerdict"
@@ -208,7 +228,7 @@ components:
 
     QuestionVerdict:
       type: string
-      enum: [correct, wrong, fixed, skipped]
+      enum: [correct, wrong, fixed, skipped, unanswered]
 
     SessionReport:
       type: object
@@ -470,21 +490,15 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [question_index, answer, elapsed_ms]
-              properties:
-                question_index: { type: integer }
-                answer:         { type: integer }
-                elapsed_ms:     { type: integer }
-                contract_version: { type: integer, enum: [2] }
-                attempt_number: { type: integer, minimum: 1, maximum: 32767 }
-                is_skip: { type: boolean }
+              oneOf:
+                - { $ref: "#/components/schemas/LegacyAttemptInput" }
+                - { $ref: "#/components/schemas/SingleAttemptRequestV2" }
       responses:
         200:
           content:
             application/json:
               schema:
-                oneOf:
+                anyOf:
                   - { $ref: "#/components/schemas/AttemptVerdict" }
                   - { $ref: "#/components/schemas/AttemptReceipt" }
         400:
@@ -505,14 +519,22 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              required: [attempts]
-              properties:
-                contract_version: { type: integer, enum: [2] }
-                attempts:
-                  type: array
-                  maxItems: 100
-                  items: { $ref: "#/components/schemas/AttemptInputV2" }
+              oneOf:
+                - type: object
+                  required: [contract_version, attempts]
+                  properties:
+                    contract_version: { type: integer, enum: [2] }
+                    attempts:
+                      type: array
+                      maxItems: 100
+                      items: { $ref: "#/components/schemas/AttemptInputV2" }
+                - type: object
+                  required: [attempts]
+                  not: { required: [contract_version] }
+                  properties:
+                    attempts:
+                      type: array
+                      items: { $ref: "#/components/schemas/LegacyAttemptInput" }
       responses:
         200:
           content:
@@ -523,7 +545,10 @@ paths:
                   contract_version: { type: integer, enum: [2] }
                   verdicts:
                     type: array
-                    items: { $ref: "#/components/schemas/AttemptReceipt" }
+                    items:
+                      anyOf:
+                        - { $ref: "#/components/schemas/AttemptVerdict" }
+                        - { $ref: "#/components/schemas/AttemptReceipt" }
         400:
           description: Invalid batch; v2 creates zero new rows
         409:
@@ -541,15 +566,19 @@ paths:
         content:
           application/json:
             schema:
-              type: object
-              properties:
-                contract_version: { type: integer, enum: [2] }
-                expected_attempts:
-                  type: array
-                  maxItems: 200
-                  uniqueItems: true
-                  description: Required for v2; retain finish-time unresolved identities until submit is acknowledged.
-                  items: { $ref: "#/components/schemas/AttemptIdentity" }
+              oneOf:
+                - type: object
+                  required: [contract_version, expected_attempts]
+                  properties:
+                    contract_version: { type: integer, enum: [2] }
+                    expected_attempts:
+                      type: array
+                      maxItems: 200
+                      uniqueItems: true
+                      description: Retain finish-time unresolved identities until submit is acknowledged.
+                      items: { $ref: "#/components/schemas/AttemptIdentity" }
+                - type: object
+                  not: { required: [contract_version] }
       responses:
         200:
           content:
