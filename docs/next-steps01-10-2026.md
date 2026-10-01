@@ -38,6 +38,7 @@ For each PR, include finding/task IDs, a short before/after reproduction, affect
 
 - **Vet:** compare `Bolt-V1/frontend` with the separate frontend checkout; confirm actual production/preview URLs, deployed commit, image digest, API origin and GitHub/Vercel integrations. The observed file-count difference does not decide which repo is authoritative.
 - **Recommendation:** choose one frontend source for this release and record where CI/build/deployment reads it. Keep the other unchanged until ownership is resolved; any necessary feature reconciliation should be an explicit PR, not wholesale directory replacement. Record GitHub Apps/hosting branch triggers, including PR previews.
+- **01 October clarification:** the user chose repository recency as a fallback after supplying the student/teacher hostnames. Use bundled `Bolt-V1/frontend` provisionally for answer recovery; CI builds that directory, but live deployed revision/hosting selection remains unverified. Root `Bolt-V1/vercel.json` has the API proxy plus SPA fallback; standalone config has only SPA fallback. Verify the actual hosting root/config before human rollout; do not generalize the standalone routing issue to both repositories.
 - **Done:** a short source/release map identifies frontend/backend branches, artifact provenance, URLs, build-time API variable and automatic deployment behavior. If access is missing, mark each field unknown and assign an owner; independent fixes can continue.
 
 #### W0-PROD-02 — agree the smallest event and service specification

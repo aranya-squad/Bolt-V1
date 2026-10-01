@@ -191,7 +191,7 @@ Key source anchors: [answer endpoints](../backend/apps/exercises/views.py#L261),
 
 ## 7. Frontend/backend and release contract
 
-`VITE_API_BASE_URL` is build-time configuration. An empty value means `/api/v1` on the SPA host. The checked-in Vercel catch-all rewrite does not establish an API proxy; a separate frontend host needs the correct API origin or an explicitly configured route. Actual deployed values are U.
+`VITE_API_BASE_URL` is build-time configuration. An empty value means `/api/v1` on the SPA host. Correction from source recheck: root `Bolt-V1/vercel.json` explicitly proxies `/api/(.*)` to `https://api.boltabacus.com/api/$1` before its SPA fallback; standalone `Bolt-V1-frontend/vercel.json` has only the SPA fallback. Routing depends on the hosting project’s selected config/root and build-time origin. Actual deployed values/config selection remain U. The user supplied `www.student.boltabacus.com` and `www.teacher.boltabacus.com`; under their recency fallback, bundled `Bolt-V1/frontend` is the provisional implementation source (functional commit `fb4ef13`, June 30, newer than standalone source). This does not prove live deployment ownership; public-host/deployment API access was blocked.
 
 Refresh cookies are HttpOnly, Secure in production and SameSite=Lax. `boltabacus.com` and its API subdomain can be same-site despite different origins; a parent-domain cookie is not automatically required. A `vercel.app` frontend is cross-site to that domain and needs a separately tested design. Credentialed CORS requires explicit allowed origins. Rotating/blacklisted refresh tokens also require multi-tab tests; no race has been reproduced here. Never cache user-specific responses or private answers publicly.
 
