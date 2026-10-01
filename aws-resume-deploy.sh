@@ -4,6 +4,7 @@
 # existing RDS/Redis/EC2/ECR instead of creating them. Safe to re-run.
 # Usage: AWS_PROFILE=bolt ./aws-resume-deploy.sh
 set -euo pipefail
+umask 077
 
 REGION="ap-south-1"
 ACCOUNT_ID="504132672502"
@@ -17,6 +18,17 @@ fi
 
 log() { echo "[$(date '+%H:%M:%S')] $*"; }
 HERE="$(cd "$(dirname "$0")" && pwd)"
+SSH_KEY_FILE="${SSH_KEY_FILE:-$HOME/.ssh/${KEY_NAME}.pem}"
+SSH_KNOWN_HOSTS_FILE="${SSH_KNOWN_HOSTS_FILE:-$HOME/.ssh/known_hosts}"
+SSH_OPTS=(-i "$SSH_KEY_FILE" -o StrictHostKeyChecking=yes -o UserKnownHostsFile="$SSH_KNOWN_HOSTS_FILE" -o BatchMode=yes)
+RELEASE_SHA="$(git -C "$HERE" rev-parse HEAD)"
+IMAGE_TAG="$RELEASE_SHA"
+
+[[ -f "$SSH_KEY_FILE" ]] || { echo "[ERROR] SSH key not found: $SSH_KEY_FILE"; exit 1; }
+[[ -f "$SSH_KNOWN_HOSTS_FILE" ]] || { echo "[ERROR] known_hosts file not found: $SSH_KNOWN_HOSTS_FILE"; exit 1; }
+command -v ssh-keygen >/dev/null || { echo "[ERROR] ssh-keygen not found"; exit 1; }
+command -v git >/dev/null || { echo "[ERROR] git not found"; exit 1; }
+command -v tar >/dev/null || { echo "[ERROR] tar not found"; exit 1; }
 
 # ─── Look up existing infrastructure ─────────────────────────────────────────
 log "Looking up EC2 instance..."
@@ -32,6 +44,19 @@ REDIS_ENDPOINT=$(aws elasticache describe-cache-clusters --region "$REGION" \
   --cache-cluster-id "${APP}-redis" --show-cache-node-info \
   --query 'CacheClusters[0].CacheNodes[0].Endpoint.Address' --output text)
 log "EC2 $INSTANCE_ID @ $EC2_PUBLIC_IP | RDS $RDS_ENDPOINT | Redis $REDIS_ENDPOINT"
+log "Release source: $RELEASE_SHA"
+
+# Fail closed before any live metadata change, image build or registry push.
+# The expected EC2 host key must already be enrolled through a trusted owner path.
+ssh-keygen -F "$EC2_PUBLIC_IP" -f "$SSH_KNOWN_HOSTS_FILE" >/dev/null 2>&1 || {
+  echo "[ERROR] No verified SSH host key for $EC2_PUBLIC_IP in $SSH_KNOWN_HOSTS_FILE"
+  echo "        Enroll and independently verify the host fingerprint before resuming a production release."
+  exit 1
+}
+log "Preflighting verified SSH and existing Django secret..."
+SECRET_KEY=$(ssh "${SSH_OPTS[@]}" "ec2-user@${EC2_PUBLIC_IP}" \
+  'set -euo pipefail; ENV=/home/ec2-user/.env.production; [ -f "$ENV" ] && [ -r "$ENV" ] && [ ! -L "$ENV" ]; line=$(grep -m1 "^DJANGO_SECRET_KEY=" "$ENV"); key=${line#DJANGO_SECRET_KEY=}; [ -n "$key" ]; printf "%s" "$key"')
+[[ -n "$SECRET_KEY" ]] || { echo "[ERROR] Existing DJANGO_SECRET_KEY is empty"; exit 1; }
 
 # Containers reach the instance IAM role (for S3 collectstatic) only with hop limit >= 2
 log "Setting IMDS hop limit to 2 (containers need the instance role for S3)..."
@@ -43,24 +68,21 @@ log "Authenticating Docker to ECR..."
 aws ecr get-login-password --region "$REGION" | \
   docker login --username AWS --password-stdin "${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com"
 
-log "Building Docker image..."
-cd "$HERE/backend"
-docker build -f docker/Dockerfile.prod -t "${APP}-api:latest" .
-docker tag "${APP}-api:latest" "${ECR_URI}:latest"
-log "Pushing to ECR..."
-docker push "${ECR_URI}:latest"
-cd "$HERE"
+log "Building Docker image from tracked Git release ${RELEASE_SHA}..."
+BUILD_CONTEXT="$(mktemp -d)"
+cleanup_build_context() { rm -rf "$BUILD_CONTEXT"; }
+trap cleanup_build_context EXIT
+git -C "$HERE" archive "${RELEASE_SHA}:backend" | tar -x -C "$BUILD_CONTEXT"
+docker build -f "$BUILD_CONTEXT/docker/Dockerfile.prod" -t "${APP}-api:${IMAGE_TAG}" "$BUILD_CONTEXT"
+docker tag "${APP}-api:${IMAGE_TAG}" "${ECR_URI}:${IMAGE_TAG}"
+log "Pushing release-tagged image to ECR..."
+docker push "${ECR_URI}:${IMAGE_TAG}"
+cleanup_build_context
+trap - EXIT
 
 # ─── Generate .env.production ────────────────────────────────────────────────
-# Preserve existing secret key across deploys — regenerating it logs out all users.
-# Read from the live .env.production on EC2; fall back to generating only if absent.
-SECRET_KEY=$(ssh -i ~/.ssh/${KEY_NAME}.pem -o StrictHostKeyChecking=no \
-  ec2-user@${EC2_PUBLIC_IP} \
-  "grep '^DJANGO_SECRET_KEY=' /home/ec2-user/.env.production | cut -d= -f2-" 2>/dev/null || true)
-if [[ -z "$SECRET_KEY" ]]; then
-  SECRET_KEY=$(python3 -c "import secrets; print(secrets.token_hex(50))")
-  log "No existing secret key found — generated a new one."
-fi
+# SECRET_KEY was fetched during the fail-closed preflight above. A resumed release
+# never synthesizes a replacement key when SSH/read/parse verification fails.
 log "Writing backend/.env.production..."
 cat > "$HERE/backend/.env.production" <<EOF
 DJANGO_SECRET_KEY=${SECRET_KEY}
@@ -105,17 +127,20 @@ EMAIL_HOST_USER=apikey
 EMAIL_HOST_PASSWORD=
 
 IMAGE_NAME=${ECR_URI}
-IMAGE_TAG=latest
+IMAGE_TAG=${IMAGE_TAG}
 EOF
+chmod 600 "$HERE/backend/.env.production"
 
 # ─── Deploy to EC2 ───────────────────────────────────────────────────────────
 log "Copying env + compose file + Caddyfile to EC2..."
-scp -i ~/.ssh/${KEY_NAME}.pem -o StrictHostKeyChecking=no \
-  backend/.env.production docker-compose.prod.yml Caddyfile \
-  ec2-user@${EC2_PUBLIC_IP}:/home/ec2-user/
+REMOTE_ENV_TMP="/home/ec2-user/.env.production.upload.$$"
+scp "${SSH_OPTS[@]}" backend/.env.production "ec2-user@${EC2_PUBLIC_IP}:${REMOTE_ENV_TMP}"
+scp "${SSH_OPTS[@]}" docker-compose.prod.yml Caddyfile "ec2-user@${EC2_PUBLIC_IP}:/home/ec2-user/"
+ssh "${SSH_OPTS[@]}" "ec2-user@${EC2_PUBLIC_IP}" \
+  "set -euo pipefail; target=/home/ec2-user/.env.production; tmp='${REMOTE_ENV_TMP}'; [ ! -L \"\$target\" ]; install -m 600 \"\$tmp\" \"\$target\"; rm -f \"\$tmp\""
 
 log "Running remote deploy (swap check, pull, migrate, collectstatic, compose up)..."
-ssh -i ~/.ssh/${KEY_NAME}.pem -o StrictHostKeyChecking=no ec2-user@${EC2_PUBLIC_IP} bash <<REMOTE
+ssh "${SSH_OPTS[@]}" ec2-user@${EC2_PUBLIC_IP} bash <<REMOTE
 set -e
 
 # Ensure swap exists — ephemeral containers during deploy exhaust 910 MB RAM on t-class.
@@ -132,13 +157,13 @@ fi
 
 aws ecr get-login-password --region ${REGION} | \
   docker login --username AWS --password-stdin ${ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
-docker pull ${ECR_URI}:latest
+docker pull ${ECR_URI}:${IMAGE_TAG}
 docker run --rm --env-file /home/ec2-user/.env.production \
   -e DJANGO_SETTINGS_MODULE=config.settings.production \
-  ${ECR_URI}:latest python manage.py migrate --settings config.settings.production
+  ${ECR_URI}:${IMAGE_TAG} python manage.py migrate --settings config.settings.production
 docker run --rm --env-file /home/ec2-user/.env.production \
   -e DJANGO_SETTINGS_MODULE=config.settings.production \
-  ${ECR_URI}:latest python manage.py collectstatic --noinput --settings config.settings.production
+  ${ECR_URI}:${IMAGE_TAG} python manage.py collectstatic --noinput --settings config.settings.production
 # --env-file makes Compose resolve \${IMAGE_NAME}/\${IMAGE_TAG} for image interpolation
 docker compose --env-file /home/ec2-user/.env.production \
   -f /home/ec2-user/docker-compose.prod.yml up -d --wait
@@ -148,7 +173,13 @@ REMOTE
 # Port 8000 is closed externally (G4). Health check goes through Caddy on 443.
 log "Health check..."
 sleep 5
-HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "https://api.boltabacus.com/api/v1/health/" || echo "000")
+if ! HTTP_STATUS=$(curl -sS --max-time 15 -o /dev/null -w "%{http_code}" "https://api.boltabacus.com/api/v1/health/"); then
+  HTTP_STATUS="000"
+fi
+if [[ "$HTTP_STATUS" != "200" ]]; then
+  echo "[ERROR] Deployment health check failed: HTTP $HTTP_STATUS" >&2
+  exit 1
+fi
 
 echo ""
 echo "================================================"
