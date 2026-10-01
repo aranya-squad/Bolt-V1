@@ -80,6 +80,8 @@ Owning status/continuation: `docs/features/ai-context-system-v2.md`.
 
 ## IN PROGRESS
 
+**Workflow [HUMAN/CODE]:** Bolt AI-SDLC V1 is adopted prospectively for feature ideas initiated after the 2026-10-01 adoption checkpoint. It adds `docs/AI_SDLC.md`, `skills/feature-scoper/SKILL.md`, a machine-readable plan and deterministic gate checker. It is not a blocking CI job at adoption and does not reopen current work. The two teacher workstreams below are explicitly grandfathered unless the owner opts them in.
+
 Two teacher workstreams are being scoped before coding: dashboard/roster
 correctness and existing batch level assignment. In this owner's Cloud dev -
 Bolt v1 Project/account Work sessions, PM, Senior Tech Manager/CTO and Head QA
