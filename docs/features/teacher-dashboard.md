@@ -1,8 +1,8 @@
 ---
-status: IN PROGRESS
+status: READY FOR HUMAN REVIEW
 branch: feat/teacher-dashboard
 base_commit: ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0
-current_commit: e7b81dc4dc258f5efa62d256952a38a901729b97
+current_commit: 865248002b95599715261be077620256e8101e8a
 last_checkpoint: 2026-10-01
 owner: coordinator
 planning_gate: bolt-work-three-role-v1
@@ -41,14 +41,21 @@ F2 will have its own stacked branch/tracker after F1 integration.
   dependencies provisioned; baseline TypeScript and 73 Vitest tests pass.
   Native PostgreSQL16.15/Redis7.4.11 ran in isolated CI; local root cannot run PostgreSQL and no identity shim was used.
 
-## In Progress
+## Completion / readiness
 
-F1 source integrated;273backend tests (zero skipped) and94frontend tests pass.
-Measured query budgets1/4/4 hold across all144requests. CTO/QA source findings
-fixed without weakening tests. Real built-SPA/API finalization browser rerun pending
-a test-only correction respecting the existing200ms minimum-answer rule.
-F2 may start from this integrated and checked source; neither feature is READY
-until required browser/integrated acceptance is executed.
+No F1 implementation remains. PM, CTO and Head QA each APPROVED the exact
+reviewed source8652480 with independently inspected runtime evidence; full role
+records: `docs/reviews/teacher-dashboard-final-2026-10-01.md`.
+
+- Named-head Teacher verification36862766356:273backend tests with no skips,
+  all144measurements at1/4/4dataqueries, and two built-SPA/realPBKDF2API browser
+  cases pass. The assignment browser case is explicitly reserved for F2.
+- Normal CI36862766238 passes backend/frontend/build/context. Node20 lint,
+  TypeScript,94Vitest and Vite production build pass, also run by coordinator.
+- Native stale-database alias simulates divergent replica data and proves
+  primary reads; it is not an actual streaming-replication topology test.
+- Scope1.2 remains unchanged. Review routing/lifecycle/schema/mock findings were
+  repaired and affected/full checks rerun. No writer/history policy changed.
 
 ## Verification / acceptance
 
@@ -72,12 +79,15 @@ full comparison main..this branch. No main/feat-Sagar commits/pushes or deploy.
 
 No unresolved product decision in signed F1. Required runtime checks may block
 readiness if provisioning fails; report exact evidence rather than weakening gates.
-Hosted CI/live revision/topology/log/health remain UNKNOWN. Tournament rules,
+Named PR CI is verified above; actual live revision/topology/log/health remain UNKNOWN. Tournament rules,
 historical auth/recovery recreation, enrollment/consent/admin changes and prerelease
 image/health/deletion/auth repairs are excluded. F2 is separately tracked.
 
 ## Next Exact Action
 
-Integrate F1 backend/frontend task commits, run candidate SQL/replica/browser CI,
-record named review and create F2 stacked branch after F1 checkpoint.
-Do not mark READY until required implemented/tested outcomes and named review pass.
+Human-review draft PR#2 and integrate its documented prerequisites before F1.
+Recheck CI against the exact human-selected integration revision. F2 is being
+implemented on its owning stacked branch `feat/batch-level-assignment`; no F1
+setup restart or duplicated recovery/auth work is required. Human release must
+verify deployed frontend/backend revisions, topology/health/logs/backups and
+backend-first capability rollout. No merge/deploy/live action was performed.

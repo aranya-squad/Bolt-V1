@@ -1,8 +1,8 @@
 ---
 last_updated: 2026-10-01
-verified_application_commit: 6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1
-verified_context_branch: chore/ai-context-system-v2
-verified_context_commit: b5c39ead35457948d4513e97cc3ee7b03f8943ff
+verified_application_commit: 865248002b95599715261be077620256e8101e8a
+verified_context_branch: feat/teacher-dashboard
+verified_context_commit: 865248002b95599715261be077620256e8101e8a
 live_environment_verified: never
 status: current-with-live-unknowns
 ---
@@ -78,25 +78,33 @@ limitation is preserved; no independent fresh-session PASS is claimed. No setup
 implementation remains. Hosted CI/integration and live release evidence remain.
 Owning status/continuation: `docs/features/ai-context-system-v2.md`.
 
+### Teacher dashboard / roster — F1
+
+`feat/teacher-dashboard` source8652480 is READY FOR HUMAN REVIEW. Existing screens
+now agree on active enrollment, use grouped primary reads, isolate teacher caches
+and expose Refresh with lesson-ID matching. PM/CTO/QA final acceptance,273native
+backend tests with no skips,94frontend tests and build,144measurements1/4/4 and
+two built-SPA realAPI cases pass. Normal PR CI passes. Owner tracker:
+`docs/features/teacher-dashboard.md`. PR#2 remains draft pending human dependency
+integration; no production capacity/live deployment claim.
+
 ## IN PROGRESS
 
-Two teacher workstreams have the same frozen v1.2 PM/CTO/QA approval:
-dashboard/roster correctness on `feat/teacher-dashboard`, then existing batch
-level assignment on stacked `feat/batch-level-assignment`. F1 code is integrated
-for native database and built-SPA/API verification; F2 coding waits that checkpoint. In this owner's Cloud dev -
-Bolt v1 Project/account Work sessions, PM, Senior Tech Manager/CTO and Head QA
-agents must sign the same finalized scope first (AGENTS / ADR 0004). User direction
-plus those signoffs authorizes routine implementation; real product ambiguity,
-human integration and live-production boundaries remain.
+F2 assigned-level management is being implemented on owning stacked branch
+`feat/batch-level-assignment`, based on checked F1source8652480. Its active tracker
+is `docs/features/batch-level-assignment.md` on that branch; retrieve that branch
+selectively for current implementation state. Same frozen scope1.2/three-role
+planning approval precedes its coding. User direction plus those approvals
+authorizes routine work; human integration and release remain separate.
 
 ## NEXT
 
 1. Human-review context V2; G is DONE by owner acceptance. Exact evidence/continuation are in its tracker.
 2. Human-review/integrate the baseline, workflow foundation, answer recovery and context branches in their documented dependency order.
-3. Verify normal GitHub CI through the appropriate PR/integration path.
+3. Normal F1 PR CI is verified; rerun required checks on the exact human-selected integration revision.
 4. Confirm actual production frontend source/deployed revision and live AWS topology before making production claims or release changes.
 5. Keep tournament timing/fairness/concurrency/load work separate from ordinary learning-session persistence. The historical 100–150 simultaneous-user target requires an approved ruleset and isolated measured load evidence before AWS sizing changes.
-6. Verify F1 teacher reporting, then implement stacked F2 assignment under frozen `docs/scopes/teacher-workflows-v1.2.md` and its three role approvals. Active state is owned by each feature tracker. Historical assessment: `docs/teacher-dashboard-assessment-2026-10-01.md`. Tournament rounds still require rules.
+6. Human-review F1 teacher reporting; finish and verify stacked F2 assignment under frozen `docs/scopes/teacher-workflows-v1.2.md` and its three role approvals. Active state is owned by each feature tracker. Historical assessment: `docs/teacher-dashboard-assessment-2026-10-01.md`. Tournament rounds still require rules.
 
 ## BLOCKED / HUMAN OR LIVE EVIDENCE NEEDED
 

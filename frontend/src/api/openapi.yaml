@@ -83,7 +83,7 @@ components:
 
     Batch:
       type: object
-      required: [id, name, join_code, live_session_link, is_active, created_at, student_count]
+      required: [id, name, join_code, live_session_link, is_active, created_at, student_count, assigned_level_ids]
       properties:
         id: { type: string, format: uuid }
         name: { type: string, maxLength: 128 }
@@ -92,6 +92,12 @@ components:
         is_active: { type: boolean }
         created_at: { type: string, format: date-time }
         student_count: { type: integer, minimum: 0, description: Active Enrollment count; archived owned batches remain listed. }
+        assigned_level_ids:
+          type: array
+          readOnly: true
+          uniqueItems: true
+          items: { type: string, format: uuid }
+          description: "Persisted assigned levels in Level.order order; [] means unassigned. Reporting metadata, with no effect on student access or progress."
 
     RosterStudent:
       type: object
@@ -328,6 +334,7 @@ paths:
         403: { description: TEACHER role required }
     post:
       summary: Create a name-only owned batch
+      description: "Creates no assignments. Supplying assigned_level_ids is rejected with a field 400 before creating a batch; configure levels through owner PATCH."
       requestBody:
         required: true
         content:
@@ -343,7 +350,7 @@ paths:
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Batch" }
-        400: { description: Invalid batch name }
+        400: { description: Invalid batch name or unsupported assigned_level_ids input; no class write }
         401: { description: Authentication required }
         403: { description: TEACHER role required }
 
@@ -352,6 +359,7 @@ paths:
       - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
     patch:
       summary: Update an owned batch, including archived batches
+      description: "Atomic scalar update and optional complete-set assignment replacement under an owned row lock. Omitted IDs preserve; [] clears. Last serialized commit wins; any invalid assignment rejects the entire request. Validation reads primary. Foreign ownership is rejected before exposing field errors."
       requestBody:
         required: true
         content:
@@ -362,16 +370,44 @@ paths:
                 name: { type: string, minLength: 1, maxLength: 128 }
                 live_session_link: { type: string, description: "A valid URL, or an empty string to clear the link." }
                 is_active: { type: boolean }
+                assigned_level_ids:
+                  type: array
+                  uniqueItems: true
+                  items: { type: string, format: uuid }
+                  description: "Complete replacement; UUID strings are normalized. Null, non-list/non-string input, malformed, duplicate after normalization or unknown IDs returns assigned_level_ids 400. No artificial level-count maximum."
       responses:
         200:
           description: Updated batch
           content:
             application/json:
               schema: { $ref: "#/components/schemas/Batch" }
-        400: { description: Invalid fields }
+        400: { description: Invalid fields; assignment errors reject all scalar and relation changes }
         401: { description: Authentication required }
         403: { description: TEACHER role required }
         404: { description: Missing or foreign batch }
+
+  /classes/join/:
+    post:
+      summary: Join an additional active batch using its join code
+      description: "Existing authenticated enrollment behavior is unchanged. Additive assignment metadata in the class-shaped response grants no teacher-portal or editing rights."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [join_code]
+              properties:
+                join_code: { type: string }
+      responses:
+        201:
+          description: Joined class with canonical assigned level IDs
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/Batch" }
+        400: { description: Invalid or expired code, or existing enrollment }
+        401: { description: Authentication required }
+        429: { description: Existing join throttle }
 
   /classes/{id}/rotate-code/:
     parameters:

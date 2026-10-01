@@ -90,18 +90,23 @@ task_routes:
   classroom:
     read:
       - docs/SYSTEM_MAP.md#classroom-and-teacher-flow
+      - docs/features/teacher-dashboard.md
+      - docs/scopes/teacher-workflows-v1.2.md
     inspect:
       - backend/apps/classroom
       - frontend/src/features/teacher
       - frontend/src/features/student
       - frontend/src/shared/api/queries/useBatches.ts
       - frontend/src/shared/api/queries/useRoster.ts
+      - frontend/src/shared/api/queries/useTeacherLevelDashboard.ts
+      - frontend/src/shared/api/queries/teacherIdentity.ts
 
   ci_build:
     read:
       - docs/RUNBOOK.md#ci
     inspect:
       - .github/workflows/ci.yml
+      - .github/workflows/teacher-verification.yml
       - scripts/check_context_freshness.py
       - scripts/tests/test_context_freshness.py
       - frontend/package.json

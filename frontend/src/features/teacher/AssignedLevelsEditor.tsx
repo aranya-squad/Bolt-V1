@@ -36,6 +36,12 @@ export function AssignedLevelsEditor({ batch, batchUnavailable }: { batch: Batch
       return { ...previous, confirmed: [...ids], draft: dirty ? previous.draft : [...ids], saved: false };
     });
   }, [ids]);
+  const { reset, isError: saveFailed } = mutation;
+  useEffect(() => {
+    // A lost response can be reconciled by a later read of the persisted set.
+    // Clear the earlier write error without inventing a successful PATCH receipt.
+    if (saveFailed && Array.isArray(ids) && sameSelection(form.draft, ids)) reset();
+  }, [ids, form.draft, saveFailed, reset]);
 
   const levels = catalogue.data;
   const dirty = !sameSelection(form.draft, form.confirmed);
@@ -53,9 +59,10 @@ export function AssignedLevelsEditor({ batch, batchUnavailable }: { batch: Batch
   }
   function save() {
     if (blocked || !dirty || mutation.isPending || !levels) return;
-    const selected = levels.filter(level => form.draft.includes(level.id)).map(level => level.id);
     setForm(previous => ({ ...previous, saved: false }));
-    mutation.mutate({ id: batch.id, payload: { assigned_level_ids: selected } }, {
+    // Send the complete draft. A changed catalogue cannot silently trim an
+    // unsaved selection; the server validates IDs and returns canonical order.
+    mutation.mutate({ id: batch.id, payload: { assigned_level_ids: [...form.draft] } }, {
       onSuccess: persisted => {
         const saved = persisted.assigned_level_ids;
         if (!Array.isArray(saved) || !saved.every(id => typeof id === "string")) {

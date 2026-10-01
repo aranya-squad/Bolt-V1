@@ -13,16 +13,24 @@ from django.urls import reverse
 from apps.classroom.models import Class, Enrollment
 from apps.classroom.serializers import ClassPatchSerializer
 from apps.classroom.views import ClassDetailView
-from apps.exercises.tests.factories import LessonFactory, LevelFactory
+from apps.exercises.models import ArenaSession
+from apps.exercises.tests.factories import (
+    ArenaSessionFactory,
+    ExerciseTemplateFactory,
+    LessonFactory,
+    LevelFactory,
+)
 from apps.progress.models import (
     LessonCompletion,
     LevelCompletion,
     ProgressRecord,
     QuestionAttempt,
+    XPEvent,
 )
+from apps.progress.services import finalize_session, record_attempt
 from apps.users.tests.factories import TeacherFactory, UserFactory
 
-from .test_reporting import ReportingReplicaRouter, auth, completed
+from .test_reporting import ReportingReplicaRouter, auth
 
 
 @pytest.fixture
@@ -211,7 +219,7 @@ def test_assignment_mutation_never_grants_non_teacher_portal_access(assignment, 
     assert assigned(batch) == [levels[0].id]
 
 
-@pytest.mark.django_db
+@pytest.mark.django_db(transaction=True)
 def test_assignment_only_controls_report_inclusion_and_preserves_history_access(
     assignment,
 ):
@@ -219,19 +227,43 @@ def test_assignment_only_controls_report_inclusion_and_preserves_history_access(
     student = UserFactory()
     Enrollment.objects.create(class_room=batch, student=student)
     lesson = LessonFactory(level=levels[0])
-    LessonFactory(level=levels[2])
-    completed(student, lesson)
+    LessonFactory(level=levels[0], order=2)
+    third_lesson = LessonFactory(level=levels[2])
+    session = ArenaSessionFactory(user=student, template=ExerciseTemplateFactory(lesson=lesson))
+    question = session.questions_json[0]
+    record_attempt(session, 0, 1, question["text"], question["answer"], question["answer"], 1000)
+    finalize_session(session)
+    ExerciseTemplateFactory(lesson=third_lesson)
     student_client = auth(student)
     access_before = student_client.get(reverse("level-list")).json()
-    history_before = tuple(
-        model.objects.count()
-        for model in (
-            ProgressRecord,
-            LessonCompletion,
-            LevelCompletion,
-            QuestionAttempt,
-        )
+    lesson_urls = [
+        reverse("lesson-list", kwargs={"level_id": level.id}) for level in (levels[0], levels[2])
+    ]
+    lessons_before = [student_client.get(lesson_url).json() for lesson_url in lesson_urls]
+    # Even an unassigned level remains playable: assignment governs reports.
+    start_url = reverse(
+        "lesson-classwork-start", kwargs={"level_id": levels[2].id, "lesson_id": third_lesson.id}
     )
+    started = student_client.post(start_url, format="json")
+    assert started.status_code == 201
+
+    def history_values():
+        # Freeze IDs, scores, completion pointers and timestamps, not just row
+        # counts: an accidental in-place rewrite must fail this regression.
+        return tuple(
+            list(model.objects.order_by("pk").values())
+            for model in (
+                ProgressRecord,
+                LessonCompletion,
+                LevelCompletion,
+                QuestionAttempt,
+                XPEvent,
+                ArenaSession,
+            )
+        )
+
+    history_before = history_values()
+    assert all(history_before)
     client = auth(teacher)
     url = reverse("class-detail", kwargs={"pk": batch.id})
     matrix_url = reverse("teacher-level-dashboard", kwargs={"level_id": levels[2].id})
@@ -247,18 +279,7 @@ def test_assignment_only_controls_report_inclusion_and_preserves_history_access(
     assert client.get(matrix_url).json()["classes"][0]["id"] == str(batch.id)
     assert client.patch(url, {"assigned_level_ids": []}, format="json").status_code == 200
     assert client.get(matrix_url).json()["classes"] == []
-    assert (
-        tuple(
-            model.objects.count()
-            for model in (
-                ProgressRecord,
-                LessonCompletion,
-                LevelCompletion,
-                QuestionAttempt,
-            )
-        )
-        == history_before
-    )
+    assert history_values() == history_before
     assert Enrollment.objects.get(class_room=batch, student=student).is_active
     assert student_client.get(reverse("level-list")).json() == access_before
     assert (
@@ -275,6 +296,13 @@ def test_assignment_only_controls_report_inclusion_and_preserves_history_access(
         format="json",
     ).json()["assigned_level_ids"] == [str(levels[0].id), str(levels[2].id)]
     assert client.get(matrix_url).json()["classes"] == []
+    assert history_values() == history_before
+    assert Enrollment.objects.get(class_room=batch, student=student).is_active
+    assert [student_client.get(lesson_url).json() for lesson_url in lesson_urls] == lessons_before
+    resumed = student_client.post(start_url, format="json")
+    assert resumed.status_code == 200
+    assert resumed.json()["session_id"] == started.json()["session_id"]
+    assert history_values() == history_before
 
 
 @pytest.mark.django_db
