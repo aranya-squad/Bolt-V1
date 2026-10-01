@@ -1,20 +1,30 @@
 // Bolt Abacus Design System — SyncDot
-type SyncState = "idle" | "sending" | "queued" | "offline";
+type SyncState = "idle" | "sending" | "queued" | "offline" | "error" | "unsupported" | "suspended";
 
 interface SyncDotProps {
   state?: SyncState;
+  pending?: number;
+  message?: string;
+  storageWarning?: string;
+  onRetry?: () => void;
+  onExclude?: () => void;
+  onFinish?: () => void;
 }
 
 const STATES: Record<SyncState, { color: string; label: string; pulse: boolean }> = {
   idle:    { color: "var(--ok)",            label: "Synced",               pulse: false },
   sending: { color: "var(--y-bolt)",        label: "Saving…",              pulse: true  },
   queued:  { color: "var(--orange-streak)", label: "Queued · will sync",   pulse: true  },
-  offline: { color: "var(--err)",           label: "Offline · saved locally", pulse: false },
+  offline: { color: "var(--err)",           label: "Offline · pending", pulse: false },
+  error: { color: "var(--err)", label: "Save failed", pulse: false },
+  unsupported: { color: "var(--err)", label: "API upgrade required", pulse: false },
+  suspended: { color: "var(--err)", label: "Sign in to recover", pulse: false },
 };
 
-export function SyncDot({ state = "idle" }: SyncDotProps) {
+export function SyncDot({ state = "idle", pending = 0, message, storageWarning, onRetry, onExclude, onFinish }: SyncDotProps) {
   const s = STATES[state];
   return (
+    <div role="status" aria-live="polite" style={{ maxWidth: 480 }}>
     <div
       title={s.label}
       style={{
@@ -44,7 +54,13 @@ export function SyncDot({ state = "idle" }: SyncDotProps) {
           flexShrink: 0,
         }}
       />
-      {s.label.split(" ")[0]}
+      {s.label}{pending > 0 ? ` · ${pending} pending` : ""}
+    </div>
+    {message && <p>{message}</p>}
+    {storageWarning && <p>{storageWarning}</p>}
+    {onRetry && <button type="button" onClick={onRetry}>Retry saving</button>}
+    {onExclude && <button type="button" onClick={onExclude}>Exclude rejected answers</button>}
+    {onFinish && <button type="button" onClick={onFinish}>Retry finish</button>}
     </div>
   );
 }

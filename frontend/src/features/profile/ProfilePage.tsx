@@ -40,15 +40,14 @@ export default function ProfilePage() {
   };
 
   const handleLogout = () => {
-    useAuthStore.getState().logout();
-    navigate("/login");
+    if (useAuthStore.getState().logout()) navigate("/login");
   };
 
   const handleDeleteAccount = async () => {
     setDeleteError("");
     try {
       await apiClient.post("/auth/delete-account/", { credential: deleteCredential });
-      useAuthStore.getState().logout();
+      useAuthStore.getState().logout(true);
       navigate("/login");
     } catch (err: unknown) {
       const detail = (err as { response?: { data?: { detail?: string } } })?.response?.data?.detail;

@@ -1,10 +1,15 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useQueryClient } from "@tanstack/react-query";
 import { useStartClasswork } from "@/shared/api/queries/useClasswork";
 import { LEVELS_QUERY_KEY } from "@/shared/api/queries/useLevels";
 import { ME_QUERY_KEY } from "@/shared/api/queries/useMe";
-import { useSubmitAttempt, useFinalizeSession } from "@/shared/api/queries/useSession";
+import { useSession } from "@/shared/api/queries/useSession";
+import { useAnswerRecovery } from "@/shared/api/queries/useAnswerRecovery";
+import { findRecoverySession } from "@/shared/store/answerRecovery";
+import { useAuthStore } from "@/shared/store/authStore";
+import { SyncDot } from "@/shared/ui/SyncDot";
+import type { ProgressRecord } from "@/shared/types";
 import { resolveVerdictAction } from "./verdictLogic";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { BreadcrumbChip } from "@/shared/ui/BreadcrumbChip";
@@ -12,149 +17,58 @@ import { Icon } from "@/shared/ui/Icon";
 import { ProblemCanvas } from "@/shared/ui/ProblemCanvas";
 import { ProgressBar } from "@/shared/ui/ProgressBar";
 
-interface VerdictState {
-  isCorrect: boolean;
-  wasSkip: boolean;
-}
-
 export default function ClassworkPage() {
   const { levelId, lessonId } = useParams<{ levelId: string; lessonId?: string }>();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
 
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [input, setInput] = useState("");
-  const [timeLeft, setTimeLeft] = useState<number | null>(null);
-  const [testMode, setTestMode] = useState(false);
-  const [verdict, setVerdict] = useState<VerdictState | null>(null);
-  const [retriedThisQuestion, setRetriedThisQuestion] = useState(false);
-  const questionStartMs = useRef(Date.now());
+  const context = `learn:${levelId}:${lessonId ?? ""}`;
+  const userId = useAuthStore(s => s.user?.id);
+  const [resumeId] = useState(() => userId ? findRecoverySession(userId, context) : null);
+  const [testModeOption, setTestModeOption] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
-  const isFinalizingRef = useRef(false);
-
-  const { mutate: startSession, data: sessionMeta, isPending: starting, isError: startError } =
-    useStartClasswork(levelId!, lessonId);
-  const { mutateAsync: submitAttempt, isPending: submitting } =
-    useSubmitAttempt(sessionMeta?.session_id ?? "");
-  const { mutate: finalizeSession } = useFinalizeSession(sessionMeta?.session_id ?? "");
-
-  const handleBeginSession = () => {
-    startSession(
-      { is_test_mode: testMode },
-      {
-        onSuccess: (meta) => {
-          setTimeLeft(meta.time_limit_sec > 0 ? meta.time_limit_sec : null);
-        },
-      }
-    );
-  };
-
-  // Countdown timer — setTimeout chain
-  useEffect(() => {
-    if (timeLeft === null || timeLeft <= 0) return;
-    const id = setTimeout(() => setTimeLeft((t) => (t !== null ? t - 1 : null)), 1000);
-    return () => clearTimeout(id);
-  }, [timeLeft]);
-
-  // Timer expired → finalize
-  useEffect(() => {
-    if (timeLeft === 0 && sessionMeta) {
-      handleFinalize();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [timeLeft]);
-
-  // Reset per-question state and focus input when moving to a new question
-  useEffect(() => {
-    questionStartMs.current = Date.now();
-    setVerdict(null);
-    setInput("");
-    setRetriedThisQuestion(false);
-    inputRef.current?.focus();
-  }, [currentIndex]);
-
-  // Refocus input after verdict is dismissed back to the same question (retry)
-  useEffect(() => {
-    if (verdict === null) {
-      inputRef.current?.focus();
-    }
-  }, [verdict]);
-
-  const handleFinalize = () => {
-    if (isFinalizingRef.current) return;
-    isFinalizingRef.current = true;
-    finalizeSession(undefined, {
-      onSuccess: () => {
-        queryClient.invalidateQueries({ queryKey: LEVELS_QUERY_KEY });
-        queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
-        if (levelId && lessonId) {
-          queryClient.invalidateQueries({ queryKey: ["levels", levelId, "lessons"] });
-        }
-        navigate(`/learn/level/${levelId}/report/${sessionMeta!.session_id}`);
-      },
-    });
-  };
-
+  const { mutate: startSession, data: startedMeta, isPending: starting, isError: startError } = useStartClasswork(levelId!, lessonId);
+  const resumed = useSession(resumeId ?? "");
+  const sessionMeta = resumed.data ?? startedMeta;
+  const onFinished = useCallback((result: ProgressRecord) => {
+    void queryClient.invalidateQueries({ queryKey: LEVELS_QUERY_KEY });
+    void queryClient.invalidateQueries({ queryKey: ME_QUERY_KEY });
+    if (levelId && lessonId) void queryClient.invalidateQueries({ queryKey: ["levels", levelId, "lessons"] });
+    navigate(`/learn/level/${levelId}/report/${result.session_id}`);
+  }, [queryClient, levelId, lessonId, navigate]);
+  const recovery = useAnswerRecovery(sessionMeta, context, onFinished);
+  const saved = recovery.recovery;
+  const currentIndex = saved?.index ?? 0;
+  const input = saved?.input ?? "";
+  const verdict = saved?.feedback?.accepted ? saved.feedback : null;
+  const retriedThisQuestion = saved?.retried ?? false;
+  const terminal = recovery.meta?.question_states?.find(q => q.question_index === currentIndex)?.terminal ?? false;
+  const testMode = sessionMeta?.is_test_mode ?? testModeOption;
+  const timeLeft = recovery.timeLeft;
+  const submitting = recovery.status === "saving" || !!saved?.pending.length;
+  const setInput = (input: string) => recovery.update({ input: input.slice(0, 12) });
+  const handleBeginSession = () => startSession({ is_test_mode: testModeOption });
   const advanceOrFinalize = () => {
-    const isLast = !!sessionMeta && currentIndex + 1 >= sessionMeta.questions.length;
-    if (isLast) {
-      handleFinalize();
-    } else {
-      setCurrentIndex((i) => i + 1);
-    }
+    if (!sessionMeta || recovery.blocked || !verdict) return;
+    if (currentIndex + 1 >= sessionMeta.questions.length) void recovery.complete();
+    else recovery.advance();
   };
-
-  // Called when student dismisses the verdict panel (clicks "Next" or "Try Again")
   const handleVerdictDismiss = () => {
-    if (!verdict) return;
-    const isLast = !!sessionMeta && currentIndex + 1 >= sessionMeta.questions.length;
-    const action = resolveVerdictAction({
-      isCorrect: verdict.isCorrect,
-      testMode,
-      retriedThisQuestion,
-      wasSkip: verdict.wasSkip,
-      isLastQuestion: isLast,
-    });
-    if (action === "retry") {
-      setRetriedThisQuestion(true);
-      setVerdict(null);
-    } else {
-      advanceOrFinalize();
-    }
+    if (!verdict || recovery.blocked || submitting) return;
+    const action = resolveVerdictAction({ isCorrect: verdict.isCorrect, testMode, retriedThisQuestion, wasSkip: verdict.wasSkip, terminal, isLastQuestion: !!sessionMeta && currentIndex + 1 >= sessionMeta.questions.length });
+    if (action === "retry") recovery.update({ retried: true, feedback: null, input: "", questionStartedAt: Date.now() });
+    else advanceOrFinalize();
   };
-
-  const handleSubmit = async () => {
-    if (!sessionMeta || submitting) return;
-    const parsed = parseInt(input, 10);
-    if (isNaN(parsed)) return;
-    const elapsed = Date.now() - questionStartMs.current;
-    try {
-      const result = await submitAttempt({
-        question_index: currentIndex,
-        answer: parsed,
-        elapsed_ms: elapsed,
-      });
-      setVerdict({ isCorrect: result.is_correct, wasSkip: false });
-    } catch {
-      // Network error — advance without feedback rather than blocking the student
-      advanceOrFinalize();
-    }
+  const handleSubmit = () => {
+    if (recovery.blocked || submitting || verdict) return;
+    const parsed = Number(input);
+    if (!input.trim() || !Number.isInteger(parsed) || parsed < -2147483648 || parsed > 2147483647) return;
+    recovery.enqueue(parsed, false);
   };
-
-  const handleSkip = async () => {
-    if (testMode || !sessionMeta || submitting) return;
-    const elapsed = Date.now() - questionStartMs.current;
-    try {
-      await submitAttempt({
-        question_index: currentIndex,
-        answer: -999999,
-        elapsed_ms: elapsed,
-      });
-    } catch {
-      // Swallow — skip is best-effort
-    }
-    setVerdict({ isCorrect: false, wasSkip: true });
+  const handleSkip = () => {
+    if (!testMode && !recovery.blocked && !submitting && !verdict) recovery.enqueue(0, true);
   };
+  useEffect(() => { inputRef.current?.focus(); }, [currentIndex, verdict]);
 
   const timeLimitSec = sessionMeta?.time_limit_sec ?? 600;
   const timerValue = timeLeft !== null ? timeLeft : timeLimitSec;
@@ -164,7 +78,7 @@ export default function ClassworkPage() {
   const question = sessionMeta?.questions[currentIndex];
 
   // Pre-start: session not yet created — let student configure test mode before committing.
-  if (!sessionMeta && !starting && !startError) {
+  if (!sessionMeta && !starting && !startError && !resumeId) {
     const preStartBreadcrumb = levelId && lessonId
       ? ["LEARN", "LEVEL " + levelId, "CLASSWORK"]
       : levelId
@@ -200,7 +114,7 @@ export default function ClassworkPage() {
             </div>
             <button
               type="button"
-              onClick={() => setTestMode((v) => !v)}
+              onClick={() => setTestModeOption((v) => !v)}
               style={{
                 padding: "10px 16px",
                 borderRadius: "var(--r-pill)",
@@ -234,11 +148,11 @@ export default function ClassworkPage() {
     );
   }
 
-  if (starting) {
+  if (starting || (resumeId && resumed.isLoading)) {
     return <div className="page-loading">PREPARING SESSION…</div>;
   }
 
-  if (startError) {
+  if (startError || resumed.isError) {
     return (
       <div className="page-loading" style={{ flexDirection: "column", gap: "var(--s-md)" }}>
         <p style={{ color: "var(--err)" }}>Failed to start session.</p>
@@ -263,10 +177,16 @@ export default function ClassworkPage() {
     !verdict.isCorrect &&
     !verdict.wasSkip &&
     !testMode &&
-    !retriedThisQuestion;
+    !retriedThisQuestion && !terminal;
 
   return (
     <main className="page-wrap" style={{ display: "flex", flexDirection: "column" }}>
+      <SyncDot state={recovery.status === "accepted" ? "idle" : recovery.status === "saving" ? "sending" : recovery.status === "pending" ? "queued" : recovery.status}
+        pending={saved?.pending.length} message={recovery.message}
+        storageWarning={recovery.storage !== "available" ? "Reload recovery is unavailable or damaged. Answers are held in memory only in this tab." : undefined}
+        onRetry={recovery.status === "error" ? () => { void recovery.retry(); } : undefined}
+        onExclude={saved?.rejected.length ? recovery.excludeRejected : undefined}
+        onFinish={saved?.manifest && recovery.status !== "saving" ? () => { void recovery.complete(); } : undefined} />
       {/* Timer bar */}
       <ProgressBar value={timerValue} max={timerMax} accent={timerAccent} height={4} />
 
@@ -393,6 +313,7 @@ export default function ClassworkPage() {
               variant={verdict.isCorrect ? "primary" : "ghost"}
               size="sm"
               onClick={handleVerdictDismiss}
+              disabled={recovery.blocked || submitting}
             >
               {canRetry ? "RETRY" : isLast ? "FINISH" : "NEXT"}
             </BoltButton>
@@ -413,6 +334,7 @@ export default function ClassworkPage() {
                 ref={inputRef}
                 type="text"
                 inputMode="numeric"
+                disabled={submitting || recovery.blocked}
                 value={input}
                 onChange={(e) =>
                   setInput(
@@ -433,9 +355,9 @@ export default function ClassworkPage() {
                 variant="primary"
                 size="md"
                 onClick={handleSubmit}
-                disabled={input.trim() === "" || submitting}
+                disabled={input.trim() === "" || submitting || recovery.blocked}
               >
-                {submitting ? "…" : "SUBMIT"}
+                {recovery.status === "saving" ? "…" : "SUBMIT"}
               </BoltButton>
             </div>
 
@@ -444,7 +366,7 @@ export default function ClassworkPage() {
               <button
                 type="button"
                 onClick={handleSkip}
-                disabled={submitting}
+                disabled={submitting || recovery.blocked}
                 style={{
                   alignSelf: "flex-start",
                   background: "transparent",

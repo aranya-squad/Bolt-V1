@@ -132,8 +132,7 @@ export default function TeacherDashboardPage() {
   const [showCreate, setShowCreate] = useState(false);
 
   function handleLogout() {
-    useAuthStore.getState().logout();
-    navigate("/login");
+    if (useAuthStore.getState().logout()) navigate("/login");
   }
 
   return (

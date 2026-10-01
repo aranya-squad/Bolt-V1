@@ -8,7 +8,7 @@ interface FeedbackToastProps {
 
 export function FeedbackToast({ verdict, onDismiss }: FeedbackToastProps) {
   useEffect(() => {
-    if (!verdict) return;
+    if (!verdict || !onDismiss) return;
     const id = setTimeout(() => onDismiss?.(), 600);
     return () => clearTimeout(id);
   }, [verdict, onDismiss]);
