@@ -89,8 +89,18 @@ test("F1 real student finalization becomes visible through teacher Refresh; inac
     const answers = inspect(["--inspect-session", session.session_id]).answers as number[];
     expect(answers).toHaveLength(session.questions.length);
     for (const [index, answer] of answers.entries()) {
+      // Ordinary classwork enforces MIN_ANSWER_MS=200. Exercise that real rule
+      // with a small synthetic think interval rather than bypass its clock.
+      await student.waitForTimeout(300);
       await student.getByPlaceholder("Answer").fill(String(answer));
+      const accepted = student.waitForResponse(r => r.url() === `${apiOrigin}/api/v1/sessions/${session.session_id}/attempts/bulk/`
+        && r.request().method() === "POST");
       await student.getByRole("button", { name: "SUBMIT", exact: true }).click();
+      const receipt = await accepted;
+      expect(receipt.status()).toBe(200);
+      expect((await receipt.json()).verdicts).toEqual(expect.arrayContaining([
+        expect.objectContaining({ question_index: index, accepted: true, is_correct: true }),
+      ]));
       await student.getByRole("button", { name: index === answers.length - 1 ? "FINISH" : "NEXT", exact: true }).click();
     }
     await expect(student).toHaveURL(new RegExp(`/report/${session.session_id}$`));

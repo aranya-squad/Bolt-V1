@@ -65,6 +65,64 @@ Cold/warm refers to isolated Redis application-cache state, not reset PostgreSQL
 
 An earlier run36860777240 is **rejected for complete-baseline evidence**: Django cumulative9000query ring truncated the final scenario. The named corrected harness resets captured query state for every request and refuses a mismatch with timed SQL executions.
 
-## Candidate
+## F1 candidate — executed
 
-Pending integrated feature measurements, stale-replica tests and real built-SPA/API browser checks.
+Named head `e7b81dc4dc258f5efa62d256952a38a901729b97`, [run36862384546](https://github.com/aranya-squad/Bolt-V1/actions/runs/36862384546). Full backend suite: **273passed, zero failures/errors/skips**, including the separate stale database alias simulating replica lag (not streaming replication). All144measurements meet **list1 / roster4 / matrix4** data SELECTs, one auth SELECT/two savepoint queries each. Returned row counts and active membership agree. Archive11162121067 SHA256 `00092f9f8bcfc278cee07b4693b92c1fbc426398aac7cbc68bdbb3d1dbaa1829`; JSON SHA256 `735119db32048ab322473f36949ededa0ef675a0d9c8ffd0c888e54200dcf48c`. JUnit archive11162285902; retained until2026-10-31.
+
+Same cell convention/fixture/cache limitations as baseline.
+
+| Active students | Classes | History | Cache | List: data; ms | Roster: data; ms | Matrix: data; ms |
+|---:|---:|---|---|---|---|---|
+
+| 5 | 1 | short | cold | 1; 2.208 / 9.194 / 11.402 | 4; 3.233 / 5.420 / 8.653 | 4; 3.401 / 5.221 / 8.623 |
+| 5 | 1 | short | warm | 1; 1.246 / 2.902 / 4.148 | 4; 2.360 / 4.855 / 7.215 | 4; 3.596 / 4.549 / 8.145 |
+| 5 | 1 | long | cold | 1; 1.210 / 3.160 / 4.370 | 4; 2.460 / 4.799 / 7.259 | 4; 2.762 / 4.820 / 7.583 |
+| 5 | 1 | long | warm | 1; 1.029 / 2.549 / 3.577 | 4; 2.195 / 4.516 / 6.710 | 4; 2.464 / 4.559 / 7.023 |
+| 5 | 5 | short | cold | 1; 1.344 / 2.977 / 4.321 | 4; 2.462 / 4.468 / 6.930 | 4; 3.033 / 4.719 / 7.752 |
+| 5 | 5 | short | warm | 1; 1.106 / 2.909 / 4.015 | 4; 2.167 / 4.685 / 6.852 | 4; 2.775 / 4.849 / 7.624 |
+| 5 | 5 | long | cold | 1; 1.190 / 3.303 / 4.493 | 4; 2.508 / 4.768 / 7.276 | 4; 3.234 / 5.578 / 8.812 |
+| 5 | 5 | long | warm | 1; 1.087 / 2.719 / 3.806 | 4; 2.212 / 4.505 / 6.716 | 4; 3.041 / 5.381 / 8.422 |
+| 5 | 20 | short | cold | 1; 1.383 / 3.498 / 4.880 | 4; 2.380 / 4.707 / 7.087 | 4; 3.160 / 5.682 / 8.842 |
+| 5 | 20 | short | warm | 1; 1.174 / 3.564 / 4.738 | 4; 2.469 / 5.601 / 8.070 | 4; 2.863 / 5.877 / 8.741 |
+| 5 | 20 | long | cold | 1; 1.342 / 4.003 / 5.345 | 4; 2.437 / 4.658 / 7.095 | 4; 5.050 / 7.358 / 12.408 |
+| 5 | 20 | long | warm | 1; 1.156 / 3.495 / 4.650 | 4; 2.144 / 4.613 / 6.757 | 4; 4.864 / 7.570 / 12.434 |
+| 10 | 1 | short | cold | 1; 1.438 / 2.790 / 4.228 | 4; 2.859 / 5.763 / 8.622 | 4; 2.656 / 4.771 / 7.427 |
+| 10 | 1 | short | warm | 1; 1.056 / 2.549 / 3.605 | 4; 2.140 / 5.162 / 7.302 | 4; 2.359 / 4.534 / 6.893 |
+| 10 | 1 | long | cold | 1; 1.261 / 3.244 / 4.505 | 4; 2.539 / 5.346 / 7.886 | 4; 3.362 / 5.164 / 8.527 |
+| 10 | 1 | long | warm | 1; 0.989 / 2.645 / 3.633 | 4; 2.227 / 4.954 / 7.182 | 4; 2.661 / 4.587 / 7.248 |
+| 10 | 5 | short | cold | 1; 1.442 / 2.954 / 4.396 | 4; 2.398 / 5.547 / 7.945 | 4; 2.821 / 4.969 / 7.789 |
+| 10 | 5 | short | warm | 1; 1.064 / 2.760 / 3.823 | 4; 2.135 / 5.124 / 7.259 | 4; 2.658 / 4.920 / 7.578 |
+| 10 | 5 | long | cold | 1; 1.419 / 3.363 / 4.783 | 4; 2.796 / 5.326 / 8.122 | 4; 4.106 / 5.394 / 9.500 |
+| 10 | 5 | long | warm | 1; 1.237 / 2.725 / 3.962 | 4; 2.497 / 4.949 / 7.446 | 4; 3.812 / 5.316 / 9.128 |
+| 10 | 20 | short | cold | 1; 1.430 / 3.714 / 5.144 | 4; 2.543 / 4.936 / 7.478 | 4; 3.425 / 5.512 / 8.938 |
+| 10 | 20 | short | warm | 1; 1.199 / 3.469 / 4.668 | 4; 2.218 / 5.193 / 7.412 | 4; 3.142 / 5.441 / 8.583 |
+| 10 | 20 | long | cold | 1; 1.358 / 4.004 / 5.362 | 4; 2.726 / 5.164 / 7.891 | 4; 7.771 / 7.815 / 15.586 |
+| 10 | 20 | long | warm | 1; 1.153 / 3.551 / 4.704 | 4; 2.327 / 5.309 / 7.636 | 4; 7.555 / 7.711 / 15.267 |
+| 50 | 1 | short | cold | 1; 1.415 / 3.164 / 4.579 | 4; 3.470 / 8.588 / 12.059 | 4; 2.996 / 4.500 / 7.496 |
+| 50 | 1 | short | warm | 1; 1.040 / 2.665 / 3.705 | 4; 2.973 / 8.186 / 11.160 | 4; 2.770 / 4.521 / 7.292 |
+| 50 | 1 | long | cold | 1; 1.303 / 3.388 / 4.691 | 4; 3.563 / 8.756 / 12.318 | 4; 3.968 / 4.824 / 8.792 |
+| 50 | 1 | long | warm | 1; 1.038 / 2.596 / 3.634 | 4; 3.164 / 8.497 / 11.661 | 4; 4.430 / 4.675 / 9.104 |
+| 50 | 5 | short | cold | 1; 1.486 / 3.434 / 4.920 | 4; 3.375 / 8.615 / 11.990 | 4; 3.717 / 4.797 / 8.515 |
+| 50 | 5 | short | warm | 1; 1.169 / 2.820 / 3.989 | 4; 3.273 / 8.865 / 12.139 | 4; 3.268 / 4.834 / 8.102 |
+| 50 | 5 | long | cold | 1; 1.451 / 3.550 / 5.001 | 4; 3.861 / 8.459 / 12.319 | 4; 9.757 / 5.394 / 15.151 |
+| 50 | 5 | long | warm | 1; 1.129 / 2.749 / 3.879 | 4; 3.269 / 8.467 / 11.735 | 4; 9.300 / 5.558 / 14.857 |
+| 50 | 20 | short | cold | 1; 1.812 / 4.340 / 6.152 | 4; 3.450 / 8.465 / 11.915 | 4; 6.474 / 6.121 / 12.595 |
+| 50 | 20 | short | warm | 1; 1.463 / 3.544 / 5.008 | 4; 2.982 / 8.653 / 11.636 | 4; 5.828 / 5.748 / 11.576 |
+| 50 | 20 | long | cold | 1; 1.907 / 4.123 / 6.030 | 4; 3.790 / 8.407 / 12.197 | 4; 30.628 / 7.241 / 37.868 |
+| 50 | 20 | long | warm | 1; 1.528 / 3.434 / 4.962 | 4; 3.381 / 8.310 / 11.691 | 4; 29.786 / 8.625 / 38.411 |
+| 150 | 1 | short | cold | 1; 1.528 / 3.240 / 4.768 | 4; 5.317 / 16.747 / 22.064 | 4; 3.320 / 4.645 / 7.965 |
+| 150 | 1 | short | warm | 1; 1.152 / 2.583 / 3.736 | 4; 4.922 / 17.698 / 22.620 | 4; 2.913 / 4.689 / 7.602 |
+| 150 | 1 | long | cold | 1; 1.527 / 3.367 / 4.894 | 4; 6.588 / 16.872 / 23.459 | 4; 7.571 / 46.123 / 53.695 |
+| 150 | 1 | long | warm | 1; 1.178 / 2.496 / 3.673 | 4; 6.147 / 17.350 / 23.498 | 4; 7.172 / 5.005 / 12.178 |
+| 150 | 5 | short | cold | 1; 1.813 / 3.630 / 5.443 | 4; 5.815 / 16.847 / 22.662 | 4; 5.768 / 5.012 / 10.780 |
+| 150 | 5 | short | warm | 1; 1.390 / 2.673 / 4.063 | 4; 5.157 / 17.023 / 22.180 | 4; 5.212 / 4.864 / 10.076 |
+| 150 | 5 | long | cold | 1; 1.819 / 3.614 / 5.434 | 4; 6.984 / 17.404 / 24.387 | 4; 25.534 / 5.492 / 31.026 |
+| 150 | 5 | long | warm | 1; 1.377 / 2.965 / 4.342 | 4; 6.098 / 17.670 / 23.768 | 4; 24.471 / 5.530 / 30.001 |
+| 150 | 20 | short | cold | 1; 2.635 / 4.034 / 6.670 | 4; 5.717 / 17.163 / 22.880 | 4; 13.929 / 6.076 / 20.004 |
+| 150 | 20 | short | warm | 1; 2.142 / 3.840 / 5.982 | 4; 4.917 / 17.073 / 21.990 | 4; 13.389 / 5.748 / 19.137 |
+| 150 | 20 | long | cold | 1; 2.678 / 4.133 / 6.811 | 4; 6.820 / 16.661 / 23.481 | 4; 105.208 / 7.968 / 113.176 |
+| 150 | 20 | long | warm | 1; 2.422 / 3.530 / 5.952 | 4; 6.239 / 17.435 / 23.674 | 4; 105.783 / 8.486 / 114.269 |
+
+At150students/20classes/longhistory, cold list/roster/matrix measured6.811/23.481/113.176ms versus baseline93.820/830.894/218.249ms. These are single observations, not statistically established latency improvements. Deterministic query growth is eliminated within measured fixture sizes. Candidate matrix aggregates the full joined dataset in one SELECT; further capacity/index decisions remain outside scope. No production/load claim.
+
+Real-browser finalization/Refresh and same-SPA account-switch checks are pending rerun after test respects existing200ms minimum answer interval; no runtime guard or clock was weakened.

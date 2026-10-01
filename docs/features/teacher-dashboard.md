@@ -2,7 +2,7 @@
 status: IN PROGRESS
 branch: feat/teacher-dashboard
 base_commit: ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0
-current_commit: 82fd04592da3abec8ff933923252825ef07d59b3
+current_commit: e7b81dc4dc258f5efa62d256952a38a901729b97
 last_checkpoint: 2026-10-01
 owner: coordinator
 planning_gate: bolt-work-three-role-v1
@@ -43,7 +43,12 @@ F2 will have its own stacked branch/tracker after F1 integration.
 
 ## In Progress
 
-Backend/frontend writers implement F1 in isolated worktrees with exclusive file ownership; coordinator integrates and runs genuine replica/built-SPA API CI checks.
+F1 source integrated;273backend tests (zero skipped) and94frontend tests pass.
+Measured query budgets1/4/4 hold across all144requests. CTO/QA source findings
+fixed without weakening tests. Real built-SPA/API finalization browser rerun pending
+a test-only correction respecting the existing200ms minimum-answer rule.
+F2 may start from this integrated and checked source; neither feature is READY
+until required browser/integrated acceptance is executed.
 
 ## Verification / acceptance
 
