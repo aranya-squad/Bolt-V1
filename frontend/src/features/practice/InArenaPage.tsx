@@ -29,6 +29,9 @@ export default function InArenaPage() {
   const input = saved?.input ?? "";
   const verdict = saved?.feedback ?? null;
   const timeLeft = recovery.timeLeft;
+  const serverComplete = recovery.verified && recovery.meta?.state === "active" &&
+    recovery.meta.question_states?.length === recovery.meta.questions.length &&
+    recovery.meta.question_states.every(q => q.terminal);
   const terminal = recovery.meta?.question_states?.find(q => q.question_index === currentIndex)?.terminal ?? false;
   const hasTimer = (sessionMeta?.time_limit_sec ?? 0) > 0;
   const isFlash = sessionMeta?.kind === "FLASH_CARDS";
@@ -55,6 +58,11 @@ export default function InArenaPage() {
     const isCorrect = parsed === sessionMeta.questions[currentIndex].answer;
     if (enqueue(parsed, false, { isCorrect, wasSkip: false, accepted: false })) update({ flashDeadline: null });
   };
+  useEffect(() => {
+    // Browser state can be absent while all answers are already durable on the server.
+    // Preserve visible feedback; otherwise use the usual manifest/drain/finalize path.
+    if (serverComplete && saved && !saved.feedback && !saved.manifest) void complete();
+  }, [serverComplete, saved, complete]);
   useEffect(() => { inputRef.current?.focus(); }, [currentIndex, verdict]);
   useEffect(() => {
     if (!isFlash || blocked || verdict || saved?.flashDeadline == null) return;

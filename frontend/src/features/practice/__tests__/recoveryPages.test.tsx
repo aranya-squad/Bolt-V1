@@ -131,6 +131,27 @@ describe("observable recovery in existing gameplay pages", () => {
     fireEvent.click(screen.getByRole("button", { name: "Retry finish" })); await tick();
     expect(screen.getByText("Confirmed victory")).toBeInTheDocument();
   });
+  it.each(["missing", "corrupt", "unavailable"])("UI-04: all server-terminal practice questions finish with %s browser state and no new answer", async storage => {
+    const m = meta();
+    m.question_states = m.questions.map(q => ({
+      question_index: q.index, max_attempt_number: 1, attempt_count: 1, terminal: true,
+      latest_receipt: accepted({ question_index: q.index, attempt_number: 1, answer: q.answer!, elapsed_ms: 500, is_skip: false }),
+    }));
+    if (storage === "corrupt") sessionStorage.setItem(storageKey(USER.id, m.session_id), "not-json");
+    if (storage === "unavailable") vi.spyOn(Storage.prototype, "getItem").mockImplementation(() => { throw new DOMException("denied", "SecurityError"); });
+    vi.spyOn(apiClient, "get").mockResolvedValue({ data: m });
+    const post = vi.spyOn(apiClient, "post").mockResolvedValue({ data: {
+      contract_version: 2, id: "server-complete-result", session_id: m.session_id,
+      created_at: new Date().toISOString(), score_correct: 2, score_total: 2,
+      accuracy_pct: 100, time_taken_sec: 10, xp_earned: 20,
+    } });
+    page(); await tick(); await tick();
+    expect(screen.getByText("Confirmed victory")).toBeInTheDocument();
+    expect(post).toHaveBeenCalledTimes(1);
+    expect(post.mock.calls[0].slice(0, 2)).toEqual([
+      `/sessions/${m.session_id}/submit/`, { contract_version: 2, expected_attempts: [] },
+    ]);
+  });
   it("UI-02: corrupt storage is visible and never described as saved locally", async () => {
     sessionStorage.setItem(storageKey(USER.id, "ui-session"), "not-json");
     vi.spyOn(apiClient, "get").mockResolvedValue({ data: meta() }); page(); await tick();
