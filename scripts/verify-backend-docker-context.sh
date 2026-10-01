@@ -38,8 +38,63 @@ docker run --rm --network none --entrypoint sh "$IMAGE" -ec \
 echo "[canary] inspecting final image filesystem"
 CID="$(docker create "$IMAGE")"
 docker export "$CID" -o "$OUT/rootfs.tar"
-if tar -tf "$OUT/rootfs.tar" | grep -E '(^|/)(\.env(\.|$)|id_ed25519$|[^/]+\.(pem|key|p12|pfx)$)'; then
-  echo "[FAIL] secret-shaped canary path reached final image filesystem" >&2
+if tar -tf "$OUT/rootfs.tar" | grep -E '(^|/)app/(\.env\.production|nested/private/\.env\.local|nested/private/id_ed25519)
+if grep -aF "$MARKER" "$OUT/rootfs.tar" >/dev/null; then
+  echo "[FAIL] secret canary value reached final image filesystem" >&2
+  exit 1
+fi
+
+echo "[canary] inspecting saved image layers"
+docker save "$IMAGE" -o "$OUT/image.tar"
+mkdir "$OUT/saved"
+tar -xf "$OUT/image.tar" -C "$OUT/saved"
+while IFS= read -r -d '' layer; do
+  if tar -tf "$layer" | grep -E '(^|/)app/(\.env\.production|nested/private/\.env\.local|nested/private/id_ed25519)
+  if grep -aF "$MARKER" "$layer" >/dev/null; then
+    echo "[FAIL] secret canary value reached image layer: $layer" >&2
+    exit 1
+  fi
+done < <(find "$OUT/saved" -name layer.tar -print0)
+
+echo "[PASS] backend Docker context excludes synthetic secret canaries; runtime content remains present"
+; then
+  echo "[FAIL] synthetic secret canary path reached final image filesystem" >&2
+  exit 1
+fi
+if grep -aF "$MARKER" "$OUT/rootfs.tar" >/dev/null; then
+  echo "[FAIL] secret canary value reached final image filesystem" >&2
+  exit 1
+fi
+
+echo "[canary] inspecting saved image layers"
+docker save "$IMAGE" -o "$OUT/image.tar"
+mkdir "$OUT/saved"
+tar -xf "$OUT/image.tar" -C "$OUT/saved"
+while IFS= read -r -d '' layer; do
+  if tar -tf "$layer" | grep -E '(^|/)(\.env(\.|$)|id_ed25519$|[^/]+\.(pem|key|p12|pfx)$)'; then
+    echo "[FAIL] secret-shaped canary path reached image layer: $layer" >&2
+    exit 1
+  fi
+  if grep -aF "$MARKER" "$layer" >/dev/null; then
+    echo "[FAIL] secret canary value reached image layer: $layer" >&2
+    exit 1
+  fi
+done < <(find "$OUT/saved" -name layer.tar -print0)
+
+echo "[PASS] backend Docker context excludes synthetic secret canaries; runtime content remains present"
+; then
+    echo "[FAIL] synthetic secret canary path reached image layer: $layer" >&2
+    exit 1
+  fi
+  if grep -aF "$MARKER" "$layer" >/dev/null; then
+    echo "[FAIL] secret canary value reached image layer: $layer" >&2
+    exit 1
+  fi
+done < <(find "$OUT/saved" -name layer.tar -print0)
+
+echo "[PASS] backend Docker context excludes synthetic secret canaries; runtime content remains present"
+; then
+  echo "[FAIL] synthetic secret canary path reached final image filesystem" >&2
   exit 1
 fi
 if grep -aF "$MARKER" "$OUT/rootfs.tar" >/dev/null; then
