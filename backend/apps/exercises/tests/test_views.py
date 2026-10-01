@@ -208,7 +208,8 @@ def test_submit_attempt_wrong(auth_client, session1):
 
 
 @pytest.mark.django_db
-def test_submit_attempt_idempotent(auth_client, session1):
+def test_legacy_repeat_returns_same_verdict_without_identity_guarantee(auth_client, session1):
+    """Absent-version repeats return the same verdict; this does not prove replay safety."""
     url = reverse("session-attempt", kwargs={"session_id": session1.id})
     payload = {"question_index": 0, "answer": 2, "elapsed_ms": 500}
     r1 = auth_client.post(url, payload, format="json")
@@ -586,8 +587,8 @@ def test_bulk_submit_empty_list_returns_empty_verdicts(auth_client, practice_ses
 
 
 @pytest.mark.django_db
-def test_bulk_submit_idempotent_on_existing_attempt(auth_client, practice_session):
-    """Second bulk call for same QI returns same verdict without creating a new attempt."""
+def test_legacy_bulk_repeat_records_another_attempt(auth_client, practice_session):
+    """Absent-version transport repeats allocate another row, a legacy recovery limitation."""
     from apps.progress.models import QuestionAttempt
 
     url = reverse("session-attempts-bulk", kwargs={"session_id": practice_session.id})
