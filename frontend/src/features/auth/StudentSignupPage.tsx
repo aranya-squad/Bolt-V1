@@ -111,8 +111,8 @@ export default function StudentSignupPage() {
               />
               {!joinCode.trim() && (
                 <p style={{ fontSize: "0.75rem", color: "var(--fg-sand)", margin: "6px 0 0", lineHeight: 1.4 }}>
-                  Don't have a code?{" "}
-                  <span style={{ color: "var(--y-bolt)" }}>Ask your teacher</span> — they'll give you one after creating a class.
+                  Don&apos;t have a code?{" "}
+                  <span style={{ color: "var(--y-bolt)" }}>Ask your teacher</span> — they&apos;ll give you one after creating a class.
                 </p>
               )}
             </div>

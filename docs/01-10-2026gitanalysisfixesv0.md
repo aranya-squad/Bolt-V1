@@ -1,0 +1,260 @@
+# Bolt Git and release-process fix plan — v0
+
+**01 October 2026, Asia/Kolkata. Agent 2 draft for an independent Agent 3 review. PLAN ONLY: no fixes, settings changes, deployments or security rotations have been performed by this document.** The requested final publication is documentation on `feat-Sagar`; it does not authorize integrating application changes into that branch or deploying AWS.
+
+For Bolt's 3–4 developers, retain task branches, separate worktrees, the existing test commands, human review and a manual release. The material changes proposed here are a secret-safe Docker context, reproducible frontend installation, a traceable single release artifact, verified SSH transfers and a verified separation between previews and production. GitHub control changes are conditional on an owner establishing actual gaps. Ordinary branch stacks, cherry-picks and the current number of worktrees need no replacement process.
+
+## 1. Evidence boundary and captured state
+
+Labels used throughout:
+
+- **CODE:** immutable repository content at the cited SHA; proves source behavior/configuration, not that it ran in production.
+- **LOCAL:** read-only Git/worktree/history observations or previously recorded local test evidence. Recorded tests are distinguished from tests rerun for this audit.
+- **UNKNOWN:** live hosting, effective permissions, branch rules, deployed artifact or operational facts that could not be inspected.
+- **PROPOSAL:** future change or acceptance check; not a completed fix.
+
+The audit window starts **2026-07-01T00:00:00+05:30 = 2026-06-30T18:30:00Z** and ends at the captured 01 October tips. Git author/committer timestamps were evaluated separately. They do not prove wall-clock work, release dates or absence of activity outside inspected reachable history.
+
+### Remote branches, before audit publication
+
+Behind/ahead counts are relative to `Bolt-V1/main@cec94ea187ab3fcf571f73dd4468b1edaf0d290a`; they are commit counts, not independent feature counts.
+
+| Repository / branch | Captured full SHA | Behind / ahead | Interpretation |
+| --- | --- | --- | --- |
+| Bolt-V1 / main | `cec94ea187ab3fcf571f73dd4468b1edaf0d290a` | 0 / 0 | Production-source baseline; live revision unverified |
+| Bolt-V1 / feat-Sagar | `c81416d166792caada0868dff0d3242daccbedde` | 0 / 2 | Lint/assessment baseline; destination for these audit docs only |
+| Bolt-V1 / chore/agent-workflow | `b03d167b8b5478feb4d306ec51a5872c0b5b3951` | 0 / 4 | Existing workflow and frontend-lock foundation |
+| Bolt-V1 / feat/answer-recovery | `88cfff2791c9adc3648a39cf39a21a73c97e1697` | 0 / 17 | Implemented/reviewed locally; human integration and live release unknown |
+| Bolt-V1 / chore/context-system-v2-plan | `c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35` | 0 / 21 | Context checkpoint |
+| Bolt-V1 / chore/continuous-dev-context | `c8675e646cb2fffa13fd7ba8d867f6baf9cc5a35` | 0 / 21 | Same tip as preceding alias; not corruption |
+| Bolt-V1 / chore/ai-context-system-v2 | `ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0` | 0 / 38 | Later context and scoped planning guidance |
+| Bolt-V1 / feat/teacher-dashboard | `379a6978c06ed8640202776f338e914c2a1cb651` | 0 / 39 | Teacher-scope planning tip; not evidence of completed feature coding |
+| Bolt-V1 / feature/v2-wave0-1-auth-rework | `c2421dea550afa68b4af6fbba2e1f49bbbcdf26e` | 9 / 0 | Old ancestor of main; no automatic deletion proposed |
+| Bolt-V1-frontend / main | `b26fd2c6f0cb25e036609ffbb4c37caeb6fc7b7f` | N/A | Separate older frontend repository; live ownership unknown |
+
+**LOCAL:** initial persistent fetch refspec was main-only in both nonshallow checkouts. Agent 1 used one explicit, nonpruning all-head fetch without changing persistent config. Therefore the table covers advertised heads, not merely the originally populated main remote-tracking ref. Future audits must enumerate advertised heads again; a plain fetch with this setup may miss branches. This clone setting is an audit limitation, not a security defect.
+
+### History and worktrees
+
+**LOCAL:** expanded Bolt-V1 history contained 86 reachable unique commits; 49 had an author or committer timestamp in the window. Helper originals and integration cherry-picks are separate commits, so this does not mean 49 distinct code changes. Main had one window commit: July 1, 09:11:08 +05:30, the [Caddy ACME default fix](https://github.com/aranya-squad/Bolt-V1/commit/cec94ea187ab3fcf571f73dd4468b1edaf0d290a). No August/September commits appeared in inspected reachable history. October branches contain lint/assessments, workflow/lock, answer recovery, context continuation and teacher planning. The standalone frontend had 13 reachable commits, zero in-window; its latest commit was June 20, 19:34:41 +05:30. This is not evidence that nobody worked or deployed elsewhere.
+
+The verified checkpoint ancestry before publication is `main → feat-Sagar → chore/agent-workflow → feat/answer-recovery → c8675e6 → ec74cf3 → teacher planning`. Both context aliases share `c8675e6`. Main contains none of the October descendant changes. Once these audit documents are appended to feat-Sagar, that new tip will not automatically be an ancestor of the already published descendants; keep the old full SHA as their base, rather than misreporting the new ancestry.
+
+Agent 1 observed six clean Bolt-V1 worktrees:
+
+| Worktree | Branch | Captured HEAD |
+| --- | --- | --- |
+| `/workspace/Bolt-V1` | feat-Sagar | `c81416d166792caada0868dff0d3242daccbedde` |
+| `/workspace/bolt-workflow` | chore/agent-workflow | `b03d167b8b5478feb4d306ec51a5872c0b5b3951` |
+| `/workspace/bolt-answer-recovery` | feat/answer-recovery | `88cfff2791c9adc3648a39cf39a21a73c97e1697` |
+| `/workspace/bolt-answer-recovery-api` | task/answer-recovery-api | `705eaf62fd7211da53fcb543c8d5cc49410c0431` |
+| `/workspace/bolt-answer-recovery-ui` | task/answer-recovery-ui | `d4502d362c9158066a2571f70f3b85ec7acc1184` |
+| `/workspace/bolt-answer-recovery-review` | review/answer-recovery | `6d32de6a94c2afb92c5bc7a4c72dffe73737d2b1` |
+
+Local `work@cec94ea` had no checked-out worktree. The standalone frontend checkout was `work@b26fd2c`, with pre-existing untracked `dist/` and `node_modules/` preserved. This audit's separate writer/reviewer worktrees are additional temporary audit resources, outside the six-worktree snapshot.
+
+Different helper/integration SHAs are explained by ordinary cherry-picks; determine missing patches with diff/patch equivalence and the handoff, not SHA inequality. Existing [worktree/resource guidance](https://github.com/aranya-squad/Bolt-V1/blob/ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0/docs/agent-workflow.md#branches-and-worktrees) already separates writers and DB/cache/ports. Official Git's worktree documentation (S11) confirms separate linked checkouts, shared refs and shared configuration by default. Application services still need explicit isolation. No new harness service, worktreeConfig conversion or automatic branch cleanup is warranted.
+
+### Actual delivery and deployment boundaries
+
+**CODE:** Bolt uses React/TypeScript/Vite and Django/DRF, PostgreSQL/Redis/Celery, with Gunicorn/Caddy/Compose in the checked-in manual AWS path. CI selects the bundled `Bolt-V1/frontend`; the standalone frontend is older. Latest commits establish the chosen working lineage, not which repository serves `www.student.boltabacus.com` or `www.teacher.boltabacus.com`.
+
+At every inspected tip, the tracked Actions workflow is `.github/workflows/ci.yml`: [main workflow](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/.github/workflows/ci.yml#L1-L91) runs on PRs and pushes to main, with backend/frontend/build jobs. The [later advisory context job](https://github.com/aranya-squad/Bolt-V1/blob/ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0/.github/workflows/ci.yml#L8-L27) does not replace core checks. No AWS deploy job is present. Manual scripts describe a deployment path; they do not prove historical/live execution or that main pushes automatically deploy AWS. External Vercel/GitHub integrations and preview triggers remain UNKNOWN.
+
+The [later AGENTS planning rule](https://github.com/aranya-squad/Bolt-V1/blob/ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0/AGENTS.md#mandatory-planning-gate-for-the-owners-bolt-work-environment) requires three role signoffs for new feature implementation in the owner's specified cloud project/account context. Retain its scoped applicability. This user-requested audit and plan are not new feature implementation. Later instructions/feature code live on their own lineage; publishing this document on feat-Sagar does not import them or waive their release boundaries.
+
+### Access and security limits
+
+**UNKNOWN:** repository visibility, protection/rulesets/bypass, PR/CI results, effective Actions token defaults, secret-scanning availability, Vercel live source/preview configuration, AWS resources/images and deployment logs. GitHub live API and rendered documentation URLs returned proxy Forbidden. Native Git worked for snapshot/source-doc retrieval. No assertion that a control is absent follows from API denial.
+
+**LOCAL:** Agent 1 scanned 743 distinct reachable Bolt text blobs and 229 standalone frontend text blobs, each ≤3 MB, for AWS-access-key shapes, private-key headers and GitHub-token shapes. Zero matches; tracked sensitive-name candidates were example env templates. This focused, non-provider-validating regex scan is not a comprehensive secrets/PII audit, and does not inspect ignored image inputs. No blanket “secret-free” claim or Git history rewrite is supported.
+
+## 2. Findings that justify bounded work
+
+| ID / priority | Established source fact and consequence | What remains unknown |
+| --- | --- | --- |
+| G01 / high, before next image release | Production Dockerfile copies the whole backend context; no Docker ignore exists at any captured remote tip. Deploy scripts leave a private env file in that context, so a later build can embed it. | Whether a real published image contains credentials; current builders' ignored files |
+| G02 / material, release reliability | Manual scripts build current checkout and move `latest`; reviewed commit/checks/artifact are not prerequisites. Generic Compose migration runs before its pull path. | Which script/operators/artifacts were actually used live |
+| G03 / material, security | Secret-bearing SSH/scp calls use `StrictHostKeyChecking=no`; env writes lack private umask/chmod. Resume secret lookup swallows failures and can generate a new Django key. | Actual workstation/host-file permissions; historical MITM/exposure or key change |
+| G04 / confirmed source install blocker | Main/feat-Sagar CI needs a missing ignored frontend lock. Existing foundation already supplies it. | Hosted CI outcome, live build root and standalone support status |
+| G05 / conditional exposure | Both bundled Vercel configs proxy relative `/api` to production. Empty frontend API base makes relative calls. | Whether these configs apply to actual previews or current live domains |
+| G06 / verification first | Core CI jobs omit explicit token permissions; live effective settings/branch rules inaccessible. | Whether material protection/privilege gaps exist; do not diagnose absence |
+
+Immutable evidence references, reused by tasks:
+
+- **C01:** [Dockerfile COPY, main lines21–24](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/backend/docker/Dockerfile.prod#L21-L24); [backend-context build, resume lines41–51](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-resume-deploy.sh#L41-L51); [env write, lines64–66](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-resume-deploy.sh#L64-L66). Absence of ignore files is LOCAL tree enumeration, reproducible below.
+- **C02:** [resume release commands lines133–144](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-resume-deploy.sh#L133-L144); [Compose web image lines6–9](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/docker-compose.prod.yml#L6-L9), [worker/beat lines21–34](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/docker-compose.prod.yml#L21-L34); [generic migrations before restart/pull, lines16–43](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/backend/deploy.sh#L16-L43).
+- **C03:** [resume secret lookup/fallback lines55–62](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-resume-deploy.sh#L55-L62); [transfer/remote execution lines113–118](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-resume-deploy.sh#L113-L118); [bootstrap env write lines342–347](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-deploy.sh#L342-L347) and [bootstrap SSH lines394–401](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/aws-deploy.sh#L394-L401). `no` disables strict enforcement; OpenSSH retains some restrictions, so this is not “no host checks at all.”
+- **C04:** [CI cache/install lines60–65](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/.github/workflows/ci.yml#L60-L65) and [lines78–84](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/.github/workflows/ci.yml#L78-L84); [existing narrow ignore exception at foundation lines28–33](https://github.com/aranya-squad/Bolt-V1/blob/b03d167b8b5478feb4d306ec51a5872c0b5b3951/.gitignore#L28-L33); [existing tracked lock](https://github.com/aranya-squad/Bolt-V1/blob/b03d167b8b5478feb4d306ec51a5872c0b5b3951/frontend/package-lock.json#L1-L24). Main/Sagar absence is LOCAL tree enumeration.
+- **C05:** [root Vercel install/proxy lines2–7](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/vercel.json#L2-L7); [bundled frontend proxy lines2–4](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/frontend/vercel.json#L2-L4); [relative API/credentials lines4–9](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/frontend/src/shared/api/client.ts#L4-L9); [standalone SPA-only config lines1–8](https://github.com/aranya-squad/Bolt-V1-frontend/blob/b26fd2c6f0cb25e036609ffbb4c37caeb6fc7b7f/vercel.json#L1-L8).
+- **C06:** [core workflow permissions/steps at main](https://github.com/aranya-squad/Bolt-V1/blob/cec94ea187ab3fcf571f73dd4468b1edaf0d290a/.github/workflows/ci.yml#L8-L91); [explicit read-only advisory job at context tip](https://github.com/aranya-squad/Bolt-V1/blob/ec74cf3882b8a2dafc9f9c1e0d70e24c496364d0/.github/workflows/ci.yml#L8-L27). Core omission is a source fact, not effective privilege proof.
+
+## 3. Waves → categories → tasks
+
+Effort ranges are rough developer estimates, excluding access waits, approvals and production operations; they are not deadlines. Tasks within a wave may proceed independently unless an explicit dependency is listed. Implement future code on scoped task branches/worktrees from refreshed approved bases, preserving the existing human planning/merge/release rules.
+
+### Wave 0 — Verify ownership and unblock safe build/review
+
+#### Category: source, release and controls ownership
+
+**W0-T01 — Capture live source/release ownership and effective controls (G02, G04, G05, G06).** Owner: one maintainer with appropriate read-only GitHub/Vercel access; deployment owner for the release-path confirmation. Rough effort: 1–2 hours after access.
+
+- **Trigger/evidence:** C02, C04–C06; UNKNOWN live source, settings and script use. Do not select the deployed frontend from recency alone.
+- **Smallest action:** record repository, root directory, production branch and deployed Git revision separately for the student and teacher domains; capture configured preview branches/rewrites/API base and external Git triggers. Identify the actual supported backend manual release entrypoint and platform. Read main protection/rulesets, bypass exceptions, required checks, effective Actions token defaults, visibility and available secret controls. Store only redacted settings evidence and reviewer/date; do not export credentials or live student records.
+- **Affected surface:** a short owner-approved runbook/feature-handoff entry and provider read-only review; no application/settings mutation by this task.
+- **Dependencies:** none. Git API denial can be resolved by an owner using the UI or authorized working read path; it is not a finding of absent controls.
+- **Acceptance:** cited hosting deployment/settings evidence ties each domain to a repository/root/revision; supported release path named; protection/check/token/bypass state recorded with UNKNOWNs remaining explicit. Capture whether a feat-Sagar doc push triggers external hosting before calling it deployment-free.
+- **Stop/rollback:** stop any dependent live release or preview change if attribution/access remains unknown or conflicts with observed source. No rollback for read-only review; correct the record when facts change. Docker-context and lock review can proceed meanwhile.
+
+#### Category: build secrets
+
+**W0-T02 — Exclude private inputs from the actual backend Docker context (G01).** Owner: backend developer; one reviewer. Rough effort: half a day including a local real-image check.
+
+- **Trigger/evidence:** C01/C03 and missing ignore at all captured tips; official S01 describes context-root ignore processing. Risk exists independently of whether current local `.env.production` is present.
+- **Smallest fix:** add `backend/.dockerignore` because the scripts build with backend as context. Exclude private `.env` variants, private keys/credential files, dependency/cache/test/build output and developer artifacts. Preserve required application code, migrations, requirements and configuration; retaining secret-free examples is optional if needed by build/runtime. Inspect every active Docker build context/any Dockerfile-specific ignore to avoid silently bypassing the rule. A repository-root `.gitignore` or deleting a secret in a later image layer is insufficient.
+- **Affected existing files:** new `backend/.dockerignore`; existing production Dockerfile only if local verification exposes a required adjustment. Do not add production credentials as build arguments or mounts: this build does not need them (S02).
+- **Dependencies:** none for source fix/local check. Must complete before building a production release through W1-T01; does not require an AWS investigation first.
+- **Acceptance:** use a disposable copy of the actual backend context and production Dockerfile with unique synthetic `.env.production`, nested env/private-key canaries and a harmless required-runtime file. Build a local image, verify required runtime imports, then inspect exported image filesystem **and layers** for canary names/values; none may occur. Check exclusion in the effective context, not only `git status`. Test with a prior-run canary already present before build. No real secrets, registry push or production collectstatic. Save redacted command/image-ID/results.
+- **Stop/rollback:** if canary is copied or runtime requirements excluded, stop release and correct patterns. Revert overbroad exclusions narrowly; never restore a known secret-copy path merely to make a build pass. Image inspection inability means verification incomplete, not PASS.
+
+**W0-T03 — Conditional previous-image exposure review (G01).** Owner: infrastructure/security owner under separate suitable live authorization. Rough effort: unknown until artifact scope is established.
+
+- **Trigger/evidence:** G01 supports possible image exposure, not a proven incident; focused Git regex matches were zero.
+- **Smallest action:** if the owner determines those scripts/images were used, inspect affected previously published image contents/layers privately and record redacted exposure conclusions. If real credentials were exposed or reasonably suspected compromised, revoke/rotate affected credentials first and assess affected image access/caches; coordinate availability/old-image handling. S06 explains why secret rotation can be sufficient and history rewriting has collaboration risks.
+- **Affected surface:** affected registry artifacts/credential owner only; no automatic Git-history rewrite, mass key rotation or AWS change within this audit.
+- **Dependencies/acceptance:** suitable access/authorization and identified artifact set from W0-T01; written redacted findings, affected-secret classes, owner-approved incident actions and closure evidence. A regex no-match or current empty env directory is not image-exposure clearance.
+- **Stop/rollback:** live authorization/access missing → leave UNKNOWN. Never print secret values. Revocation is not safely “rolled back” to exposed credentials; owner plans application updates and recovery before operations.
+
+#### Category: deterministic install and existing fix reuse
+
+**W0-T04 — Review/integrate the existing frontend lock foundation (G04).** Owner: frontend developer + human integrator. Rough effort: 1–3 hours plus normal PR review/CI.
+
+- **Trigger/evidence:** C04; S03 says `npm ci` needs an existing matching lock. Existing `b03d167b8b5478feb4d306ec51a5872c0b5b3951` already tracks the lock and its narrow ignore exception. Do not regenerate it, upgrade packages or add another dependency manager to reproduce the fix.
+- **Smallest action:** review the declared baseline/foundation prerequisites in the [answer-recovery handoff](https://github.com/aranya-squad/Bolt-V1/blob/88cfff2791c9adc3648a39cf39a21a73c97e1697/docs/features/answer-recovery.md#L302-L321); human integrates the already tested foundation under the agreed merge policy. Other product/context descendants are separate review decisions, not prerequisites for this audit's Docker/SSH fix.
+- **Affected existing files:** already committed `.gitignore` and `frontend/package-lock.json`; future approved live-root build configuration may switch `npm install` to `npm ci` after W0-T01. No dual-repo edits unless standalone remains supported; then scope its own ignore/lock fix. If retired, document/archive it only by owner decision.
+- **Dependencies:** approved baseline/foundation integration sequence; live-root attribution required only for changing hosting install configuration. Do not merge this audit's docs commit as a shortcut to feature integration.
+- **Acceptance:** fresh isolated checkout of the exact proposed integration commit, Node 20/npm 10-compatible install matching current CI, `npm ci`, lint/types/tests/build pass without shared `node_modules`; inspect any lifecycle-generated differences. Record exact commit, commands and actual PR backend/frontend/build executions. [Recorded foundation local checks](https://github.com/aranya-squad/Bolt-V1/blob/88cfff2791c9adc3648a39cf39a21a73c97e1697/docs/features/answer-recovery.md#L224-L229) and [Node-20 followup](https://github.com/aranya-squad/Bolt-V1/blob/88cfff2791c9adc3648a39cf39a21a73c97e1697/docs/features/answer-recovery.md#L263-L279) are useful prior evidence, not hosted CI proof or audit reruns.
+- **Stop/rollback:** mismatched lock, version drift, failure or unreviewed prerequisite → fix only that blocker on owning branch. Don't replace CI with ad-hoc `npm install`, weaken checks or force-push. Reverting a bad lock returns the install blocker, so block release until a matching reviewed lock is restored.
+
+### Wave 1 — Correct the proven release/security boundaries
+
+#### Category: manual release traceability
+
+**W1-T01 — Deploy one recorded approved artifact, rather than mutable latest (G02).** Owner: release-capable backend developer; human release owner. Rough effort: 1–2 days for a small script/Compose/runbook change and local rehearsal.
+
+- **Trigger/evidence:** C01/C02. Mutable tag behavior and digest syntax are documented by S07/S08. The material problem is unbound application release selection, not merely using a familiar base-image tag.
+- **Smallest fix:** retain the supported manual ECR/Compose path from W0-T01. Require an explicit approved merged-main full SHA and record the actual review/check evidence for that source/merge result. Refuse tracked/staged/untracked source changes; intentional private runtime configuration must be excluded from build context by W0-T02, not treated as safe simply because ignored. Build from that verified source once; record source SHA, build platform and resulting immutable artifact reference. Use the **same reference** for migration, collectstatic, web, worker and beat. Fetch the selected artifact before running migrations; never migrate an old locally cached image then pull another release. Reject missing release input rather than defaulting to latest.
+- **Reference choice:** prefer one complete `IMAGE_REF=registry/repository@sha256:...` variable used by all three Compose application services and script runs; this requires a small Compose template change. Current `${IMAGE_NAME}:${IMAGE_TAG}` cannot accept `IMAGE_TAG='sha256:...'` as a digest. Alternatively keep a unique full-SHA tag only after confirming/enabling registry immutability under separate owner approval; record and verify its resolved digest before every use. A unique but overwriteable tag alone is insufficient. Record platform/manifest semantics so local/remote digest comparisons refer to the same artifact.
+- **Affected existing files:** supported manual script, root `docker-compose.prod.yml` image expressions, release section of runbook. `backend/deploy.sh` must be fixed if supported; if unused, clearly mark its path unsupported rather than retaining a misleading alternative. `aws-deploy.sh` includes provisioning and is not a routine release path; do not run it or redesign provisioning here.
+- **Dependencies:** W0-T01 names the supported path; W0-T02 blocks secret-bearing production builds; W0-T04 resolves frontend CI/install where applicable; W1-T02 must be complete before any secret-bearing production transfer. Script source/local checks can proceed in parallel with SSH changes under exclusive file ownership.
+- **Acceptance:** shell syntax validation plus a small local command-capture fixture tests missing SHA/artifact, dirty checkout, wrong platform, failed pull, changed digest and failed migration. These must stop before subsequent mutation commands. Render Compose with synthetic env using image-only output; migration/static/web/worker/beat references equal the recorded artifact. A disposable local Compose rehearsal demonstrates the selected image is fetched before migration and reused for services. Record actual review/CI run/check source commit and merge SHA separately when GitHub tests a synthetic merge; rerun/review if final source materially changes. No production deployment for acceptance.
+- **Stop/rollback:** unknown supported path/approved commit/check outcome/artifact or digest mismatch → no release. Record previous immutable image and configuration plus schema compatibility before the later authorized release. Roll back image only when database/schema/scoring compatibility is established; do not auto-reverse migrations or promise zero downtime. Existing answer-recovery scoring/older-client rollout constraints remain in its own handoff; a release traceability fix does not solve them.
+
+#### Category: SSH trust and private runtime secrets
+
+**W1-T02 — Enforce verified host identity and fail safely on secret lookup (G03).** Owner: deployment developer and human host/credential owner. Rough effort: half to one day, excluding trusted fingerprint/access coordination.
+
+- **Trigger/evidence:** C03; S05/S09 describe strict checking and untrusted scan output. The current `ssh ... || true` maps lookup failures to a new Django secret, even though its comment intends key preservation.
+- **Smallest fix:** independently verify the expected host fingerprint through a trusted owner channel/authorized console or equivalent. Store its public key in a dedicated known_hosts file; apply `StrictHostKeyChecking=yes` and that file consistently to secret lookup, scp and remote execution. Unknown/changed keys must stop before a secret transfer; key/IP replacement needs a documented owner-verified re-enrollment, not automatic deletion. `ssh-keyscan` may collect a candidate but does not authenticate it; `accept-new` is TOFU, not verified first contact.
+- **Secret handling:** use a private umask and explicit owner-only permissions for local/remote env files; reject unsafe/symlink destinations where relevant, avoid `set -x`/secret dumps and accidental retention in the build context. Preserve the existing supported runtime env-file path; no new secret-management platform is necessary. Fail separately for SSH/verification/read errors and missing existing Django key. Creating/replacing a production Django key is an explicit bootstrap/owner decision, never the fallback for a failed resumed-release lookup. Clean temporary sensitive files on both success/failure without deleting the live env needed by running services.
+- **Affected existing files:** supported deploy script plus any retained bootstrap secret-transfer path; private known_hosts/runbook enrollment outside Git. Host public keys are not credentials, but expose infrastructure identifiers, so don't commit private inventory by default.
+- **Dependencies:** W0-T01 identifies actual release path; owner supplies trusted identity. Cannot complete live enrollment from an unverified scanned key. Coordinate script edits with W1-T01, not two concurrent writers.
+- **Acceptance:** disposable loopback SSH server or equivalent integration fixture verifies correct pinned key works; unknown/changed key or unreachable/read-failed host blocks before transfer/remote execution and never generates a replacement Django key. Synthetic existing/missing-key scenarios are distinct. Under permissive parent umask, written synthetic secret files are owner-readable/writable only on both ends; failures/logs reveal no synthetic secret contents. No production SSH connection required by the plan.
+- **Stop/rollback:** fingerprint ambiguity, unexpected key change, unsafe paths or key lookup failure → stop, retain current live key/state and involve owner. Do not roll back by disabling strict checks or reusing exposed credentials. A lost trusted host record requires verified enrollment, not blind acceptance.
+
+#### Category: preview versus production API
+
+**W1-T03 — Remove implicit production access from nonproduction hosting (G05).** Owner: frontend/hosting maintainer. Rough effort: half to one day after ownership confirmation.
+
+- **Trigger/evidence:** C05. The code establishes a possible path to live API, not a proven active preview or cookie/data leak. No Vercel-specific control behavior was retrieved, so select/verify actual supported settings before prescribing syntax.
+- **Smallest fix:** after W0-T01 choose either disabled API-connected previews or an explicit safe isolated test target. Disabled previews/no API integration is the default if no nonproduction backend exists; no new AWS staging estate is required. Preserve the working local real-API test runner for development. For permitted previews, absent/unsafe environment must fail closed and neither a direct API base nor relative `/api` rewrite may target production. A baseURL-only guard is insufficient while a production rewrite remains reachable. Apply one owner-approved policy to the actual active root, not speculative changes to both repositories.
+- **Affected existing files/controls:** active Vercel project preview configuration and applicable root/frontend `vercel.json`; narrow build/config check if permitted previews need enforcement. Change production routing only under separate release approval, preserving student/teacher auth behavior.
+- **Dependencies:** W0-T01 verifies each domain/project/root and preview settings; W0-T04 for install command changes. Safe isolated target required only if previews are enabled. A UI-only mock preview must be clearly labeled and not presented as persistence/auth integration evidence.
+- **Acceptance:** inspect generated preview configuration and built-client API base; local/sandbox browser network interception proves missing configuration fails before API calls, an unsafe production base is rejected, and both direct API URLs and relative `/api` paths cannot reach production. If preview hosting is disabled, owner records the setting and verifies the normal nonproduction trigger yields no hosted API-connected deployment. Later separately authorized hosted verification uses synthetic accounts/isolated backend only; no probe or mutation of public production API in this audit. Production config unchanged is a diff/config assertion, not live release proof.
+- **Stop/rollback:** uncertain ownership/rewrites, no safe API or test request reaching production → disable/block API-connected previews pending correction. Rollback keeps previews disabled; do not restore an implicit production default to make a preview convenient.
+
+#### Category: proportionate GitHub review and token controls
+
+**W1-T04 — Close only verified material GitHub control gaps (G06).** Owner: repository administrator after W0-T01; developer for a minimal workflow PR. Rough effort: 1–3 hours plus provider/PR validation.
+
+- **Trigger/evidence:** actual settings evidence from W0-T01, C06 and S04/S10. No missing protection or write token scope is established by this audit alone.
+- **Smallest fix when needed:** main merges through a PR with one human reviewer for this small team, real required backend/frontend/build checks and no unintended direct-main bypass; define a narrowly documented owner emergency exception only if needed. Verify provider features available for the actual visibility/subscription before proposing a setting; no automatic paid-tool purchase. Ensure approvals/checks cover the latest reviewable changes and relevant integration state. Build/test jobs need read-only repository content: make existing workflow token permissions explicit if effective defaults are wider or ambiguous, adding narrowly required scopes only when a job genuinely needs them. Verify checkout/artifact operations still work. Do not add deployment credentials to these build jobs.
+- **Affected controls/files:** main branch rule/ruleset and effective Actions token settings; `.github/workflows/ci.yml` only for the declared minimal permissions change. Preserve the intentionally advisory context-freshness job; do not require it as a hard gate or broaden all-push CI merely because feature pushes do not run this workflow.
+- **Dependencies:** W0-T01 proves the actual gap; W0-T04 fixes lock availability before required frontend/build checks can operate. Existing feature/context stacks retain documented review order; no force-rebase required by this task.
+- **Acceptance:** owner captures redacted before/after rules, exact unique required check names/expected provider, effective token permissions and bypass policy. Inspect a normal PR at its recorded head/integration SHA: tests actually execute and failure blocks merge, unreviewed later changes require renewed review under chosen policy. GitHub permits skipped/neutral required checks (S10), so merely green mergeability is not proof tests ran. Verify configuration/provider behavior without deliberately attempting unauthorized direct pushes or disabling safeguards. Agent test approval is not human merge approval.
+- **Stop/rollback:** unavailable provider feature/access → retain UNKNOWN and an explicit human review/CI-release record; do not claim enforced protection. Incorrect check names causing a deadlock → adjust narrowly to verified actual jobs, preserving the security intent. Do not broadly turn protections off. If a permissions change breaks a legitimate job, grant only its evidenced required scope.
+
+## 4. Developer handoff and completion record
+
+Implementers first refresh refs and revalidate these findings against the actual intended base; the October snapshot must not overwrite newer work. Existing protected-baseline/feature instructions keep their task-specific meaning: audit-doc publication on feat-Sagar is the user's explicit exception, not permission to build new fixes there.
+
+Suggested small-team sequence:
+
+1. Owner performs W0-T01 while a developer reviews the existing lock foundation and a backend developer handles W0-T02. Keep file ownership explicit; no more than two independent writers are needed.
+2. Review the Docker-context fix and existing lock/check evidence. Owner scopes any W0-T03 incident followup only if live artifact evidence warrants it.
+3. One release-script owner sequences W1-T01/W1-T02 on one reviewable branch or dependent small branches; another developer handles W1-T03 once actual hosting ownership is known. Administrator handles W1-T04 only for confirmed gaps.
+4. An independent reviewer checks the exact integrated commit, meaningful local acceptance and unresolved live UNKNOWNs. Human developers own PR integration and later deployment. No plan-only task marks production SAFE/RELEASED.
+
+Each task handoff records: finding/task ID, refreshed base/current full SHA, owned files, proposed and actual behavior, code/standards citations, exact commands and results, local environment/fixture boundary, unresolved facts, dependencies, stop/rollback decision and next owner action. Keep this in the owning feature/fix handoff instead of adding a new issue bureaucracy. Save redacted evidence with access suitable to its contents; never put env files, tokens or live-account exports in GitHub.
+
+Before closing a task distinguish **source fix done**, **local acceptance passed**, **PR checks actually passed**, **human merged** and **owner released**. These are different checkpoints. Documentation publication is not implementation completion.
+
+### Reproducible Git evidence commands
+
+These are examples for a read-only audit in the correct checkout, with frozen SHAs substituted. They do not change persistent fetch configuration, remove refs or deploy:
+
+```bash
+git ls-remote --heads origin
+git worktree list --porcelain
+git status --short --branch
+git config --get-all remote.origin.fetch
+git log --all --format='%H|%aI|%cI|%s'
+git rev-list --left-right --count cec94ea187ab3fcf571f73dd4468b1edaf0d290a...<captured-tip>
+git merge-base --is-ancestor <captured-base> <captured-descendant>
+git ls-tree -r --name-only <captured-tip>
+git show <full-source-SHA>:<path>
+```
+
+Agent 1's one-time `git fetch --no-tags origin '+refs/heads/*:refs/remotes/origin/*'` populated advertised heads without pruning or changing local branches. Git metadata counts must be computed against **that frozen graph**, with an explicit timezone-aware July boundary on author/committer fields; this audit's later docs commits are not part of its 49-count historical snapshot. Search each captured tree for `.dockerignore`/Dockerfile-specific ignore and the exact lock path rather than infer absence from a local directory or default-main fetch. Avoid dumping private local environment contents in diagnostics.
+
+## 5. Primary standards actually inspected
+
+Official source texts were retrieved through native Git; rendered sites returned proxy403. URLs below identify immutable primary source content inspected locally, not successful rendered-page retrieval. Canonical npm documentation is listed for portability; the retrieved text was the official npm 10.8.2 package's bundled `npm-ci.md` in the existing Node20 image.
+
+| ID | Inspected primary source | What it supports here |
+| --- | --- | --- |
+| S01 | [Docker context docs, 1cbac586f589fa6a3e8cebede7e3d22623373f34, lines467–509](https://github.com/docker/docs/blob/1cbac586f589fa6a3e8cebede7e3d22623373f34/content/manuals/build/concepts/context.md#L467-L509) | Context-root ignore removes matching inputs; Dockerfile-specific ignore takes precedence. Supports backend context exclusion, not Git-ignore reliance. |
+| S02 | [Docker build secrets, same SHA, lines10–16](https://github.com/docker/docs/blob/1cbac586f589fa6a3e8cebede7e3d22623373f34/content/manuals/build/building/secrets.md#L10-L16) | ARG/ENV are unsuitable for build secrets. Do not introduce production build secrets when this build doesn't need them. |
+| S03 | Official npm 10.8.2 bundled `docs/lib/content/commands/npm-ci.md`, lines17–42; [canonical npm v10 reference](https://docs.npmjs.com/cli/v10/commands/npm-ci) | Existing lock required; mismatch errors; install frozen. Official package text was inspected, rendered URL was not. |
+| S04 | [GitHub secure-use, b6a703508e3709cc1a56701f2abf67aac4fe0700, lines32–34](https://github.com/github/docs/blob/b6a703508e3709cc1a56701f2abf67aac4fe0700/content/actions/reference/security/secure-use.md#L32-L34) | GITHUB_TOKEN minimum privileges/read-only contents default; actual Bolt effective settings need verification. |
+| S05 | [OpenSSH ssh_config.5, 87f0cd1892e501f835dd210abea5461807c8deba, lines2037–2073](https://github.com/openssh/openssh-portable/blob/87f0cd1892e501f835dd210abea5461807c8deba/ssh_config.5#L2037-L2073) | Strict yes rejects automatic new/changed keys; accept-new is TOFU; no permits new/changed keys subject to restrictions. |
+| S06 | [GitHub sensitive-data removal, same GitHub SHA, lines24–31](https://github.com/github/docs/blob/b6a703508e3709cc1a56701f2abf67aac4fe0700/content/authentication/keeping-your-account-and-data-secure/removing-sensitive-data-from-a-repository.md#L24-L31) | Revoke/rotate actual exposed secrets first; history rewrite may be unwarranted and affects collaboration. |
+| S07 | [Docker build best practices, same Docker SHA, lines211–253](https://github.com/docker/docs/blob/1cbac586f589fa6a3e8cebede7e3d22623373f34/content/manuals/build/building/best-practices.md#L211-L253) | Tags can move; digests select the same image. Applies to selecting this application's release artifact; does not mandate pinning every base tag here. |
+| S08 | [Docker Compose image format, same Docker SHA, lines1116–1128](https://github.com/docker/docs/blob/1cbac586f589fa6a3e8cebede7e3d22623373f34/content/reference/compose-file/services.md#L1116-L1128) | Tag `:tag` and digest `@digest` formats differ; supports complete IMAGE_REF rather than invalid digest in IMAGE_TAG. |
+| S09 | [OpenSSH ssh-keyscan.1, same OpenSSH SHA, lines54–60](https://github.com/openssh/openssh-portable/blob/87f0cd1892e501f835dd210abea5461807c8deba/ssh-keyscan.1#L54-L60) | Keyscan cannot authenticate obtained keys; verify out of band before trusting secret-bearing connections. |
+| S10 | [GitHub protected branches, same GitHub SHA, lines33–37](https://github.com/github/docs/blob/b6a703508e3709cc1a56701f2abf67aac4fe0700/content/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches.md#L33-L37) and [lines64–109](https://github.com/github/docs/blob/b6a703508e3709cc1a56701f2abf67aac4fe0700/content/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/about-protected-branches.md#L64-L109) | Review/check/bypass controls are supported; required successful/skipped/neutral states require honest execution evidence. This is provider capability, not observed Bolt settings. |
+| S11 | [Git worktrees, a018953688f1b10bddf91bff8747068f5f4746a4, lines25–37](https://github.com/git/git/blob/a018953688f1b10bddf91bff8747068f5f4746a4/Documentation/git-worktree.adoc#L25-L37), [shared refs lines301–310](https://github.com/git/git/blob/a018953688f1b10bddf91bff8747068f5f4746a4/Documentation/git-worktree.adoc#L301-L310), [shared configuration lines330–345](https://github.com/git/git/blob/a018953688f1b10bddf91bff8747068f5f4746a4/Documentation/git-worktree.adoc#L330-L345) | Multiple linked working trees are normal Git; most refs/config are shared by default. Supports existing isolated checkouts without imposing an optional configuration extension. |
+
+The exact captured evidence bundle is `/workspace/audit/git-analysis-2026-10-01/stage1/{evidence.md,snapshot.json,branch-analysis.json,redacted-secret-scan.json}`; the official-source index is `sources/verified-sources.json`. These are audit workspace artifacts, not promised portable GitHub attachments. The branch table, source references and reproducible commands above carry the essential handoff without depending on those local paths.
+
+## 6. Deferred or unsupported changes
+
+- No evidence requires GitFlow, branch renaming, mandatory signed commits, several human approvers, broad CODEOWNERS committees, a new agent harness, Kubernetes/GitOps or a deployment pipeline. Keep the explicitly scoped existing PM/CTO/QA feature-planning rule; do not silently replace it with a universal enterprise gate.
+- Do not delete historical/helper/context branches or force-rewrite stacks based on age, alias tips or cherry-picked SHAs. Cleanup is an optional later owner decision after integration/recovery needs are checked.
+- Official major-version Actions tags are mutable, but GitHub [secure-use lines137–159](https://github.com/github/docs/blob/b6a703508e3709cc1a56701f2abf67aac4fe0700/content/actions/reference/security/secure-use.md#L137-L159) explicitly describes trusted tags as convenient/widely used while SHA pinning is most secure. Pinning/scanning can be considered later for the actual threat model/provider availability; their current source use alone is not a proven vast deviation or breach.
+- No blanket Git history rewrite, repo merger, lock regeneration, dependency upgrades, dual-frontend maintenance or new AWS staging estate. Every such expansion needs separate evidence and owner scope.
+- Tournament capacity, product/auth hardening, answer-recovery semantics and teacher features belong to their own reviewed plans. This Git audit does not claim production load-readiness or reopen completed product features.
+
+## 7. v0 self-review and questions for Agent 3
+
+Self-review checked immutable source paths/lines, current versus pending fixes, conditional live claims, user scope and small-team impact. No code/CI/production check was rerun or marked passed for this plan. Strict second-pass reviewer should independently challenge:
+
+1. G01 is an image-context risk, not established exposure; review proposed canary acceptance for filesystem/layer coverage without live secrets.
+2. G02 must work with the existing Compose image syntax and actual supported entrypoint; no invented main-to-AWS deployment trigger, image immutability or CI success.
+3. G03's key-lookup fallback enhancement is source-grounded but must distinguish read error from genuinely missing key and preserve owner-controlled bootstrap decisions.
+4. G04 must reuse b03's pending lock fix, preserving declared review order and actual hosted-check UNKNOWNs.
+5. G05 must cover direct base and relative proxy and avoid production probes; verify the proposed default-disabled preview policy is proportionate to the unverified hosting state.
+6. G06 is verify-then-fix, not missing-controls diagnosis; required-check tests must actually execute, and advisory context checks stay advisory.
+7. Historical counts/tip ancestry are pre-publication and include cherry-pick duplicates; later feat-Sagar docs change its tip without retroactively changing captured bases.
+
+Remaining owner questions are attached to W0-T01: which repository/root/revision serves each domain; are production-connected previews active; which manual release script is supported; what actual main/token/bypass controls exist? W0-T03 also needs authorization/artifact evidence before any live exposure or rotation action. These unknowns block only dependent operations, not independent local source fixes.

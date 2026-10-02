@@ -175,6 +175,6 @@ class TeacherLevelDashboardView(APIView):
 
         return Response({
             "level": {"id": str(level.id), "name": level.name, "order": level.order},
-            "lessons": [{"id": str(l.id), "name": l.name, "order": l.order} for l in lessons],
+            "lessons": [{"id": str(lesson.id), "name": lesson.name, "order": lesson.order} for lesson in lessons],
             "classes": classes_data,
         })
