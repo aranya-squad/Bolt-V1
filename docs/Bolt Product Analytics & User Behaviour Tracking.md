@@ -997,6 +997,7 @@ Frontend:
 ```text
 practice_start_requested
 ```
+
 Backend outcome:
 
 ```text
@@ -1996,6 +1997,7 @@ A weekly product review should look at:
 ### Product decision
 
 End each review with:
+
 > **What is the single highest-impact friction point we will investigate next?**
 
 Analytics is only valuable when it changes product decisions.
