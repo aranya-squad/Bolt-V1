@@ -1,10 +1,11 @@
 # Production Docker Compose — used by backend/deploy.sh PLATFORM=compose path.
 # Postgres and Redis are NOT here; they are managed services (RDS + ElastiCache).
 # Secrets come from .env.production — never commit that file.
+# Release scripts set IMAGE_REF to one immutable digest so web/worker/beat match.
 
 services:
   web:
-    image: ${IMAGE_NAME:-bolt-abacus-api}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REF:?IMAGE_REF must be an immutable registry digest}
     command: gunicorn config.wsgi:application --config gunicorn.conf.py
     env_file: .env.production
     environment:
@@ -19,7 +20,7 @@ services:
       start_period: 20s
 
   worker:
-    image: ${IMAGE_NAME:-bolt-abacus-api}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REF:?IMAGE_REF must be an immutable registry digest}
     command: celery -A config worker --loglevel=info --concurrency=2
     env_file: .env.production
     environment:
@@ -27,7 +28,7 @@ services:
     restart: unless-stopped
 
   beat:
-    image: ${IMAGE_NAME:-bolt-abacus-api}:${IMAGE_TAG:-latest}
+    image: ${IMAGE_REF:?IMAGE_REF must be an immutable registry digest}
     command: celery -A config beat --loglevel=info
     env_file: .env.production
     environment:

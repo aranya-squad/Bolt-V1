@@ -9,7 +9,14 @@ from django.utils import timezone
 
 from apps.exercises.models import ArenaSession
 
-from .models import LessonCompletion, LevelCompletion, ProgressRecord, QuestionAttempt, XPEvent, XPEventType
+from .models import (
+    LessonCompletion,
+    LevelCompletion,
+    ProgressRecord,
+    QuestionAttempt,
+    XPEvent,
+    XPEventType,
+)
 from .xp_rules import compute_session_xp
 
 

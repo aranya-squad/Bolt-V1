@@ -2,7 +2,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import { useBatches } from "@/shared/api/queries/useBatches";
 import { useRoster } from "@/shared/api/queries/useRoster";
 import { AmbientScene } from "@/shared/ui/AmbientScene";
-import { BackLink } from "@/shared/ui/BackLink";
+import { BreadcrumbChip } from "@/shared/ui/BreadcrumbChip";
 import { BoltButton } from "@/shared/ui/BoltButton";
 import { GlassCard } from "@/shared/ui/GlassCard";
 import { Page } from "@/shared/ui/Page";
@@ -72,7 +72,7 @@ export default function BatchDetailPage() {
     <>
       <AmbientScene accents={["blue", "purple"]} />
       <Page>
-        <BackLink onClick={() => navigate("/teacher")} label="INSTRUCTOR COMMAND" />
+        <BreadcrumbChip items={["Instructor Command", "Class Detail"]} />
 
         <h1
           className="t-h1"

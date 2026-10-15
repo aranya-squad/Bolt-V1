@@ -1,7 +1,7 @@
 """Tests for Celery tasks in apps.exercises."""
-import pytest
 from datetime import timedelta
 
+import pytest
 from django.utils import timezone
 
 from apps.exercises.models import ArenaSession

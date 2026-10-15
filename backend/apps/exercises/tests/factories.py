@@ -1,7 +1,7 @@
 import factory
 from factory.django import DjangoModelFactory
 
-from apps.courses.models import Level, Lesson
+from apps.courses.models import Lesson, Level
 from apps.exercises.models import ArenaSession, ExerciseTemplate, SessionKind
 from apps.users.tests.factories import UserFactory
 

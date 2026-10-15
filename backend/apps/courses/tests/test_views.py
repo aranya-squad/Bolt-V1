@@ -3,15 +3,14 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from apps.users.tests.factories import GuardianFactory
 from apps.exercises.tests.factories import (
     ArenaSessionFactory,
     ExerciseTemplateFactory,
-    LevelFactory,
     LessonFactory,
+    LevelFactory,
 )
 from apps.progress.models import LevelCompletion, ProgressRecord
-
+from apps.users.tests.factories import GuardianFactory
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -178,6 +177,7 @@ def test_level_context_cache_invalidated_by_finalize_session(user, template1, le
     # The default @pytest.mark.django_db wraps tests in a rolled-back transaction,
     # so on_commit callbacks never fire in that mode.
     from django.core.cache import cache
+
     from apps.exercises.tests.factories import ArenaSessionFactory
     from apps.progress.services import finalize_session, record_attempt
 

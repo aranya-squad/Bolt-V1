@@ -1,6 +1,6 @@
 from rest_framework import serializers
 
-from .models import Level, Lesson
+from .models import Level
 
 
 class LessonDetailSerializer(serializers.Serializer):

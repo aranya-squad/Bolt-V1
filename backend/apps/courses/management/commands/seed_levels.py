@@ -1,6 +1,6 @@
 from django.core.management.base import BaseCommand
 
-from apps.courses.models import Level, Lesson
+from apps.courses.models import Lesson, Level
 from apps.exercises.models import ExerciseTemplate, SessionKind
 
 # Must match courses/migrations/0003_level_xp_thresholds.py — re-running seed preserves these values.

@@ -168,9 +168,20 @@ through the other instance during each restart.
 
 ### 5.3 Generic deploy.sh path
 
-See `backend/deploy.sh` for the documented two-step deploy:
-1. Pull new image, run migrations
-2. Rolling restart (stop old instance, start new, health-check, repeat)
+Compose releases must name one immutable registry digest, for example:
+
+```bash
+export IMAGE_REF=<registry>/bolt-abacus-api@sha256:<digest>
+PLATFORM=compose ./backend/deploy.sh
+```
+
+`backend/deploy.sh` then:
+1. pulls that exact digest for web/worker/beat;
+2. runs migrations using the pulled release image;
+3. starts the same digest and waits for the web healthcheck.
+
+Do not use `latest` as a production release selector. The AWS resume path resolves
+its pushed Git-SHA tag to an ECR digest before migrations or service restart.
 
 ---
 

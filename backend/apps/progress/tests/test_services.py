@@ -1,16 +1,15 @@
 import pytest
 from django.db import IntegrityError, transaction
 
-from apps.users.tests.factories import GuardianFactory
 from apps.exercises.tests.factories import (
     ArenaSessionFactory,
     ExerciseTemplateFactory,
-    LevelFactory,
     LessonFactory,
+    LevelFactory,
 )
 from apps.progress.models import LevelCompletion, ProgressRecord, QuestionAttempt, XPEvent
 from apps.progress.services import finalize_session, record_attempt
-
+from apps.users.tests.factories import GuardianFactory
 
 # ---------------------------------------------------------------------------
 # Fixtures
@@ -71,9 +70,8 @@ def test_record_attempt_incorrect(session_with_template):
 @pytest.mark.django_db
 def test_record_attempt_duplicate_raises(session_with_template):
     record_attempt(session_with_template, 0, 1, "1 + 1", 2, 2, 500)
-    with pytest.raises(IntegrityError):
-        with transaction.atomic():
-            record_attempt(session_with_template, 0, 1, "1 + 1", 2, 99, 1000)
+    with pytest.raises(IntegrityError), transaction.atomic():
+        record_attempt(session_with_template, 0, 1, "1 + 1", 2, 99, 1000)
 
 
 # ---------------------------------------------------------------------------
@@ -153,7 +151,7 @@ def session2(user, template1):
 def test_level_completion_updates_best_record_on_better_accuracy(user, session_with_template, session2, template1):
     # First session: 1/3 correct
     record_attempt(session_with_template, 0, 1, "1+1", 2, 2, 500)
-    first_record = finalize_session(session_with_template)
+    finalize_session(session_with_template)
 
     # Second session: 3/3 correct — should replace best
     for i in range(3):

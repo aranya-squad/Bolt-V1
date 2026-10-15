@@ -11,8 +11,14 @@ from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from apps.courses.models import Level, Lesson
-from apps.exercises.constants import ANTICHEAT_ENFORCE_KINDS, MAX_ATTEMPTS_PER_QUESTION, MAX_SESSION_SECONDS, MIN_ANSWER_MS, SKIP_ANSWER_SENTINEL
+from apps.courses.models import Lesson, Level
+from apps.exercises.constants import (
+    ANTICHEAT_ENFORCE_KINDS,
+    MAX_ATTEMPTS_PER_QUESTION,
+    MAX_SESSION_SECONDS,
+    MIN_ANSWER_MS,
+    SKIP_ANSWER_SENTINEL,
+)
 from apps.exercises.generators.curated import CuratedGenerator
 from apps.exercises.generators.procedural import ProceduralGenerator
 from apps.progress.models import LessonCompletion, LevelCompletion, ProgressRecord
@@ -633,7 +639,7 @@ class ImportQuestionsView(APIView):
                 row_index, topic_name, question, operator, answer = (list(row) + [None] * 5)[:5]
 
                 # Detect Excel date serials: openpyxl returns datetime objects for date-formatted cells.
-                if isinstance(question, (datetime.date, datetime.datetime)):
+                if isinstance(question, datetime.date | datetime.datetime):
                     msg = f"{sheet_name} row {row_index}: question column is a date serial — skipped"
                     skipped.append(msg)
                     _import_log.warning(msg)

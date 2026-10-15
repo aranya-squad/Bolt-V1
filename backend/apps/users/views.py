@@ -1,8 +1,10 @@
+import contextlib
 import logging
 import secrets
 from datetime import date
 
 from django.conf import settings
+from django.core.cache import cache
 from django.db import IntegrityError, transaction
 from django.http import JsonResponse
 from django.utils import timezone
@@ -11,7 +13,6 @@ from rest_framework import status
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from django.core.cache import cache
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.serializers import TokenRefreshSerializer
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -150,10 +151,8 @@ class LogoutView(APIView):
     def post(self, request):
         token = request.COOKIES.get(_COOKIE_NAME)
         if token:
-            try:
+            with contextlib.suppress(TokenError):
                 RefreshToken(token).blacklist()
-            except TokenError:
-                pass
         response = Response(status=status.HTTP_204_NO_CONTENT)
         response.delete_cookie(_COOKIE_NAME, path=_COOKIE_PATH, domain=_COOKIE_DOMAIN)
         return response

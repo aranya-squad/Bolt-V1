@@ -7,7 +7,6 @@ from rest_framework.test import APIClient
 from apps.users.models import User
 from apps.users.tests.factories import GuardianFactory, TeacherFactory
 
-
 _COOKIE_NAME = settings.SIMPLE_JWT["REFRESH_COOKIE_NAME"]
 _COOKIE_PATH = settings.SIMPLE_JWT["REFRESH_COOKIE_PATH"]
 
@@ -169,8 +168,9 @@ def test_me_returns_stats(client):
 
 @pytest.mark.django_db
 def test_client_ip_extraction_prefers_x_forwarded_for(client):
-    from apps.users.views import _client_ip
     from unittest.mock import MagicMock
+
+    from apps.users.views import _client_ip
 
     request = MagicMock()
     request.META = {"HTTP_X_FORWARDED_FOR": "1.2.3.4, 10.0.0.1", "REMOTE_ADDR": "127.0.0.1"}

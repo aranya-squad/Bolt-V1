@@ -1,0 +1,48 @@
+# Bolt production backend Docker build context
+# Keep private/runtime-local inputs out of image layers. The production build
+# uses backend/ as its context, so root .gitignore rules are not sufficient.
+
+# Environment / credentials
+.env
+.env.*
+**/.env
+**/.env.*
+*.pem
+**/*.pem
+*.key
+**/*.key
+*.p12
+**/*.p12
+*.pfx
+**/*.pfx
+id_rsa
+**/id_rsa
+id_ed25519
+**/id_ed25519
+
+# Local Python/runtime artifacts
+.venv/
+venv/
+env/
+__pycache__/
+**/__pycache__/
+*.py[cod]
+.pytest_cache/
+.coverage
+htmlcov/
+*.log
+*.sqlite3
+*.sqlite3-journal
+*.egg-info/
+
+# Build/editor/VCS artifacts
+dist/
+build/
+.git/
+.github/
+.vscode/
+.idea/
+.DS_Store
+
+# Secret-free deployment template may remain available to tooling if required.
+!.env.production.example
