@@ -43,4 +43,4 @@ Four proposed dashboard metrics: Weekly Meaningful Active Students (candidate No
 6. Preserve human-owned merge and deployment boundaries.
 
 ## Reference
-Follow [AI_SDLC.md](../docs/AI_SDLC.md), [AGENTS.md](../AGENTS.md), [BOLT_BOOTSTRAP.md](../BOLT_BOOTSTRAP.md) and current code over this snapshot. Correct relative links for repo-root docs from this tracker are [docs/AI_SDLC.md](../docs/AI_SDLC.md) and [AGENTS.md](../AGENTS.md).
+Follow [AI_SDLC.md](../AI_SDLC.md), [AGENTS.md](../../AGENTS.md), [BOLT_BOOTSTRAP.md](../../BOLT_BOOTSTRAP.md) and current code over this snapshot. Correct relative links for repo-root docs from this tracker are [docs/AI_SDLC.md](../AI_SDLC.md) and [AGENTS.md](../../AGENTS.md).
