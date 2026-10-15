@@ -4,11 +4,11 @@
 **Feature ID:** BA-ANALYTICS-001 | **Plan version:** 1.0 | **Date:** 2026-10-15  
 **Author perspective:** Senior Business Analyst / Product + Engineering handoff  
 **Source:** [05-final-simplified-architecture.md](05-final-simplified-architecture.md)  
-**Repository:** \`aranya-squad/Bolt-V1\`; **planning branch:** \`feat/behavior-analytics-discovery-plan-2026-10-15\`; source verified against \`main@0d209947e44675770f6b1fd7ac271d4cc4e4e832\` and separately inspected branch code.  
-**Boundary:** This document is the requested **planning artifact**. No app code, tests, migrations, runtime, production queries, merge or deployment has been changed. Implementation MUST wait for frozen-scope digest + real independent PM, CTO and Head QA (and Security/Data where routed) approval and G1/G2 pass per \`docs/AI_SDLC.md\`. The role-based adversarial review in 02 was not separate actual agents.
+**Repository:** `aranya-squad/Bolt-V1`; **planning branch:** `feat/behavior-analytics-discovery-plan-2026-10-15`; source verified against `main@0d209947e44675770f6b1fd7ac271d4cc4e4e832` and separately inspected branch code.  
+**Boundary:** This document is the requested **planning artifact**. No app code, tests, migrations, runtime, production queries, merge or deployment has been changed. Implementation MUST wait for frozen-scope digest + real independent PM, CTO and Head QA (and Security/Data where routed) approval and G1/G2 pass per `docs/AI_SDLC.md`. The role-based adversarial review in 02 was not separate actual agents.
 
 ### How to hand this off
-Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENTS.md, BOLT_BOOTSTRAP.md, docs/PROJECT_BRIEF.md, docs/CONTEXT_INDEX.yaml, docs/AI_SDLC.md, current \`docs/features/behavior-analytics.md\` and [05-final-simplified-architecture.md](05-final-simplified-architecture.md). Recheck remote main, PRs and pending branch integrations before adopting file paths, assumptions or API signatures. Treat this as a **task backlog awaiting formal scope authorization**, not a substitute for the project's G1/G2 scope and execution JSON.
+Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENTS.md, BOLT_BOOTSTRAP.md, docs/PROJECT_BRIEF.md, docs/CONTEXT_INDEX.yaml, docs/AI_SDLC.md, current `docs/features/behavior-analytics.md` and [05-final-simplified-architecture.md](05-final-simplified-architecture.md). Recheck remote main, PRs and pending branch integrations before adopting file paths, assumptions or API signatures. Treat this as a **task backlog awaiting formal scope authorization**, not a substitute for the project's G1/G2 scope and execution JSON.
 
 ## 0. Implementation strategy, priorities and stop conditions
 
@@ -34,15 +34,15 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 | Feature / capability | Current repo evidence, checked 2026-10-15 | Dependency action | Must remain unchanged and covered |
 |---|---|---|---|
-| Base \`main\` | React 18/TS/Vite, Django DRF, Postgres, sessions, class/enrollment, XP/progress; main commit \`0d209...\` | Exact SHA and fresh source check; assess whether more branches have merged | Register/auth, progress scoring, exercise endpoint semantics |
-| Teacher Dashboard \`feat/teacher-dashboard\` / PR #2 | Source and \`backend/apps/classroom/tests/test_reporting.py\`, tracker READY FOR HUMAN REVIEW, optimized primary-backed roster/matrix | **Inspect only**, do not cherry-pick; if integrated, reuse primary-read query/testing patterns | Roster, teacher-level reporting, ownership, query-budget fixtures |
-| Batch assignment \`feat/batch-level-assignment\` / PR #3 | Class.assigned_levels M2M and PATCH editing in branch; tracker READY FOR HUMAN REVIEW | Don't implement or edit class assignment. If integrated run assignment tests | PATCH transaction, teacher catalogue, assignment persistence |
-| Answer Recovery \`feat/answer-recovery\` | v2 receipt/manifest/replay-safe attempts, existing session routes, pending flush/recovery frontend stores | Don't implement new attempt beacon/submit retries. Recheck version/branch before final QA | session resume, no duplicate attempts, correct persisted results, old client compatibility |
-| Daily Quests \`feat/daily-quests\` | \`DailyQuest\` linked to existing \`ArenaSession\`; /daily-quests/today + /start; tracker READY FOR HUMAN REVIEW | Don't create daily quest event counter. If integrated, test existing quest sessions in M1/M3 | five-question quest, no reward/score or lifecycle changes |
+| Base `main` | React 18/TS/Vite, Django DRF, Postgres, sessions, class/enrollment, XP/progress; main commit `0d209...` | Exact SHA and fresh source check; assess whether more branches have merged | Register/auth, progress scoring, exercise endpoint semantics |
+| Teacher Dashboard `feat/teacher-dashboard` / PR #2 | Source and `backend/apps/classroom/tests/test_reporting.py`, tracker READY FOR HUMAN REVIEW, optimized primary-backed roster/matrix | **Inspect only**, do not cherry-pick; if integrated, reuse primary-read query/testing patterns | Roster, teacher-level reporting, ownership, query-budget fixtures |
+| Batch assignment `feat/batch-level-assignment` / PR #3 | Class.assigned_levels M2M and PATCH editing in branch; tracker READY FOR HUMAN REVIEW | Don't implement or edit class assignment. If integrated run assignment tests | PATCH transaction, teacher catalogue, assignment persistence |
+| Answer Recovery `feat/answer-recovery` | v2 receipt/manifest/replay-safe attempts, existing session routes, pending flush/recovery frontend stores | Don't implement new attempt beacon/submit retries. Recheck version/branch before final QA | session resume, no duplicate attempts, correct persisted results, old client compatibility |
+| Daily Quests `feat/daily-quests` | `DailyQuest` linked to existing `ArenaSession`; /daily-quests/today + /start; tracker READY FOR HUMAN REVIEW | Don't create daily quest event counter. If integrated, test existing quest sessions in M1/M3 | five-question quest, no reward/score or lifecycle changes |
 | Release/CI hardening / PR #4 | Draft PR, independent work | Do not modify workflow/config unless explicitly required in signed scope | Existing CI and release gating |
-| \`auth/me\` cached HUD stats | \`backend/apps/users/stats.py\`, 60s per-user cache | Read reference only; don't reuse its per-user request endpoint for platform analytics | HUD totals, cache identity boundaries |
-| ADMIN tool | \`frontend/src/router.tsx\` /admin/import-questions, Django \`/admin/\` | First locate separate user-described metrics dashboard; use existing entry components and permissions only | XLSX import must remain fully functional |
-| Feature governance | \`docs/AI_SDLC.md\`, \`skills/feature-scoper/SKILL.md\` | Use existing scope/plan/validation scripts, no new automation scaffold | No development before G1/G2; human merge/deploy |
+| `auth/me` cached HUD stats | `backend/apps/users/stats.py`, 60s per-user cache | Read reference only; don't reuse its per-user request endpoint for platform analytics | HUD totals, cache identity boundaries |
+| ADMIN tool | `frontend/src/router.tsx` /admin/import-questions, Django `/admin/` | First locate separate user-described metrics dashboard; use existing entry components and permissions only | XLSX import must remain fully functional |
+| Feature governance | `docs/AI_SDLC.md`, `skills/feature-scoper/SKILL.md` | Use existing scope/plan/validation scripts, no new automation scaffold | No development before G1/G2; human merge/deploy |
 
 **Integration invariant:** Branch is *not* production. Some trackers have historical CI PASS; those do not prove the current integration tree, deployment or this feature's tests. Every branch issue must be classified as (a) already merged, (b) separate approved/pending, (c) irrelevant. Don't duplicate (b) in our plan.
 
@@ -52,7 +52,7 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 **W0-A01 — Establish exact source and outstanding-feature state**  
 **Priority:** P0 | **Owner:** tech lead | **Dependencies:** none  
-**Description:** Query remote main/ref heads, compare PR #2/#3/#4, \`feat/answer-recovery\`, \`feat/daily-quests\` and this docs branch. Read target files and integration/release handoffs before making an implementation branch. Build an ownership/dependency table indicating what is on selected base, still unmerged, or being tested. Confirm existing tests to use as regression, not rewrite.
+**Description:** Query remote main/ref heads, compare PR #2/#3/#4, `feat/answer-recovery`, `feat/daily-quests` and this docs branch. Read target files and integration/release handoffs before making an implementation branch. Build an ownership/dependency table indicating what is on selected base, still unmerged, or being tested. Confirm existing tests to use as regression, not rewrite.
 **Success criteria:**
 - SC-001: Evidence report gives exact base SHA, current open PR statuses, relevant feature-branch SHA and whether each capability exists in *selected* code tree.
 - SC-002: Every overlap in §1 assigned **REUSE**, **INTEGRATION PREREQUISITE**, or **DEFER**, with no work item copied from existing feature scopes.
@@ -88,17 +88,17 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 **W0-C01 — Produce/freeze proper AI-SDLC artifacts and obtain authentic approvals**  
 **Priority:** P0 | **Owner:** PM/CTO/Head QA, Security/Data | **Dependencies:** W0-A02, B01, B02  
-**Description:** Derive \`docs/features/behavior-analytics.scope.md\` (freeze exact bytes with SHA-256), \`docs/features/behavior-analytics.plan.json\` (AC mappings and Wave→Category→Story→Task), and update feature tracker per existing template. Have separately executing PM, Senior Tech Manager/CTO and Head QA examine same digest; route Security/Data due to student data. Do not claim prior role-perspective critique counts as these signoffs.
+**Description:** Derive `docs/features/behavior-analytics.scope.md` (freeze exact bytes with SHA-256), `docs/features/behavior-analytics.plan.json` (AC mappings and Wave→Category→Story→Task), and update feature tracker per existing template. Have separately executing PM, Senior Tech Manager/CTO and Head QA examine same digest; route Security/Data due to student data. Do not claim prior role-perspective critique counts as these signoffs.
 **Success criteria:**
 - SC-013: Same scope digest approved by **actual independent** mandatory roles; no open blocker and explicit security/data decisions recorded.
-- SC-014: Existing \`scripts/check_feature_gate.py --gate G1\` passes on actual artifacts, followed by G2 passing with exclusive ownership/acceptance traceability.
+- SC-014: Existing `scripts/check_feature_gate.py --gate G1` passes on actual artifacts, followed by G2 passing with exclusive ownership/acceptance traceability.
 - SC-015: No feature code starts before passing gates; a material scope change re-freezes/re-approves.
 
 **W0 exit:** SC-001..015 satisfied. If missing the genuine admin page, owner explicitly accepts small fallback and that decision is incorporated in G1. If legal basis unresolved, base product data exposure is blocked. W1/W2 should not begin by assuming pending branches are main.
 
 ## 3. Wave 1 — Backend metrics with existing schema and endpoint style | P0
 
-**General non-duplication rule:** W1 reads User/Class/Enrollment/ArenaSession/QuestionAttempt/ProgressRecord; **does not edit** \`backend/apps/progress/services.py\`, exercise creation/attempt/finalize endpoints, Classroom CRUD or answer recovery contracts. Reuse current DRF settings/auth and a small query helper. No new tables/migrations by default.
+**General non-duplication rule:** W1 reads User/Class/Enrollment/ArenaSession/QuestionAttempt/ProgressRecord; **does not edit** `backend/apps/progress/services.py`, exercise creation/attempt/finalize endpoints, Classroom CRUD or answer recovery contracts. Reuse current DRF settings/auth and a small query helper. No new tables/migrations by default.
 
 ### Category W1-A: Canonical query implementation
 
@@ -138,16 +138,16 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 **W1-B01 — ADMIN-only Insights GET and API contract**  
 **Priority:** P0 | **Owner:** backend/API + frontend contract owner | **Dependencies:** W1-A01..A04  
-**Description:** Add one read-only API handler to existing DRF \`api/v1/\` namespace (suggest \`GET /api/v1/admin/insights/\`, final path frozen at G1), using \`IsAuthenticated\` and existing \`IsAdmin\`. Server validates period selection, bounded history, timezone convention and safe enumerated mode, with no arbitrary user/teacher/org lookup. Include schema revision, source/freshness, n/N/unknown statuses, two funnel count sets; no raw child rows. Update OpenAPI and typed DTO, not auth mechanism.
+**Description:** Add one read-only API handler to existing DRF `api/v1/` namespace (suggest `GET /api/v1/admin/insights/`, final path frozen at G1), using `IsAuthenticated` and existing `IsAdmin`. Server validates period selection, bounded history, timezone convention and safe enumerated mode, with no arbitrary user/teacher/org lookup. Include schema revision, source/freshness, n/N/unknown statuses, two funnel count sets; no raw child rows. Update OpenAPI and typed DTO, not auth mechanism.
 **Success criteria:**
 - SC-113: Anonymous 401; STUDENT/TEACHER 403; ADMIN can query bounded valid period; malformed dates, >approved max range or arbitrary filters rejected with 400.
 - SC-114: API returns *only aggregate counts* and metadata; never email, DOB, call sign, IP, join code, question text, raw answer, session/user UUID lists.
 - SC-115: Four metric outputs match source fixture SQL exactly, show numerator/denominator nullability, UTC period and definition version; invalid data yields explicit quality status rather than 500 or zero.
-- SC-116: Existing \`/api/v1/auth/me/\`, classes, sessions, report and import endpoints remain byte-compatible in their public responses except separately approved integrations.
+- SC-116: Existing `/api/v1/auth/me/`, classes, sessions, report and import endpoints remain byte-compatible in their public responses except separately approved integrations.
 
 **W1-B02 — Performance without a new service**  
 **Priority:** P1 | **Owner:** backend/data + operations reviewer | **Dependencies:** W1-B01  
-**Description:** Benchmark bounded queries on isolated PostgreSQL using production-like *synthetic* volume and \`EXPLAIN (ANALYZE, BUFFERS)\` in staging only. Reuse existing indexes where sensible, capture p95 under expected concurrent admin usage. Propose **no new Redis cache, materialized tables, Celery job, replica, warehouse or index migration** unless metrics show a concrete need and separately signed change.
+**Description:** Benchmark bounded queries on isolated PostgreSQL using production-like *synthetic* volume and `EXPLAIN (ANALYZE, BUFFERS)` in staging only. Reuse existing indexes where sensible, capture p95 under expected concurrent admin usage. Propose **no new Redis cache, materialized tables, Celery job, replica, warehouse or index migration** unless metrics show a concrete need and separately signed change.
 **Success criteria:**
 - SC-117: Actual query count, plans, row count, p50/p95, test hardware and chosen SLO are recorded (threshold signed before measurement; **do not invent latency PASS**).
 - SC-118: Admin endpoint stays bounded and doesn't grow as N+1 per student/teacher. Existing optimized teacher primary-query budgets are not regressed by touching their code.
@@ -171,7 +171,7 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 **W2-A01 — Integrate exactly one ADMIN insights surface**  
 **Priority:** P1 | **Owner:** frontend | **Dependencies:** W0-A02, W1-B01  
-**Description:** If owner verifies a current admin metrics page, extend its existing layout/state/API convention. Otherwise add only a lazy-loaded \`/admin/insights\` route under existing \`ProtectedRoute\` + \`RoleRoute allow=["ADMIN"]\`, reuse \`Page\`, \`GlassCard\`, \`PageSkeleton\`, existing apiClient/query patterns. Don't modify \`AdminImportPage\` behavior, teacher portal, onboarding or gameplay pages.
+**Description:** If owner verifies a current admin metrics page, extend its existing layout/state/API convention. Otherwise add only a lazy-loaded `/admin/insights` route under existing `ProtectedRoute` + `RoleRoute allow=["ADMIN"]`, reuse `Page`, `GlassCard`, `PageSkeleton`, existing apiClient/query patterns. Don't modify `AdminImportPage` behavior, teacher portal, onboarding or gameplay pages.
 **Success criteria:**
 - SC-201: No duplicate existing KPI tile/endpoint, no second admin shell, no student/teacher link to platform insights; existing admin metrics remain intact.
 - SC-202: Frontend non-admin route redirects/denies **and** server 403 is separately tested; authenticated refresh/account switch doesn't show prior admin data to a student/teacher.
@@ -221,8 +221,8 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 **Priority:** P0 | **Owner:** Head Engineering + QA | **Dependencies:** W0-A01, W3-A01  
 **Description:** Run a cross-feature “do not recreate” audit against selected integration commit. Verify classes, teacher dashboards, assignments, answer recovery and quests when present. Avoid copying their tests merely to tick metrics checkboxes; link to their already existing tests and run them. If a branch not integrated, mark its acceptance **blocked-by-integration / not applicable**, not missing analytics scope.
 **Success criteria:**
-- SC-304: Existing \`GET /classes/\`, \`/classes/{id}/roster/\`, \`/classes/levels/{id}/dashboard/\`, join and assignment PATCH (when integrated), session start/attempt/bulk/finalize/report, daily quest APIs (when integrated), and \`auth/me\` retain prior behavior and statuses.
-- SC-305: Teacher query performance tests \`backend/apps/classroom/tests/test_reporting.py\`, batch tests \`test_assignments.py\`, answer recovery tests \`test_answer_recovery.py\` plus frontend recovery tests, daily quests \`test_daily_quests.py\` are **run if present on integrated tree**. If not present, acceptance notes branch and integration prerequisite, not added duplicated code.
+- SC-304: Existing `GET /classes/`, `/classes/{id}/roster/`, `/classes/levels/{id}/dashboard/`, join and assignment PATCH (when integrated), session start/attempt/bulk/finalize/report, daily quest APIs (when integrated), and `auth/me` retain prior behavior and statuses.
+- SC-305: Teacher query performance tests `backend/apps/classroom/tests/test_reporting.py`, batch tests `test_assignments.py`, answer recovery tests `test_answer_recovery.py` plus frontend recovery tests, daily quests `test_daily_quests.py` are **run if present on integrated tree**. If not present, acceptance notes branch and integration prerequisite, not added duplicated code.
 - SC-306: Git diff against appropriate base contains only approved analytics files, contracts/tests and intentional admin UI additions; **no duplicate progress/mode/teacher subsystem rewrites**, no dependency upgrade “because analytics”.
 
 ### Category W3-B: Performance/privacy/independent signoff
@@ -237,7 +237,7 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 **W3-B02 — Exact-SHA quality handoff, rollback and human approval**  
 **Priority:** P0 | **Owner:** coordinator / independent reviewer | **Dependencies:** W3-B01  
-**Description:** Check repository's actual \`scripts/check_feature_gate.py\` G4/G5 on signed artifacts, required CI at exact code revision (only assert if available), \`scripts/agent_env_preflight.py --strict-e2e\` before isolated full API tests where relevant, record branch/base/commits, limitations, migrations (none expected), API schema and client compatibility. Keep feature flag/route visibility revert plan. Owner decides merge/release separately.
+**Description:** Check repository's actual `scripts/check_feature_gate.py` G4/G5 on signed artifacts, required CI at exact code revision (only assert if available), `scripts/agent_env_preflight.py --strict-e2e` before isolated full API tests where relevant, record branch/base/commits, limitations, migrations (none expected), API schema and client compatibility. Keep feature flag/route visibility revert plan. Owner decides merge/release separately.
 **Success criteria:**
 - SC-310: Exact integrated SHA, test commands/output, head-based CI run IDs (or UNKNOWN), reviewer decisions, open risks and Next Exact Action recorded.
 - SC-311: Rollback instructions disable admin view/GET safely without modifying original progress/account/class data; no destructive migration.
@@ -275,16 +275,16 @@ Developer/technical lead starts at **W0**, not with an analytics SDK. Read AGENT
 
 | Original feature being preserved | Existing route/service | Known tests / evidence source | Analytics acceptance |
 |---|---|---|---|
-| Auth & user stats | \`auth/register-student\`, \`auth/register-teacher\`, \`auth/me\`; users/stats.py | users/tests/test_auth.py, tests/test_permissions.py, existing frontend auth tests | Do not change login/roles/HUD calculations (SC-116, 121, 212) |
-| Practice/lesson lifecycle | \`practice/start\`, classwork/start, sessions/attempts, sessions/submit, report | exercises/tests/test_views.py; progress/tests/test_services.py | Distinct sessions & attempts read-only; no scoring changes (SC-101..109, 121, 304) |
+| Auth & user stats | `auth/register-student`, `auth/register-teacher`, `auth/me`; users/stats.py | users/tests/test_auth.py, tests/test_permissions.py, existing frontend auth tests | Do not change login/roles/HUD calculations (SC-116, 121, 212) |
+| Practice/lesson lifecycle | `practice/start`, classwork/start, sessions/attempts, sessions/submit, report | exercises/tests/test_views.py; progress/tests/test_services.py | Distinct sessions & attempts read-only; no scoring changes (SC-101..109, 121, 304) |
 | Abandonment marking | exercises/tasks.py Celery beat nominal 5m | exercises/tests/test_tasks.py | Interpret only; don't change task and don't assert live schedule (SC-109, 121) |
-| Teacher classroom/roster | \`classes/\`, \`classes/join\`, \`classes/{id}/roster\`, \`classes/levels/{id}/dashboard\` | classroom/tests/test_views.py; teacher branch test_reporting.py | No new roster or class REST; first enrollment only (SC-110..112, 304..305) |
+| Teacher classroom/roster | `classes/`, `classes/join`, `classes/{id}/roster`, `classes/levels/{id}/dashboard` | classroom/tests/test_views.py; teacher branch test_reporting.py | No new roster or class REST; first enrollment only (SC-110..112, 304..305) |
 | Batch assigned levels | existing Class.assigned_levels, PATCH when merged | batch branch test_assignments.py | No change assigned levels/auth/transactions (SC-112, 305) |
 | Answer Recovery | existing session URLs, v2 receipt/manifest if merged | answer branch exercises/tests/test_answer_recovery.py, FE recoveryPages.test.tsx | No loss/duplicate identity, no overwrite recovery store (SC-107, 121, 212, 305) |
 | Daily Quests | five-question linked ZEN session if merged | daily quest branch exercises/tests/test_daily_quests.py | Count underlying ArenaSession once, no new "quest event" (SC-102, 305) |
-| Admin XLSX import | \`admin/import-questions\` in existing app | existing API/frontend import tests (locate at integration baseline) | Never replace import page or its POST; no duplicate admin shell (SC-201, 212) |
+| Admin XLSX import | `admin/import-questions` in existing app | existing API/frontend import tests (locate at integration baseline) | Never replace import page or its POST; no duplicate admin shell (SC-201, 212) |
 
-**Tester instructions:** First collect tests *present on the integrated commit*, run those; do not demand tests for unmerged branches against \`main\`, and do not call missing branch features a defect of analytics. Treat existing feature tests as regressions, not new acceptance work or an excuse to re-scope those systems.
+**Tester instructions:** First collect tests *present on the integrated commit*, run those; do not demand tests for unmerged branches against `main`, and do not call missing branch features a defect of analytics. Treat existing feature tests as regressions, not new acceptance work or an excuse to re-scope those systems.
 
 ## 9. Traceability summary (IDs -> goal)
 
