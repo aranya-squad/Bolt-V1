@@ -1,0 +1,39 @@
+name: AI-SDLC tooling
+on:
+  pull_request:
+    paths:
+      - "AGENTS.md"
+      - "BOLT_BOOTSTRAP.md"
+      - "docs/**"
+      - "skills/**"
+      - "scripts/**"
+      - ".github/workflows/ai-sdlc.yml"
+  push:
+    branches: [main]
+    paths:
+      - "AGENTS.md"
+      - "BOLT_BOOTSTRAP.md"
+      - "docs/**"
+      - "skills/**"
+      - "scripts/**"
+      - ".github/workflows/ai-sdlc.yml"
+permissions:
+  contents: read
+jobs:
+  governance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Offline agent tooling regression tests
+        run: python -m unittest discover -s scripts/tests -v
+      - name: Strict context freshness
+        run: python scripts/check_context_freshness.py
+      - name: Verify tool argument interfaces
+        run: |
+          python scripts/verify_ci_evidence.py --help
+          python scripts/agent_env_preflight.py --help

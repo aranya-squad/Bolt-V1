@@ -1,0 +1,56 @@
+version: 1
+last_updated: 2026-10-15
+startup:
+  mandatory:
+    - BOLT_BOOTSTRAP.md
+    - docs/PROJECT_BRIEF.md
+    - docs/CONTEXT_INDEX.yaml
+task_routes:
+  frontend:
+    read:
+      - docs/SYSTEM_MAP.md
+    inspect:
+      - frontend/src/router.tsx
+      - frontend/src/shared
+      - frontend/package.json
+  backend:
+    read:
+      - docs/SYSTEM_MAP.md
+    inspect:
+      - backend/apps/progress/services.py
+      - backend/apps/exercises/views.py
+      - backend/config
+  ai_sdlc:
+    read:
+      - docs/AI_SDLC.md
+      - docs/AGENT_CONTEXT_PACKETS.md
+      - skills/feature-scoper/SKILL.md
+    inspect:
+      - scripts/check_feature_gate.py
+      - scripts/tests/test_feature_gate.py
+      - docs/templates/feature-scope.md
+      - docs/templates/feature-plan.json
+  context_checker:
+    read:
+      - docs/CLOUD_DEV_HANDOFF.md
+    inspect:
+      - scripts/check_context_freshness.py
+      - scripts/tests/test_context_freshness.py
+  stakeholder_refresh:
+    read:
+      - skills/bolt-stakeholder-refresh/SKILL.md
+    inspect:
+      - docs/AGENT_CONTEXT_PACKETS.md
+  ci_evidence:
+    read:
+      - docs/RUNBOOK.md
+    inspect:
+      - scripts/verify_ci_evidence.py
+      - scripts/agent_env_preflight.py
+      - .github/workflows/ai-sdlc.yml
+  cloud_handoff:
+    read:
+      - docs/CLOUD_DEV_HANDOFF.md
+    inspect:
+      - docs/AI_DEV_LOG.md
+      - docs/CURRENT_STATE.md
